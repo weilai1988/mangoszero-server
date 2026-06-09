@@ -11,7 +11,6 @@ public:
     CasterShamanStrategyActionNodeFactory()
     {
         creators["magma totem"] = &magma_totem;
-        creators["thunderstorm"] = &thunderstorm;
     }
 private:
     static ActionNode* magma_totem(PlayerbotAI* ai)
@@ -20,13 +19,6 @@ private:
             /*P*/ NULL,
             /*A*/ NULL,
             /*C*/ NextAction::array(0, new NextAction("fire nova"), NULL));
-    }
-    static ActionNode* thunderstorm(PlayerbotAI* ai)
-    {
-        return new ActionNode ("thunderstorm",
-            /*P*/ NULL,
-            /*A*/ NextAction::array(0, new NextAction("chain lightning"), NULL),
-            /*C*/ NULL);
     }
 };
 
@@ -71,13 +63,7 @@ void CasterShamanStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
 
 void CasterAoeShamanStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
 {
-    MeleeAoeShamanStrategy::InitTriggers(triggers);
-
     triggers.push_back(new TriggerNode(
         "light aoe",
         NextAction::array(0, new NextAction("chain lightning", 25.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "medium aoe",
-        NextAction::array(0, new NextAction("thunderstorm", 26.0f), NULL)));
 }

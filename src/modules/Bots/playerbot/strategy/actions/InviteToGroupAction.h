@@ -13,15 +13,11 @@ namespace ai
         {
             Player* master = event.getOwner();
             if (!master)
-            {
                 return false;
-            }
 
             WorldPacket p;
-            uint32 roles_mask = 0;
-            p << master->GetName();
-            p << roles_mask;
-            bot->GetSession()->HandleGroupInviteOpcode(p);
+            p << bot->GetName();
+            master->GetSession()->HandleGroupInviteOpcode(p);
 
             return true;
         }

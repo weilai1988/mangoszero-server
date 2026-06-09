@@ -1,20 +1,34 @@
 #include "../botpch.h"
 #include "playerbot.h"
-#include "Util.h"
 #include <algorithm>
+#include <functional>
 #include <cctype>
 #include <locale>
+
+void split(std::vector<std::string>& dest, const std::string& str, const char* delim)
+{
+    char* pTempStr = strdup( str.c_str() );
+    char* pWord = strtok(pTempStr, delim);
+    while(pWord != NULL)
+    {
+        dest.push_back(pWord);
+        pWord = strtok(NULL, delim);
+    }
+
+    free(pTempStr);
+}
 
 vector<string>& split(const string &s, char delim, vector<string> &elems)
 {
     stringstream ss(s);
     string item;
-    while (getline(ss, item, delim))
+    while(getline(ss, item, delim))
     {
         elems.push_back(item);
     }
     return elems;
 }
+
 
 vector<string> split(const string &s, char delim)
 {
@@ -49,6 +63,8 @@ char *strstri(const char *haystack, const char *needle)
     return 0;
 }
 
+
+
 uint64 extractGuid(WorldPacket& packet)
 {
     uint8 mask;
@@ -65,9 +81,7 @@ uint64 extractGuid(WorldPacket& packet)
             guid += (word << bit);
         }
         if (bit == 7)
-        {
             break;
-        }
         ++bit;
         testMask <<= 1;
     }

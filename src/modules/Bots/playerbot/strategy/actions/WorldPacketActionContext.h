@@ -38,6 +38,7 @@ namespace ai
             creators["tell cannot equip"] = &WorldPacketActionContext::tell_cannot_equip;
             creators["talk to quest giver"] = &WorldPacketActionContext::turn_in_quest;
             creators["accept quest"] = &WorldPacketActionContext::accept_quest;
+            creators["confirm quest"] = &WorldPacketActionContext::confirm_quest;
             creators["accept all quests"] = &WorldPacketActionContext::accept_all_quests;
             creators["accept quest share"] = &WorldPacketActionContext::accept_quest_share;
             creators["loot roll"] = &WorldPacketActionContext::loot_roll;
@@ -60,9 +61,11 @@ namespace ai
             creators["uninvite"] = &WorldPacketActionContext::uninvite;
             creators["security check"] = &WorldPacketActionContext::security_check;
             creators["guild accept"] = &WorldPacketActionContext::guild_accept;
+            creators["inventory change failure"] = &WorldPacketActionContext::inventory_change_failure;
         }
 
     private:
+        static Action* inventory_change_failure(PlayerbotAI* ai) { return new InventoryChangeFailureAction(ai); }
         static Action* guild_accept(PlayerbotAI* ai) { return new GuildAcceptAction(ai); }
         static Action* security_check(PlayerbotAI* ai) { return new SecurityCheckAction(ai); }
         static Action* uninvite(PlayerbotAI* ai) { return new UninviteAction(ai); }
@@ -89,9 +92,11 @@ namespace ai
         static Action* tell_cannot_equip(PlayerbotAI* ai) { return new InventoryChangeFailureAction(ai); }
         static Action* turn_in_quest(PlayerbotAI* ai) { return new TalkToQuestGiverAction(ai); }
         static Action* accept_quest(PlayerbotAI* ai) { return new AcceptQuestAction(ai); }
+        static Action* confirm_quest(PlayerbotAI* ai) { return new ConfirmQuestAction(ai); }
         static Action* accept_all_quests(PlayerbotAI* ai) { return new AcceptAllQuestsAction(ai); }
         static Action* accept_quest_share(PlayerbotAI* ai) { return new AcceptQuestShareAction(ai); }
         static Action* loot_roll(PlayerbotAI* ai) { return (QueryItemUsageAction*)new LootRollAction(ai); }
     };
+
 
 };

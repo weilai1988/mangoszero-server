@@ -19,14 +19,19 @@ public:
         if (!result)
         {
             Player* enemy = dynamic_cast<Player*>(attacker);
-            if (enemy && ai->IsOpposing(enemy) && enemy->IsPvP())
-            {
+            if (enemy &&
+                    ai->IsOpposing(enemy) &&
+                    enemy->IsPvP() &&
+                    !sPlayerbotAIConfig.IsInPvpProhibitedZone(enemy->GetAreaId()) &&
+                    !enemy->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE) &&
+                    !enemy->HasStealthAura() &&
+                    !enemy->HasInvisibilityAura())
                 result = attacker;
-            }
         }
     }
 
 };
+
 
 Unit* EnemyPlayerValue::Calculate()
 {

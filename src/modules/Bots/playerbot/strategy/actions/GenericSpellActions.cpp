@@ -6,47 +6,28 @@ using namespace ai;
 
 bool CastSpellAction::Execute(Event event)
 {
-    return ai->CastSpell(spell, GetTarget());
+	return ai->CastSpell(spell, GetTarget());
 }
 
 bool CastSpellAction::isPossible()
 {
-    if (AI_VALUE2(float, "distance", GetTargetName()) > range)
-    {
-        return false;
-    }
-    uint32 spellId = AI_VALUE2(uint32, "spell id", spell);
-    if (spellId)
-    {
-        const SpellEntry* spellInfo = sSpellStore.LookupEntry(spellId);
-        if (spellInfo && IsAutoRepeatRangedSpell(spellInfo))
-        {
-            Spell* currentAutoRepeat = bot->GetCurrentSpell(CURRENT_AUTOREPEAT_SPELL);
-            if (currentAutoRepeat && currentAutoRepeat->m_spellInfo->Id == spellId)
-            {
-                return false; // Already casting this autorepeat spell
-            }
-        }
-    }
-    return ai->CanCastSpell(spell, GetTarget());
+	return ai->CanCastSpell(spell, GetTarget());
 }
 
 bool CastSpellAction::isUseful()
 {
-    return GetTarget() && AI_VALUE2(bool, "spell cast useful", spell);
+    return GetTarget() && AI_VALUE2(bool, "spell cast useful", spell) && AI_VALUE2(float, "distance", GetTargetName()) <= range;
 }
 
 bool CastAuraSpellAction::isUseful()
 {
-    return CastSpellAction::isUseful() && !ai->HasAura(spell, GetTarget());
+	return CastSpellAction::isUseful() && !ai->HasAura(spell, GetTarget(), true);
 }
 
-bool CastEnchantItemAction::isUseful()
+bool CastEnchantItemAction::isPossible()
 {
-    if (!CastSpellAction::isUseful())
-    {
+    if (!CastSpellAction::isPossible())
         return false;
-    }
 
     uint32 spellId = AI_VALUE2(uint32, "spell id", spell);
     return spellId && AI_VALUE2(Item*, "item for spell", spellId);
@@ -54,13 +35,14 @@ bool CastEnchantItemAction::isUseful()
 
 bool CastHealingSpellAction::isUseful()
 {
-    return CastAuraSpellAction::isUseful() && AI_VALUE2(uint8, "health", GetTargetName()) < (100 - estAmount);
+	return CastAuraSpellAction::isUseful();
 }
 
 bool CastAoeHealSpellAction::isUseful()
 {
-    return CastSpellAction::isUseful() && AI_VALUE2(uint8, "aoe heal", "medium") > 0;
+	return CastSpellAction::isUseful();
 }
+
 
 Value<Unit*>* CurePartyMemberAction::GetTargetValue()
 {

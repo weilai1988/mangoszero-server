@@ -5,7 +5,7 @@ namespace ai
 {
     class ShamanWeaponTrigger : public BuffTrigger {
     public:
-        ShamanWeaponTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "rockbiter weapon") {}
+        ShamanWeaponTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "rockbiter weapon", 2) {}
         virtual bool IsActive();
     private:
         static list<string> spells;
@@ -13,10 +13,10 @@ namespace ai
 
     class TotemTrigger : public Trigger {
     public:
-        TotemTrigger(PlayerbotAI* ai, string spell, int attackerCount = 0) : Trigger(ai, spell), attackerCount(attackerCount) {}
+        TotemTrigger(PlayerbotAI* ai, string spell, int attackerCount = 0) : Trigger(ai, spell, 1), attackerCount(attackerCount) {}
 
         virtual bool IsActive()
-        {
+		{
             return AI_VALUE(uint8, "attacker count") >= attackerCount && !AI_VALUE2(bool, "has totem", name);
         }
 
@@ -27,6 +27,12 @@ namespace ai
     class WindfuryTotemTrigger : public TotemTrigger {
     public:
         WindfuryTotemTrigger(PlayerbotAI* ai) : TotemTrigger(ai, "windfury totem") {}
+    };
+
+    class GraceOfAirTotemTrigger : public TotemTrigger
+    {
+    public:
+        GraceOfAirTotemTrigger(PlayerbotAI* ai) : TotemTrigger(ai, "grace of air totem") {}
     };
 
     class ManaSpringTotemTrigger : public TotemTrigger {
@@ -86,7 +92,7 @@ namespace ai
 
     class WaterWalkingTrigger : public BuffTrigger {
     public:
-        WaterWalkingTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "water walking") {}
+        WaterWalkingTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "water walking", 7) {}
 
         virtual bool IsActive()
         {
@@ -96,7 +102,7 @@ namespace ai
 
     class WaterBreathingTrigger : public BuffTrigger {
     public:
-        WaterBreathingTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "water breathing") {}
+        WaterBreathingTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "water breathing", 5) {}
 
         virtual bool IsActive()
         {
@@ -106,7 +112,7 @@ namespace ai
 
     class WaterWalkingOnPartyTrigger : public BuffOnPartyTrigger {
     public:
-        WaterWalkingOnPartyTrigger(PlayerbotAI* ai) : BuffOnPartyTrigger(ai, "water walking on party") {}
+        WaterWalkingOnPartyTrigger(PlayerbotAI* ai) : BuffOnPartyTrigger(ai, "water walking on party", 2) {}
 
         virtual bool IsActive()
         {
@@ -116,7 +122,7 @@ namespace ai
 
     class WaterBreathingOnPartyTrigger : public BuffOnPartyTrigger {
     public:
-        WaterBreathingOnPartyTrigger(PlayerbotAI* ai) : BuffOnPartyTrigger(ai, "water breathing on party") {}
+        WaterBreathingOnPartyTrigger(PlayerbotAI* ai) : BuffOnPartyTrigger(ai, "water breathing on party", 2) {}
 
         virtual bool IsActive()
         {
@@ -195,19 +201,27 @@ namespace ai
         WindShearInterruptEnemyHealerSpellTrigger(PlayerbotAI* ai) : InterruptEnemyHealerTrigger(ai, "wind shear") {}
     };
 
-    class GhostWolfTrigger : public BuffTrigger
+    class CurePoisonTrigger : public NeedCureTrigger
     {
     public:
-        GhostWolfTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "ghost wolf") {}
+        CurePoisonTrigger(PlayerbotAI* ai) : NeedCureTrigger(ai, "cure poison", DISPEL_POISON) {}
     };
 
-    class TremorTotemTrigger : public TotemTrigger
+    class PartyMemberCurePoisonTrigger : public PartyMemberNeedCureTrigger
     {
     public:
-        TremorTotemTrigger(PlayerbotAI* ai) : TotemTrigger(ai, "tremor totem", 1) {}
-        virtual bool IsActive()
-        {
-            return TotemTrigger::IsActive() && !AI_VALUE2(bool, "has totem", "strength of earth totem");
-        }
+        PartyMemberCurePoisonTrigger(PlayerbotAI* ai) : PartyMemberNeedCureTrigger(ai, "cure poison", DISPEL_POISON) {}
+    };
+
+    class CureDiseaseTrigger : public NeedCureTrigger
+    {
+    public:
+        CureDiseaseTrigger(PlayerbotAI* ai) : NeedCureTrigger(ai, "cure disease", DISPEL_DISEASE) {}
+    };
+
+    class PartyMemberCureDiseaseTrigger : public PartyMemberNeedCureTrigger
+    {
+    public:
+        PartyMemberCureDiseaseTrigger(PlayerbotAI* ai) : PartyMemberNeedCureTrigger(ai, "cure disease", DISPEL_DISEASE) {}
     };
 }

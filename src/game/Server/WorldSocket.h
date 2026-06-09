@@ -173,7 +173,13 @@ class WorldSocket : protected WorldHandler
         /// to mark the socket for output ).
         bool iFlushPacketQueue();
 
+        /// Remember a few recently decoded client opcodes for disconnect diagnostics.
+        void RecordRecentOpcode(uint32 opcode, size_t size);
+        void RecordRecentServerOpcode(uint32 opcode, size_t size);
+
     private:
+        static constexpr size_t RECENT_OPCODE_HISTORY_SIZE = 12;
+
         /// Time in which the last ping was received
         ACE_Time_Value m_LastPingTime;
 
@@ -212,6 +218,15 @@ class WorldSocket : protected WorldHandler
         /// Here are stored packets for which there was no space on m_OutBuffer,
         /// this allows not-to kick player if its buffer is overflowed.
         PacketQueueT m_PacketQueue;
+
+        uint32 m_RecentOpcodes[RECENT_OPCODE_HISTORY_SIZE];
+        uint32 m_RecentOpcodeSizes[RECENT_OPCODE_HISTORY_SIZE];
+        size_t m_RecentOpcodePos;
+        size_t m_RecentOpcodeCount;
+        uint32 m_RecentServerOpcodes[RECENT_OPCODE_HISTORY_SIZE];
+        uint32 m_RecentServerOpcodeSizes[RECENT_OPCODE_HISTORY_SIZE];
+        size_t m_RecentServerOpcodePos;
+        size_t m_RecentServerOpcodeCount;
 
         const uint32 m_Seed;
 };

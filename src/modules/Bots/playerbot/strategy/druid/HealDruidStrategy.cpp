@@ -40,6 +40,22 @@ void HealDruidStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
         NextAction::array(0, new NextAction("regrowth on party", ACTION_MEDIUM_HEAL + 1), NULL)));
 
     triggers.push_back(new TriggerNode(
+        "low health",
+        NextAction::array(0, new NextAction("healing touch", ACTION_CRITICAL_HEAL + 2), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "party member low health",
+        NextAction::array(0,  new NextAction("healing touch on party", ACTION_CRITICAL_HEAL + 1), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "brain party member emergency heal",
+        NextAction::array(0, new NextAction("regrowth on party", ACTION_EMERGENCY + 8), new NextAction("healing touch on party", ACTION_EMERGENCY + 7), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "brain party member critical heal",
+        NextAction::array(0, new NextAction("regrowth on party", ACTION_CRITICAL_HEAL + 8), new NextAction("healing touch on party", ACTION_CRITICAL_HEAL + 7), NULL)));
+
+    triggers.push_back(new TriggerNode(
         "almost full health",
         NextAction::array(0, new NextAction("rejuvenation", ACTION_LIGHT_HEAL + 2), NULL)));
 
@@ -48,10 +64,14 @@ void HealDruidStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
         NextAction::array(0, new NextAction("rejuvenation on party", ACTION_LIGHT_HEAL + 1), NULL)));
 
     triggers.push_back(new TriggerNode(
+        "brain party member steady heal",
+        NextAction::array(0, new NextAction("rejuvenation on party", ACTION_MEDIUM_HEAL + 8), new NextAction("regrowth on party", ACTION_MEDIUM_HEAL + 7), NULL)));
+
+    triggers.push_back(new TriggerNode(
         "medium aoe heal",
         NextAction::array(0, new NextAction("tranquility", ACTION_MEDIUM_HEAL + 3), NULL)));
 
     triggers.push_back(new TriggerNode(
-        "entangling roots",
-        NextAction::array(0, new NextAction("entangling roots on cc", ACTION_HIGH + 1), NULL)));
+        "party member to heal out of spell range",
+        NextAction::array(0, new NextAction("reach party member to heal", ACTION_CRITICAL_HEAL + 1), NULL)));
 }

@@ -294,6 +294,114 @@ bool ChatHandler::HandleSendItemsCommand(char* args)
 }
 
 /**
+ * @brief Handler for HandleSendBulkItemsCommand command.
+ *
+ * Sends each requested item stack as a separate GM mail. This is useful on
+ * Classic, where MAX_MAIL_ITEMS is intentionally limited to one item stack.
+ *
+ * @param args Command arguments.
+ * @returns True if the command executed successfully, false otherwise.
+ */
+bool ChatHandler::HandleSendBulkItemsCommand(char* args)
+{
+    // format: name "subject text" "mail text" item1[:count1][:enchant1] item2[:count2][:enchant2] ...
+    Player* receiver;
+    ObjectGuid receiver_guid;
+    std::string receiver_name;
+    if (!ExtractPlayerTarget(&args, &receiver, &receiver_guid, &receiver_name))
+    {
+        return false;
+    }
+
+    char* msgSubject = ExtractQuotedArg(&args);
+    if (!msgSubject)
+    {
+        return false;
+    }
+
+    char* msgText = ExtractQuotedArg(&args);
+    if (!msgText)
+    {
+        return false;
+    }
+
+    uint32 sent = 0;
+    while (char* itemStr = ExtractArg(&args))
+    {
+        uint32 item_id = 0;
+        uint32 item_count = 1;
+        uint32 item_enchant_id = 0;
+
+        if (sscanf(itemStr, "%u:%u:%u", &item_id, &item_count, &item_enchant_id) == 0)
+        {
+            if (sscanf(itemStr, "%u:%u", &item_id, &item_count) == 0)
+            {
+                if (sscanf(itemStr, "%u", &item_id) == 0)
+                {
+                    return false;
+                }
+            }
+        }
+
+        if (!item_id)
+        {
+            PSendSysMessage(LANG_COMMAND_ITEMIDINVALID, item_id);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        ItemPrototype const* item_proto = ObjectMgr::GetItemPrototype(item_id);
+        if (!item_proto)
+        {
+            PSendSysMessage(LANG_COMMAND_ITEMIDINVALID, item_id);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (item_count < 1 || (item_proto->MaxCount > 0 && item_count > uint32(item_proto->MaxCount)))
+        {
+            PSendSysMessage(LANG_COMMAND_INVALID_ITEM_COUNT, item_count, item_id);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        uint32 max_items_count = item_proto->GetMaxStackSize();
+        uint32 remaining_items_count = item_count;
+
+        while (remaining_items_count > 0)
+        {
+            uint32 send_count = remaining_items_count > max_items_count ? max_items_count : remaining_items_count;
+            remaining_items_count -= send_count;
+
+            MailDraft draft(msgSubject, msgText);
+            if (Item* item = Item::CreateItem(item_id, send_count, m_session ? m_session->GetPlayer() : 0))
+            {
+                if (item_enchant_id)
+                {
+                    item->SetEnchantment(PERM_ENCHANTMENT_SLOT, item_enchant_id, 0, 0);
+                }
+
+                item->SaveToDB();
+                draft.AddItem(item);
+
+                MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetGUIDLow() : (uint32)0, MAIL_STATIONERY_GM);
+                draft.SendMailTo(MailReceiver(receiver, receiver_guid), sender);
+                ++sent;
+            }
+        }
+    }
+
+    if (!sent)
+    {
+        return false;
+    }
+
+    std::string nameLink = playerLink(receiver_name);
+    PSendSysMessage("Sent %u item mail(s) to %s.", sent, nameLink.c_str());
+    return true;
+}
+
+/**
  * @brief Handler for HandleSendMassItemsCommand command.
  *
  * @param args Command arguments.

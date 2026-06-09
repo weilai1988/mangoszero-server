@@ -1,67 +1,66 @@
 #include "botpch.h"
 #include "../../playerbot.h"
 #include "PaladinActions.h"
-#include "PaladinTriggers.h"
-#include "../../PlayerbotAIConfig.h"
 
 using namespace ai;
 
-bool CastBlessingOnPartyAction::Execute(Event event)
+string GetActualBlessingOfMight(Unit* target)
 {
-    Group* group = bot->GetGroup();
-    if (!group) return false;
-
-    Group::MemberSlotList const& groupSlot = group->GetMemberSlots();
-    bool casted = false;
-
-    for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); ++itr)
+    switch (target->getClass())
     {
-        Player* member = sObjectMgr.GetPlayer(itr->guid);
-        if (!member || !member->IsAlive())
-            continue;
-
-        if (HasAnyBlessing(ai, member))
-            continue;
-
-        string primary;
-        switch (member->getClass())
-        {
-            case CLASS_WARRIOR:
-            case CLASS_ROGUE:
-            case CLASS_HUNTER:
-                primary = "greater blessing of might";
-                break;
-            case CLASS_PRIEST:
-            case CLASS_MAGE:
-            case CLASS_WARLOCK:
-            case CLASS_SHAMAN:
-            case CLASS_DRUID:
-                primary = "greater blessing of wisdom";
-                break;
-            case CLASS_PALADIN:
-                primary = "greater blessing of wisdom";
-                break;
-            default:
-                primary = "blessing of might";
-                break;
-        }
-
-        if (ai->CastSpell(primary, member))
-            casted = true;
-        else
-        {
-            string lesser = (primary.find("greater ") == 0) ? primary.substr(8) : primary;
-            if (ai->CastSpell(lesser, member))
-                casted = true;
-            else if (lesser != "blessing of might" && ai->CastSpell("blessing of might", member))
-                casted = true;
-        }
+    case CLASS_MAGE:
+    case CLASS_PRIEST:
+    case CLASS_WARLOCK:
+        return "blessing of wisdom";
     }
-    return casted;
+    return "blessing of might";
 }
 
-bool CastBlessingOnPartyAction::isUseful()
+string GetActualBlessingOfWisdom(Unit* target)
 {
-    return bot->GetGroup() != nullptr;
+    switch (target->getClass())
+    {
+    case CLASS_WARRIOR:
+    case CLASS_ROGUE:
+        return "blessing of might";
+    }
+    return "blessing of wisdom";
 }
 
+Value<Unit*>* CastBlessingOnPartyAction::GetTargetValue()
+{
+    return context->GetValue<Unit*>("party member without aura",
+            "blessing of kings,blessing of might,blessing of wisdom");
+}
+
+bool CastBlessingOfMightAction::Execute(Event event)
+{
+    Unit* target = GetTarget();
+    if (!target) return false;
+
+    return ai->CastSpell(GetActualBlessingOfMight(target), target);
+}
+
+bool CastBlessingOfMightOnPartyAction::Execute(Event event)
+{
+    Unit* target = GetTarget();
+    if (!target) return false;
+
+    return ai->CastSpell(GetActualBlessingOfMight(target), target);
+}
+
+bool CastBlessingOfWisdomAction::Execute(Event event)
+{
+    Unit* target = GetTarget();
+    if (!target) return false;
+
+    return ai->CastSpell(GetActualBlessingOfWisdom(target), target);
+}
+
+bool CastBlessingOfWisdomOnPartyAction::Execute(Event event)
+{
+    Unit* target = GetTarget();
+    if (!target) return false;
+
+    return ai->CastSpell(GetActualBlessingOfWisdom(target), target);
+}

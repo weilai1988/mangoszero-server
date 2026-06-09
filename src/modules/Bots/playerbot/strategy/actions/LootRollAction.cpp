@@ -1,6 +1,7 @@
 #include "botpch.h"
 #include "../../playerbot.h"
 #include "LootRollAction.h"
+
 #include "../values/ItemUsageValue.h"
 
 using namespace ai;
@@ -12,61 +13,29 @@ bool LootRollAction::Execute(Event event)
     WorldPacket p(event.getPacket());
     ObjectGuid lootTargetGuid;
     uint32 slot;
-    uint32 itemid;
-    uint32 randomSuffix;
-    uint32 itemRandomPropId;
+    uint8 rollType;
+
+    if (p.size() < 13)
+        return false;
+
     p.rpos(0);
     p >> lootTargetGuid;
     p >> slot;
-    p >> itemid;
-    p >> randomSuffix;
-    p >> itemRandomPropId;
+    p >> rollType;
 
     Group* group = bot->GetGroup();
-    if (!group)
-    {
+    if(!group)
         return false;
-    }
+
+#ifdef MANGOS
+    Roll const* roll = group->GetRollForLoot(lootTargetGuid, slot);
+    if (!roll)
+        return false;
 
     RollVote vote = ROLL_PASS;
-
-    ItemPrototype const *proto = sItemStorage.LookupEntry<ItemPrototype>(itemid);
+    ItemPrototype const *proto = sItemStorage.LookupEntry<ItemPrototype>(roll->itemid);
     if (proto)
-    {
-        AiObjectContext* context = QueryItemUsageAction::context;
-        ostringstream out; out << itemid;
-        ItemUsage usage = AI_VALUE2(ItemUsage, "item usage", out.str());
-
-        switch (proto->Class)
-        {
-        case ITEM_CLASS_WEAPON:
-        case ITEM_CLASS_ARMOR:
-            if (usage == ITEM_USAGE_EQUIP || usage == ITEM_USAGE_REPLACE)
-            {
-                vote = ROLL_NEED;
-            }
-            else if (bot->CanUseItem(proto) == EQUIP_ERR_OK && proto->Bonding != BIND_WHEN_PICKED_UP)
-            {
-                vote = ROLL_GREED;
-            }
-            break;
-        default:
-            if (usage == ITEM_USAGE_SKILL || usage == ITEM_USAGE_USE)
-            {
-                vote = ROLL_NEED;
-            }
-            else if (proto->StartQuest || proto->Bonding == BIND_QUEST_ITEM ||
-                    proto->Bonding == BIND_QUEST_ITEM1 || proto->Class == ITEM_CLASS_QUEST)
-            {
-                vote = ROLL_NEED;
-            }
-            else if (proto->SellPrice > 0 && proto->Bonding != BIND_WHEN_PICKED_UP)
-            {
-                vote = ROLL_GREED;
-            }
-            break;
-        }
-    }
+        vote = CalculateRollVote(proto);
 
     switch (group->GetLootMethod())
     {
@@ -78,6 +47,49 @@ bool LootRollAction::Execute(Event event)
         group->CountRollVote(bot, lootTargetGuid, slot, vote);
         break;
     }
+#endif
+
+#ifdef CMANGOS
+    Loot* loot = sLootMgr.GetLoot(bot, lootTargetGuid);
+    if (!loot)
+        return false;
+
+    LootItem* item = loot->GetLootItemInSlot(slot);
+    ItemPrototype const *proto = sItemStorage.LookupEntry<ItemPrototype>(item->itemId);
+    if (!proto)
+        return false;
+
+    RollVote vote = CalculateRollVote(proto);
+
+    GroupLootRoll* lootRoll = loot->GetRollForSlot(slot);
+    if (!lootRoll)
+        return false;
+
+    lootRoll->PlayerVote(bot, vote);
+#endif
 
     return true;
+}
+
+RollVote LootRollAction::CalculateRollVote(ItemPrototype const *proto)
+{
+    ostringstream out; out << proto->ItemId;
+    ItemUsage usage = AI_VALUE2(ItemUsage, "item usage", out.str());
+
+    RollVote needVote = ROLL_GREED;
+    switch (usage)
+    {
+    case ITEM_USAGE_EQUIP:
+    case ITEM_USAGE_REPLACE:
+    case ITEM_USAGE_GUILD_TASK:
+        needVote = ROLL_NEED;
+        break;
+    case ITEM_USAGE_SKILL:
+    case ITEM_USAGE_USE:
+    case ITEM_USAGE_DISENCHANT:
+        needVote = ROLL_GREED;
+        break;
+    }
+
+    return StoreLootAction::IsLootAllowed(proto->ItemId, bot->GetPlayerbotAI()) ? needVote : ROLL_PASS;
 }

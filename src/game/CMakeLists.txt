@@ -104,9 +104,21 @@ source_group("Player Bot" FILES ${Playerbot_Source})
 file(GLOB AHbot_Source ${CMAKE_SOURCE_DIR}/src/modules/Bots/ahbot/*.cpp ${CMAKE_SOURCE_DIR}/src/modules/Bots/ahbot/*.h)
 source_group("AH Bot" FILES ${AHbot_Source})
 
+file(GLOB_RECURSE Playerbot_Ai_Source
+    ${CMAKE_SOURCE_DIR}/src/modules/Bots/Ai/*.cpp
+    ${CMAKE_SOURCE_DIR}/src/modules/Bots/Ai/*.h)
+source_group("Player Bot\\Ai" FILES ${Playerbot_Ai_Source})
+
+file(GLOB_RECURSE Playerbot_Bot_Source
+    ${CMAKE_SOURCE_DIR}/src/modules/Bots/Bot/*.cpp
+    ${CMAKE_SOURCE_DIR}/src/modules/Bots/Bot/*.h)
+source_group("Player Bot\\Bot" FILES ${Playerbot_Bot_Source})
+
 set(SRC_GRP_BOTS
     ${Playerbot_Source}
     ${AHbot_Source}
+    ${Playerbot_Ai_Source}
+    ${Playerbot_Bot_Source}
 )
 #Strategy files
 file(GLOB Playerbot_Strategy ${CMAKE_SOURCE_DIR}/src/modules/Bots/playerbot/strategy/*.cpp ${CMAKE_SOURCE_DIR}/src/modules/Bots/playerbot/strategy/*.h)
@@ -267,6 +279,17 @@ target_include_directories(game
         >
         $<$<BOOL:${PLAYERBOTS}>:
             ${CMAKE_SOURCE_DIR}/src/modules/Bots
+            ${CMAKE_SOURCE_DIR}/src/modules/Bots/Ai
+            ${CMAKE_SOURCE_DIR}/src/modules/Bots/Ai/Base
+            ${CMAKE_SOURCE_DIR}/src/modules/Bots/Ai/Class
+            ${CMAKE_SOURCE_DIR}/src/modules/Bots/Ai/Dungeon
+            ${CMAKE_SOURCE_DIR}/src/modules/Bots/Ai/Raid
+            ${CMAKE_SOURCE_DIR}/src/modules/Bots/Ai/World
+            ${CMAKE_SOURCE_DIR}/src/modules/Bots/Bot
+            ${CMAKE_SOURCE_DIR}/src/modules/Bots/Bot/Cmd
+            ${CMAKE_SOURCE_DIR}/src/modules/Bots/Bot/Debug
+            ${CMAKE_SOURCE_DIR}/src/modules/Bots/Bot/Engine
+            ${CMAKE_SOURCE_DIR}/src/modules/Bots/Bot/Factory
             ${CMAKE_SOURCE_DIR}/src/modules/Bots/playerbot
             ${CMAKE_SOURCE_DIR}/src/modules/Bots/ahbot
         >

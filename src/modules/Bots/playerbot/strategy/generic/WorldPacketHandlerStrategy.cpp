@@ -72,28 +72,21 @@ void WorldPacketHandlerStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
         NextAction::array(0, new NextAction("finish ready check", relevance), NULL)));
 
     triggers.push_back(new TriggerNode(
-        "no possible targets",
-        NextAction::array(0, new NextAction("lfg join", relevance), NULL)));
+        "often",
+        NextAction::array(0, new NextAction("security check", relevance), new NextAction("check mail", relevance), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "guild invite",
+        NextAction::array(0, new NextAction("guild accept", relevance), NULL)));
 
     triggers.push_back(new TriggerNode(
         "seldom",
         NextAction::array(0, new NextAction("lfg leave", relevance), NULL)));
 
     triggers.push_back(new TriggerNode(
-        "lfg proposal",
-        NextAction::array(0, new NextAction("lfg accept", relevance), NULL)));
+        "no non bot players around",
+        NextAction::array(0, new NextAction("delay", 6.0f), NULL)));
 
-    triggers.push_back(new TriggerNode(
-        "lfg proposal active",
-        NextAction::array(0, new NextAction("lfg accept", relevance), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "often",
-        NextAction::array(0, new NextAction("security check", relevance), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "guild invite",
-        NextAction::array(0, new NextAction("guild accept", relevance), NULL)));
 }
 
 WorldPacketHandlerStrategy::WorldPacketHandlerStrategy(PlayerbotAI* ai) : PassTroughStrategy(ai)
@@ -105,7 +98,12 @@ WorldPacketHandlerStrategy::WorldPacketHandlerStrategy(PlayerbotAI* ai) : PassTr
     supported.push_back("ready check");
     supported.push_back("uninvite");
     supported.push_back("lfg role check");
+    supported.push_back("lfg teleport");
+    supported.push_back("random bot update");
+    supported.push_back("inventory change failure");
+    supported.push_back("confirm quest");
 }
+
 
 void ReadyCheckStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
 {

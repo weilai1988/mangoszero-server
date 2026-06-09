@@ -5,16 +5,15 @@
 namespace ai
 {
     class HasAvailableLootValue : public BoolCalculatedValue
-    {
-    public:
+	{
+	public:
         HasAvailableLootValue(PlayerbotAI* ai) : BoolCalculatedValue(ai) {}
 
     public:
         virtual bool Calculate()
         {
             return !AI_VALUE(bool, "can loot") &&
-                    AI_VALUE(LootObjectStack*, "available loot")->CanLoot(sPlayerbotAIConfig.lootDistance) &&
-                    !bot->IsMounted();
+                    AI_VALUE(LootObjectStack*, "available loot")->CanLoot(sPlayerbotAIConfig.lootDistance);
         }
     };
 }

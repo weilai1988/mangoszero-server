@@ -127,6 +127,14 @@ int CliThread::svc()
 
         else if (feof(stdin))
         {
+#if (PLATFORM != PLATFORM_WINDOWS)
+            if (!isatty(STDIN_FILENO))
+            {
+                clearerr(stdin);
+                ACE_OS::sleep(1);
+                continue;
+            }
+#endif
             World::StopNow(SHUTDOWN_EXIT_CODE);
         }
     }

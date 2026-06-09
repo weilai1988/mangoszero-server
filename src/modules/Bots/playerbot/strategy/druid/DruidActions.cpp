@@ -29,3 +29,13 @@ bool CastEntanglingRootsCcAction::Execute(Event event)
 {
     return ai->CastSpell("entangling roots", GetTarget());
 }
+
+Value<Unit*>* CastHibernateCcAction::GetTargetValue()
+{
+    return context->GetValue<Unit*>("cc target", "hibernate");
+}
+
+bool CastHibernateCcAction::Execute(Event event)
+{
+    return ai->CastSpell("hibernate", GetTarget());
+}

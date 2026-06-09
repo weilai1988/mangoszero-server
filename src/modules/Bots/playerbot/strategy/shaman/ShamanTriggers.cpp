@@ -20,16 +20,12 @@ bool ShamanWeaponTrigger::IsActive()
 
     for (list<string>::iterator i = spells.begin(); i != spells.end(); ++i)
     {
-        uint32 spellId = AI_VALUE2(uint32, "spell id", *i);
+        uint32 spellId = AI_VALUE2(uint32, "spell id", spell);
         if (!spellId)
-        {
             continue;
-        }
 
         if (AI_VALUE2(Item*, "item for spell", spellId))
-        {
             return true;
-        }
     }
 
     return false;

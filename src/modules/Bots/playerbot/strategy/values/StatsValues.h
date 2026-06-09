@@ -31,6 +31,20 @@ namespace ai
         virtual bool Calculate();
     };
 
+    class PetIsDeadValue : public BoolCalculatedValue
+    {
+    public:
+        PetIsDeadValue(PlayerbotAI* ai) : BoolCalculatedValue(ai) {}
+        virtual bool Calculate();
+    };
+
+    class PetIsHappyValue : public BoolCalculatedValue
+    {
+    public:
+        PetIsHappyValue(PlayerbotAI* ai) : BoolCalculatedValue(ai) {}
+        virtual bool Calculate();
+    };
+
     class RageValue : public Uint8CalculatedValue, public Qualified
     {
     public:
@@ -130,4 +144,24 @@ namespace ai
         virtual uint8 Calculate();
     };
 
+    class SpeedValue : public Uint8CalculatedValue, public Qualified
+    {
+    public:
+        SpeedValue(PlayerbotAI* ai) : Uint8CalculatedValue(ai) {}
+
+        Unit* GetTarget()
+        {
+            AiObjectContext* ctx = AiObject::context;
+            return ctx->GetValue<Unit*>(qualifier)->Get();
+        }
+        virtual uint8 Calculate();
+    };
+
+    class IsInGroupValue : public BoolCalculatedValue
+    {
+    public:
+        IsInGroupValue(PlayerbotAI* ai) : BoolCalculatedValue(ai) {}
+
+        virtual bool Calculate() { return bot->GetGroup(); }
+    };
 }

@@ -16,14 +16,13 @@ public:
     virtual void CheckAttacker(Unit* attacker, ThreatManager* threatManager)
     {
         if (ai->HasAura(spell, attacker))
-        {
             result = attacker;
-        }
     }
 
 private:
     string spell;
 };
+
 
 Unit* CurrentCcTargetValue::Calculate()
 {

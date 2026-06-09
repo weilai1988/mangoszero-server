@@ -1,3 +1,4 @@
+#include "../botpch.h"
 #include "Category.h"
 #include "ItemBag.h"
 #include "ConsumableCategory.h"
@@ -21,40 +22,65 @@ CategoryList CategoryList::instance;
 CategoryList::CategoryList()
 {
     Add(new Equip());
-    Add(new ahbot::Quest());
     Add(new Quiver());
-    Add(new Projectile());
-
-    Add(new Recipe());
     Add(new Container());
-
-    Add(new Reagent());
+    Add(new Projectile());
+    Add(new Recipe());
     Add(new Alchemy());
     Add(new Scroll());
     Add(new Food());
     Add(new Bandage());
+    Add(new ItemEnchant());
+    Add(new Reagent());
+    Add(new ahbot::Quest());
+    Add(new DevicesAndParts());
 
-    Add(new Engineering());
+    Add(new TradeSkill(SKILL_TAILORING, true));
+    Add(new TradeSkill(SKILL_LEATHERWORKING, true));
+    Add(new TradeSkill(SKILL_ENGINEERING, true));
+    Add(new TradeSkill(SKILL_BLACKSMITHING, true));
+    Add(new TradeSkill(SKILL_ALCHEMY, true));
+    Add(new TradeSkill(SKILL_ENCHANTING, true));
+    Add(new TradeSkill(SKILL_FISHING, true));
+    Add(new TradeSkill(SKILL_FIRST_AID, true));
+    Add(new TradeSkill(SKILL_COOKING, true));
 
-    Add(new OtherConsumable());
-    Add(new OtherTrade());
-    Add(new Other());
+    Add(new TradeSkill(SKILL_MINING, true));
+    Add(new TradeSkill(SKILL_HERBALISM, true));
+    Add(new TradeSkill(SKILL_SKINNING, true));
+
+    Add(new TradeSkill(SKILL_TAILORING, false));
+    Add(new TradeSkill(SKILL_LEATHERWORKING, false));
+    Add(new TradeSkill(SKILL_ENGINEERING, false));
+    Add(new TradeSkill(SKILL_BLACKSMITHING, false));
+    Add(new TradeSkill(SKILL_ALCHEMY, false));
+    Add(new TradeSkill(SKILL_ENCHANTING, false));
+    Add(new TradeSkill(SKILL_FISHING, false));
+    Add(new TradeSkill(SKILL_FIRST_AID, false));
+    Add(new TradeSkill(SKILL_COOKING, false));
+
+#ifdef MANGOSBOT_ONE
+    Add(new TradeSkill(SKILL_JEWELCRAFTING, true));
+    Add(new TradeSkill(SKILL_JEWELCRAFTING, false));
+#endif
+#ifdef MANGOSBOT_TWO
+    Add(new TradeSkill(SKILL_JEWELCRAFTING, true));
+    Add(new TradeSkill(SKILL_JEWELCRAFTING, false));
+    Add(new TradeSkill(SKILL_INSCRIPTION, true));
+    Add(new TradeSkill(SKILL_INSCRIPTION, false));
+#endif
 }
 
 void CategoryList::Add(Category* category)
 {
     for (uint32 quality = ITEM_QUALITY_NORMAL; quality <= ITEM_QUALITY_EPIC; ++quality)
-    {
         categories.push_back(new QualityCategoryWrapper(category, quality));
-    }
 }
 
 CategoryList::~CategoryList()
 {
     for (vector<Category*>::const_iterator i = categories.begin(); i != categories.end(); ++i)
-    {
         delete *i;
-    }
 }
 
 ItemBag::ItemBag()
@@ -75,7 +101,9 @@ void ItemBag::Init(bool silent)
 
     sLog.outString("Loading/Scanning %s...", GetName().c_str());
 
+    for (int i = 0; i < CategoryList::instance.size(); i++) CategoryList::instance[i]->LoadCache();
     Load();
+    for (int i = 0; i < CategoryList::instance.size(); i++) CategoryList::instance[i]->SaveCache();
 
     for (int i = 0; i < CategoryList::instance.size(); i++)
     {
@@ -93,9 +121,7 @@ int32 ItemBag::GetCount(Category* category, uint32 item)
     for (vector<uint32>::iterator i = items.begin(); i != items.end(); ++i)
     {
         if (*i == item)
-        {
             count++;
-        }
     }
 
     return count;
@@ -109,61 +135,56 @@ bool ItemBag::Add(ItemPrototype const* proto)
         return false;
 
     if (proto->RequiredLevel > sAhBotConfig.maxRequiredLevel || proto->ItemLevel > sAhBotConfig.maxItemLevel)
-    {
         return false;
-    }
 
     if (proto->Duration & 0x80000000)
-    {
         return false;
-    }
 
     if (sAhBotConfig.ignoreItemIds.find(proto->ItemId) != sAhBotConfig.ignoreItemIds.end())
-    {
         return false;
-    }
 
     if (strstri(proto->Name1, "qa") || strstri(proto->Name1, "test") || strstri(proto->Name1, "deprecated"))
-    {
         return false;
-    }
 
+    bool contains = false;
     for (int i = 0; i < CategoryList::instance.size(); i++)
     {
         if (CategoryList::instance[i]->Contains(proto))
         {
             content[CategoryList::instance[i]].push_back(proto->ItemId);
-            return true;
+            contains = true;
         }
     }
 
-    return false;
+    if (!contains)
+        sLog.outDetail("Item %s does not included in any category", proto->Name1);
+
+    return contains;
 }
 
 void AvailableItemsBag::Load()
 {
     set<uint32> vendorItems;
 
-    QueryResult* results = WorldDatabase.PQuery("SELECT `item` FROM `npc_vendor` WHERE `maxcount` = 0");
-    if (results != NULL)
-    {
-        do
-        {
-            Field* fields = results->Fetch();
-            vendorItems.insert(fields[0].GetUInt32());
-        } while (results->NextRow());
+      QueryResult* results = WorldDatabase.PQuery("SELECT item FROM npc_vendor where maxcount = 0");
+      if (results != NULL)
+      {
+          do
+          {
+              Field* fields = results->Fetch();
+              vendorItems.insert(fields[0].GetUInt32());
+          } while (results->NextRow());
 
-        delete results;
-    }
+          delete results;
+      }
 
-    for (uint32 itemId = 0; itemId < sItemStorage.GetMaxEntry(); ++itemId)
-    {
-        if (vendorItems.find(itemId) != vendorItems.end())
-        {
-            continue;
-        }
+      BarGoLink bar(sItemStorage.GetMaxEntry());
+      for (uint32 itemId = 0; itemId < sItemStorage.GetMaxEntry(); ++itemId)
+      {
+          if (vendorItems.find(itemId) == vendorItems.end() || sAhBotConfig.ignoreVendorItemIds.find(itemId) != sAhBotConfig.ignoreVendorItemIds.end())
+              Add(sObjectMgr.GetItemPrototype(itemId));
 
-        Add(sObjectMgr.GetItemPrototype(itemId));
+          bar.step();
     }
 
 }
@@ -171,10 +192,8 @@ void AvailableItemsBag::Load()
 void InAuctionItemsBag::Load()
 {
     AuctionHouseEntry const* ahEntry = sAuctionHouseStore.LookupEntry(auctionId);
-    if (!ahEntry)
-    {
+    if(!ahEntry)
         return;
-    }
 
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap(ahEntry);
     AuctionHouseObject::AuctionEntryMap const& auctionEntryMap = auctionHouse->GetAuctions();
@@ -182,9 +201,7 @@ void InAuctionItemsBag::Load()
     {
         ItemPrototype const* proto = sObjectMgr.GetItemPrototype(itr->second->itemTemplate);
         if (!proto)
-        {
             continue;
-        }
 
         Add(proto);
     }

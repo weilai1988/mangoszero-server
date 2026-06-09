@@ -10,6 +10,7 @@
 
 using namespace ai;
 
+
 namespace ai
 {
     namespace hunter
@@ -25,6 +26,9 @@ namespace ai
                 creators["nc"] = &hunter::StrategyFactoryInternal::nc;
                 creators["aoe"] = &hunter::StrategyFactoryInternal::aoe;
                 creators["dps debuff"] = &hunter::StrategyFactoryInternal::dps_debuff;
+                creators["boost"] = &hunter::StrategyFactoryInternal::boost;
+                creators["pet"] = &hunter::StrategyFactoryInternal::pet;
+                creators["cc"] = &hunter::StrategyFactoryInternal::cc;
             }
 
         private:
@@ -32,6 +36,9 @@ namespace ai
             static Strategy* dps(PlayerbotAI* ai) { return new DpsHunterStrategy(ai); }
             static Strategy* nc(PlayerbotAI* ai) { return new GenericHunterNonCombatStrategy(ai); }
             static Strategy* dps_debuff(PlayerbotAI* ai) { return new DpsHunterDebuffStrategy(ai); }
+            static Strategy* boost(PlayerbotAI* ai) { return new HunterBoostStrategy(ai); }
+            static Strategy* pet(PlayerbotAI* ai) { return new HunterPetStrategy(ai); }
+            static Strategy* cc(PlayerbotAI* ai) { return new HunterCcStrategy(ai); }
         };
 
         class BuffStrategyFactoryInternal : public NamedObjectContext<Strategy>
@@ -54,6 +61,7 @@ namespace ai
     };
 };
 
+
 namespace ai
 {
     namespace hunter
@@ -70,40 +78,42 @@ namespace ai
                 creators["no stings"] = &TriggerFactoryInternal::NoStings;
                 creators["hunters pet dead"] = &TriggerFactoryInternal::hunters_pet_dead;
                 creators["hunters pet low health"] = &TriggerFactoryInternal::hunters_pet_low_health;
-                creators["hunters pet unhappy"] = &TriggerFactoryInternal::hunters_pet_unhappy;
                 creators["hunter's mark"] = &TriggerFactoryInternal::hunters_mark;
                 creators["freezing trap"] = &TriggerFactoryInternal::freezing_trap;
                 creators["aspect of the pack"] = &TriggerFactoryInternal::aspect_of_the_pack;
                 creators["rapid fire"] = &TriggerFactoryInternal::rapid_fire;
-                creators["bestial wrath"] = &TriggerFactoryInternal::bestial_wrath;
                 creators["aspect of the hawk"] = &TriggerFactoryInternal::aspect_of_the_hawk;
                 creators["aspect of the wild"] = &TriggerFactoryInternal::aspect_of_the_wild;
                 creators["aspect of the viper"] = &TriggerFactoryInternal::aspect_of_the_viper;
                 creators["trueshot aura"] = &TriggerFactoryInternal::trueshot_aura;
                 creators["serpent sting on attacker"] = &TriggerFactoryInternal::serpent_sting_on_attacker;
-                creators["has feign death"] = &TriggerFactoryInternal::has_feign_death;
+                creators["pet not happy"] = &TriggerFactoryInternal::pet_not_happy;
+                creators["concussive shot on snare target"] = &TriggerFactoryInternal::concussive_shot_on_snare_target;
+                creators["scare beast"] = &TriggerFactoryInternal::scare_beast;
             }
 
         private:
+            static Trigger* scare_beast(PlayerbotAI* ai) { return new ScareBeastTrigger(ai); }
+            static Trigger* concussive_shot_on_snare_target(PlayerbotAI* ai) { return new ConsussiveShotSnareTrigger(ai); }
+            static Trigger* pet_not_happy(PlayerbotAI* ai) { return new HunterPetNotHappy(ai); }
             static Trigger* serpent_sting_on_attacker(PlayerbotAI* ai) { return new SerpentStingOnAttackerTrigger(ai); }
-            static Trigger* has_feign_death(PlayerbotAI* ai) { return new FeignDeathTrigger(ai); }
             static Trigger* trueshot_aura(PlayerbotAI* ai) { return new TrueshotAuraTrigger(ai); }
             static Trigger* aspect_of_the_viper(PlayerbotAI* ai) { return new HunterAspectOfTheViperTrigger(ai); }
             static Trigger* black_arrow(PlayerbotAI* ai) { return new BlackArrowTrigger(ai); }
             static Trigger* NoStings(PlayerbotAI* ai) { return new HunterNoStingsActiveTrigger(ai); }
             static Trigger* hunters_pet_dead(PlayerbotAI* ai) { return new HuntersPetDeadTrigger(ai); }
             static Trigger* hunters_pet_low_health(PlayerbotAI* ai) { return new HuntersPetLowHealthTrigger(ai); }
-            static Trigger* hunters_pet_unhappy(PlayerbotAI* ai) { return new HuntersPetUnhappyTrigger(ai); }
             static Trigger* hunters_mark(PlayerbotAI* ai) { return new HuntersMarkTrigger(ai); }
             static Trigger* freezing_trap(PlayerbotAI* ai) { return new FreezingTrapTrigger(ai); }
             static Trigger* aspect_of_the_pack(PlayerbotAI* ai) { return new HunterAspectOfThePackTrigger(ai); }
             static Trigger* rapid_fire(PlayerbotAI* ai) { return new RapidFireTrigger(ai); }
-            static Trigger* bestial_wrath(PlayerbotAI* ai) { return new BestialWrathTrigger(ai); }
             static Trigger* aspect_of_the_hawk(PlayerbotAI* ai) { return new HunterAspectOfTheHawkTrigger(ai); }
             static Trigger* aspect_of_the_wild(PlayerbotAI* ai) { return new HunterAspectOfTheWildTrigger(ai); }
         };
     };
 };
+
+
 
 namespace ai
 {
@@ -118,6 +128,7 @@ namespace ai
             {
                 creators["auto shot"] = &AiObjectContextInternal::auto_shot;
                 creators["aimed shot"] = &AiObjectContextInternal::aimed_shot;
+                creators["chimera shot"] = &AiObjectContextInternal::chimera_shot;
                 creators["explosive shot"] = &AiObjectContextInternal::explosive_shot;
                 creators["arcane shot"] = &AiObjectContextInternal::arcane_shot;
                 creators["concussive shot"] = &AiObjectContextInternal::concussive_shot;
@@ -130,39 +141,38 @@ namespace ai
                 creators["viper sting"] = &AiObjectContextInternal::viper_sting;
                 creators["scorpid sting"] = &AiObjectContextInternal::scorpid_sting;
                 creators["hunter's mark"] = &AiObjectContextInternal::hunters_mark;
-                creators["feed pet"] = &AiObjectContextInternal::feed_pet;
                 creators["mend pet"] = &AiObjectContextInternal::mend_pet;
                 creators["revive pet"] = &AiObjectContextInternal::revive_pet;
                 creators["call pet"] = &AiObjectContextInternal::call_pet;
+                creators["black arrow"] = &AiObjectContextInternal::black_arrow;
                 creators["freezing trap"] = &AiObjectContextInternal::freezing_trap;
                 creators["rapid fire"] = &AiObjectContextInternal::rapid_fire;
                 creators["boost"] = &AiObjectContextInternal::rapid_fire;
+                creators["readiness"] = &AiObjectContextInternal::readiness;
                 creators["aspect of the hawk"] = &AiObjectContextInternal::aspect_of_the_hawk;
                 creators["aspect of the wild"] = &AiObjectContextInternal::aspect_of_the_wild;
+                creators["aspect of the viper"] = &AiObjectContextInternal::aspect_of_the_viper;
                 creators["aspect of the pack"] = &AiObjectContextInternal::aspect_of_the_pack;
                 creators["aspect of the cheetah"] = &AiObjectContextInternal::aspect_of_the_cheetah;
                 creators["trueshot aura"] = &AiObjectContextInternal::trueshot_aura;
                 creators["feign death"] = &AiObjectContextInternal::feign_death;
-                creators["remove feign death"] = &AiObjectContextInternal::remove_feign_death;
                 creators["wing clip"] = &AiObjectContextInternal::wing_clip;
-                creators["disengage"] = &AiObjectContextInternal::disengage;
-                creators["immolation trap"] = &AiObjectContextInternal::immolation_trap;
-                creators["frost trap"] = &AiObjectContextInternal::frost_trap;
-                creators["explosive trap"] = &AiObjectContextInternal::explosive_trap;
-                creators["scatter shot"] = &AiObjectContextInternal::scatter_shot;
+                creators["feed pet"] = &AiObjectContextInternal::feed_pet;
                 creators["bestial wrath"] = &AiObjectContextInternal::bestial_wrath;
-                creators["mongoose bite"] = &AiObjectContextInternal::mongoose_bite;
-                creators["intimidation"] = &AiObjectContextInternal::intimidation;
-                creators["hunter melee"] = &AiObjectContextInternal::hunter_melee;
-                creators["hunter ensure ranged position"] = &AiObjectContextInternal::hunter_ensure_ranged_position;
+                creators["scare beast"] = &AiObjectContextInternal::scare_beast;
+                creators["scare beast on cc"] = &AiObjectContextInternal::scare_beast_on_cc;
             }
 
         private:
+            static Action* scare_beast(PlayerbotAI* ai) { return new CastScareBeastAction(ai); }
+            static Action* scare_beast_on_cc(PlayerbotAI* ai) { return new CastScareBeastCcAction(ai); }
+            static Action* bestial_wrath(PlayerbotAI* ai) { return new CastBestialWrathAction(ai); }
+            static Action* feed_pet(PlayerbotAI* ai) { return new FeedPetAction(ai); }
             static Action* feign_death(PlayerbotAI* ai) { return new CastFeignDeathAction(ai); }
-            static Action* remove_feign_death(PlayerbotAI* ai) { return new RemoveFeignDeathAction(ai); }
             static Action* trueshot_aura(PlayerbotAI* ai) { return new CastTrueshotAuraAction(ai); }
             static Action* auto_shot(PlayerbotAI* ai) { return new CastAutoShotAction(ai); }
             static Action* aimed_shot(PlayerbotAI* ai) { return new CastAimedShotAction(ai); }
+            static Action* chimera_shot(PlayerbotAI* ai) { return new CastChimeraShotAction(ai); }
             static Action* explosive_shot(PlayerbotAI* ai) { return new CastExplosiveShotAction(ai); }
             static Action* arcane_shot(PlayerbotAI* ai) { return new CastArcaneShotAction(ai); }
             static Action* concussive_shot(PlayerbotAI* ai) { return new CastConcussiveShotAction(ai); }
@@ -175,24 +185,16 @@ namespace ai
             static Action* viper_sting(PlayerbotAI* ai) { return new CastViperStingAction(ai); }
             static Action* scorpid_sting(PlayerbotAI* ai) { return new CastScorpidStingAction(ai); }
             static Action* hunters_mark(PlayerbotAI* ai) { return new CastHuntersMarkAction(ai); }
-            static Action* feed_pet(PlayerbotAI* ai) { return new FeedPetAction(ai); }
             static Action* mend_pet(PlayerbotAI* ai) { return new CastMendPetAction(ai); }
             static Action* revive_pet(PlayerbotAI* ai) { return new CastRevivePetAction(ai); }
             static Action* call_pet(PlayerbotAI* ai) { return new CastCallPetAction(ai); }
+            static Action* black_arrow(PlayerbotAI* ai) { return new CastBlackArrow(ai); }
             static Action* freezing_trap(PlayerbotAI* ai) { return new CastFreezingTrap(ai); }
             static Action* rapid_fire(PlayerbotAI* ai) { return new CastRapidFireAction(ai); }
+            static Action* readiness(PlayerbotAI* ai) { return new CastReadinessAction(ai); }
             static Action* aspect_of_the_hawk(PlayerbotAI* ai) { return new CastAspectOfTheHawkAction(ai); }
             static Action* aspect_of_the_wild(PlayerbotAI* ai) { return new CastAspectOfTheWildAction(ai); }
-            static Action* disengage(PlayerbotAI* ai) { return new CastDisengageAction(ai); }
-            static Action* immolation_trap(PlayerbotAI* ai) { return new CastImmolationTrapAction(ai); }
-            static Action* frost_trap(PlayerbotAI* ai) { return new CastFrostTrapAction(ai); }
-            static Action* explosive_trap(PlayerbotAI* ai) { return new CastExplosiveTrapAction(ai); }
-            static Action* scatter_shot(PlayerbotAI* ai) { return new CastScatterShotAction(ai); }
-            static Action* bestial_wrath(PlayerbotAI* ai) { return new CastBestialWrathAction(ai); }
-            static Action* mongoose_bite(PlayerbotAI* ai) { return new CastMongooseBiteAction(ai); }
-            static Action* intimidation(PlayerbotAI* ai) { return new CastIntimidationAction(ai); }
-            static Action* hunter_melee(PlayerbotAI* ai) { return new HunterMeleeAction(ai); }
-            static Action* hunter_ensure_ranged_position(PlayerbotAI* ai) { return new HunterEnsureRangedPositionAction(ai); }
+            static Action* aspect_of_the_viper(PlayerbotAI* ai) { return new CastAspectOfTheViperAction(ai); }
             static Action* aspect_of_the_pack(PlayerbotAI* ai) { return new CastAspectOfThePackAction(ai); }
             static Action* aspect_of_the_cheetah(PlayerbotAI* ai) { return new CastAspectOfTheCheetahAction(ai); }
             static Action* wing_clip(PlayerbotAI* ai) { return new CastWingClipAction(ai); }

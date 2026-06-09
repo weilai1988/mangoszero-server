@@ -14,7 +14,6 @@ public:
         creators["boost"] = &rapid_fire;
         creators["aspect of the pack"] = &aspect_of_the_pack;
         creators["feign death"] = &feign_death;
-        creators["wing clip"] = &wing_clip;
     }
 private:
     static ActionNode* rapid_fire(PlayerbotAI* ai)
@@ -35,57 +34,52 @@ private:
     {
         return new ActionNode ("feign death",
             /*P*/ NULL,
-            /*A*/ NextAction::array(0, new NextAction("flee"), NULL),
-            /*C*/ NULL);
-    }
-    static ActionNode* wing_clip(PlayerbotAI* ai)
-    {
-        return new ActionNode ("wing clip",
-            /*P*/ NULL,
             /*A*/ NULL,
             /*C*/ NULL);
     }
 };
 
-GenericHunterStrategy::GenericHunterStrategy(PlayerbotAI* ai) : RangedCombatStrategy(ai)
+GenericHunterStrategy::GenericHunterStrategy(PlayerbotAI* ai) : CombatStrategy(ai)
 {
     actionNodeFactories.Add(new GenericHunterStrategyActionNodeFactory());
 }
 
 void GenericHunterStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
 {
-    RangedCombatStrategy::InitTriggers(triggers);
+    CombatStrategy::InitTriggers(triggers);
 
     triggers.push_back(new TriggerNode(
-        "enemy too close for spell",
-        NextAction::array(0,
-            new NextAction("intimidation", 52.0f),
-            new NextAction("wing clip", 51.0f),
-            new NextAction("hunter ensure ranged position", 50.0f),
-            new NextAction("mongoose bite", 49.5f),
-            new NextAction("disengage", 49.0f),
-            new NextAction("hunter melee", 48.5f),
-            new NextAction("flee", 48.0f),
-            NULL)));
+        "enemy is close",
+        NextAction::array(0, new NextAction("wing clip", 50.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "enemy too close for shoot",
+        NextAction::array(0, new NextAction("flee for shoot", 55.0f), NULL)));
 
     triggers.push_back(new TriggerNode(
         "medium threat",
-        NextAction::array(0, new NextAction("feign death", 52.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "has feign death",
-        NextAction::array(0, new NextAction("remove feign death", 53.0f), NULL)));
+        NextAction::array(0, new NextAction("feign death", 32.0f), NULL)));
 
     triggers.push_back(new TriggerNode(
         "hunters pet low health",
-        NextAction::array(0, new NextAction("mend pet", 60.0f), NULL)));
+        NextAction::array(0, new NextAction("mend pet", 20.0f), NULL)));
+}
 
+NextAction** HunterBoostStrategy::getDefaultActions()
+{
+    return NextAction::array(0, new NextAction("bestial wrath", 15.0f), NULL);
+}
+
+void HunterBoostStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
+{
     triggers.push_back(new TriggerNode(
         "rapid fire",
-        NextAction::array(0, new NextAction("rapid fire", 55.0f), NULL)));
+        NextAction::array(0, new NextAction("rapid fire", 16.0f), NULL)));
+}
 
+void HunterCcStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
+{
     triggers.push_back(new TriggerNode(
-        "bestial wrath",
-        NextAction::array(0, new NextAction("bestial wrath", 55.0f), NULL)));
-
+        "scare beast",
+        NextAction::array(0, new NextAction("scare beast on cc", ACTION_HIGH + 3), NULL)));
 }

@@ -621,6 +621,7 @@ ChatCommand* ChatHandler::getCommandTable()
         { "mass",           SEC_ADMINISTRATOR,  true,  NULL,                                           "", sendMassCommandTable },
 
         { "items",          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleSendItemsCommand,           "", NULL },
+        { "bulkitems",      SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleSendBulkItemsCommand,       "", NULL },
         { "mail",           SEC_MODERATOR,      true,  &ChatHandler::HandleSendMailCommand,            "", NULL },
         { "message",        SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleSendMessageCommand,         "", NULL },
         { "money",          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleSendMoneyCommand,           "", NULL },
@@ -804,6 +805,8 @@ ChatCommand* ChatHandler::getCommandTable()
         { "banlist",        SEC_ADMINISTRATOR,  true,  NULL,                                           "", banlistCommandTable  },
         { "start",          SEC_PLAYER,         false, &ChatHandler::HandleStartCommand,               "", NULL },
         { "taxicheat",      SEC_MODERATOR,      false, &ChatHandler::HandleTaxiCheatCommand,           "", NULL },
+        { "taxiclear",      SEC_GAMEMASTER,     false, &ChatHandler::HandleTaxiClearCommand,           "", NULL },
+        { "taxiunlock",     SEC_GAMEMASTER,     false, &ChatHandler::HandleTaxiUnlockCommand,          "", NULL },
         { "linkgrave",      SEC_ADMINISTRATOR,  false, &ChatHandler::HandleLinkGraveCommand,           "", NULL },
         { "neargrave",      SEC_ADMINISTRATOR,  false, &ChatHandler::HandleNearGraveCommand,           "", NULL },
         { "explorecheat",   SEC_ADMINISTRATOR,  false, &ChatHandler::HandleExploreCheatCommand,        "", NULL },
@@ -3661,7 +3664,11 @@ std::string ChatHandler::ExtractPlayerNameFromLink(char** text)
     char* name_str = ExtractKeyFromLink(text, "Hplayer");
     if (!name_str)
     {
-        return "";
+        name_str = ExtractLiteralArg(text);
+        if (!name_str)
+        {
+            return "";
+        }
     }
 
     std::string name = name_str;

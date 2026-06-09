@@ -3,53 +3,38 @@
 
 namespace ai
 {
-    BUFF_TRIGGER(HolyShieldTrigger, "holy shield", "holy shield")
+	BUFF_TRIGGER(HolyShieldTrigger, "holy shield", "holy shield")
     BUFF_TRIGGER(RighteousFuryTrigger, "righteous fury", "righteous fury")
 
     BUFF_TRIGGER(RetributionAuraTrigger, "retribution aura", "retribution aura")
 
-    class CrusaderAuraTrigger : public BuffTrigger
-    {
-    public:
-        CrusaderAuraTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "crusader aura") {}
-        virtual bool IsActive();
-    };
+	class CrusaderAuraTrigger : public BuffTrigger
+	{
+	public:
+		CrusaderAuraTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "crusader aura") {}
+		virtual bool IsActive();
+	};
 
-    class SealTrigger : public BuffTrigger
-    {
-    public:
-        SealTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "seal of justice") {}
-        virtual bool IsActive();
-    };
+	class SealTrigger : public BuffTrigger
+	{
+	public:
+		SealTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "seal of justice") {}
+		virtual bool IsActive();
+	};
 
     DEBUFF_TRIGGER(JudgementOfLightTrigger, "judgement of light", "judgement of light")
     DEBUFF_TRIGGER(JudgementOfWisdomTrigger, "judgement of wisdom", "judgement of wisdom")
 
-    inline bool HasAnyBlessing(PlayerbotAI* ai, Unit* target)
-    {
-        for (const char* b : {"blessing of kings", "blessing of might", "blessing of sanctuary",
-                              "blessing of wisdom", "blessing of salvation", "blessing of light",
-                               "greater blessing of kings", "greater blessing of might"})
-            if (ai->HasAura(b, target))
-                return true;
-        return false;
-    }
-
-    class BlessingTrigger : public Trigger
+    class BlessingOnPartyTrigger : public BuffOnPartyTrigger
     {
     public:
-        BlessingTrigger(PlayerbotAI* ai) : Trigger(ai, "blessing") {}
-        virtual bool IsActive()
-        {
-            Unit* target = GetTarget();
-            return target && !HasAnyBlessing(ai, target);
-        }
+        BlessingOnPartyTrigger(PlayerbotAI* ai) : BuffOnPartyTrigger(ai, "blessing of kings,blessing of might,blessing of wisdom", 2) {}
     };
 
-    class AuraTrigger : public BuffTrigger
+    class BlessingTrigger : public BuffTrigger
     {
     public:
-        AuraTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "devotion aura") {}
+        BlessingTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "blessing of sanctuary", 2) {}
         virtual bool IsActive();
     };
 
@@ -137,25 +122,15 @@ namespace ai
         HammerOfJusticeEnemyHealerTrigger(PlayerbotAI* ai) : InterruptEnemyHealerTrigger(ai, "hammer of justice") {}
     };
 
-    class HolyWrathTrigger : public SpellTrigger
+    class DivineFavorTrigger : public BuffTrigger
     {
     public:
-        HolyWrathTrigger(PlayerbotAI* ai) : SpellTrigger(ai, "holy wrath") {}
-        virtual bool IsActive();
+        DivineFavorTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "divine favor") {}
     };
 
-    class ExorcismTrigger : public SpellTrigger
+    class TurnUndeadTrigger : public HasCcTargetTrigger
     {
     public:
-        ExorcismTrigger(PlayerbotAI* ai) : SpellTrigger(ai, "exorcism") {}
-        virtual bool IsActive();
-    };
-
-    // Fires when the bot itself is rooted — cast Blessing of Freedom on self.
-    class BlessingOfFreedomTrigger : public Trigger
-    {
-    public:
-        BlessingOfFreedomTrigger(PlayerbotAI* ai) : Trigger(ai, "blessing of freedom") {}
-        virtual bool IsActive();
+        TurnUndeadTrigger(PlayerbotAI* ai) : HasCcTargetTrigger(ai, "turn undead") {}
     };
 }

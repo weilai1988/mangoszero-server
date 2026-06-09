@@ -45,6 +45,8 @@
 *.swo
 *.swp
 *.vi
+*.backup-*
+*.codex-before-*
 *~
 callgrind.out.*
 

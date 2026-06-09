@@ -5,22 +5,23 @@
 
 using namespace ai;
 
-GenericPaladinStrategy::GenericPaladinStrategy(PlayerbotAI* ai) : MeleeCombatStrategy(ai)
+
+GenericPaladinStrategy::GenericPaladinStrategy(PlayerbotAI* ai) : CombatStrategy(ai)
 {
     actionNodeFactories.Add(new GenericPaladinStrategyActionNodeFactory());
 }
 
 void GenericPaladinStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
 {
-    MeleeCombatStrategy::InitTriggers(triggers);
+    CombatStrategy::InitTriggers(triggers);
 
     triggers.push_back(new TriggerNode(
-        "medium health",
-        NextAction::array(0, new NextAction("flash of light", ACTION_MEDIUM_HEAL + 2), NULL)));
+       "medium health",
+       NextAction::array(0, new NextAction("flash of light", ACTION_MEDIUM_HEAL + 1), NULL)));
 
-    triggers.push_back(new TriggerNode(
-        "party member medium health",
-        NextAction::array(0, new NextAction("flash of light on party", ACTION_MEDIUM_HEAL + 1), NULL)));
+   triggers.push_back(new TriggerNode(
+       "party member medium health",
+       NextAction::array(0, new NextAction("flash of light on party", ACTION_MEDIUM_HEAL), NULL)));
 
     triggers.push_back(new TriggerNode(
         "low health",
@@ -30,26 +31,33 @@ void GenericPaladinStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
         "party member low health",
         NextAction::array(0, new NextAction("holy light on party", ACTION_CRITICAL_HEAL + 1), NULL)));
 
-    triggers.push_back(new TriggerNode(
-        "hammer of justice interrupt",
-        NextAction::array(0, new NextAction("hammer of justice", ACTION_INTERRUPT), NULL)));
+	triggers.push_back(new TriggerNode(
+		"hammer of justice interrupt",
+		NextAction::array(0, new NextAction("hammer of justice", ACTION_INTERRUPT), NULL)));
 
-    triggers.push_back(new TriggerNode(
-        "hammer of justice on enemy healer",
-        NextAction::array(0, new NextAction("hammer of justice on enemy healer", ACTION_INTERRUPT), NULL)));
+	triggers.push_back(new TriggerNode(
+		"hammer of justice on enemy healer",
+		NextAction::array(0, new NextAction("hammer of justice on enemy healer", ACTION_INTERRUPT), NULL)));
 
-    triggers.push_back(new TriggerNode(
-        "critical health",
-        NextAction::array(0, new NextAction("lay on hands", ACTION_EMERGENCY), NULL)));
+	triggers.push_back(new TriggerNode(
+		"hammer of justice on snare target",
+		NextAction::array(0, new NextAction("hammer of justice on snare target", ACTION_MOVE + 1), NULL)));
 
-    triggers.push_back(new TriggerNode(
-        "party member critical health",
-        NextAction::array(0, new NextAction("lay on hands on party", ACTION_EMERGENCY), NULL)));
+	triggers.push_back(new TriggerNode(
+		"critical health",
+		NextAction::array(0, new NextAction("lay on hands", ACTION_EMERGENCY), NULL)));
 
-    triggers.push_back(new TriggerNode(
-        "target critical health",
-        NextAction::array(0, new NextAction("hammer of wrath", ACTION_HIGH + 1), NULL)));
+	triggers.push_back(new TriggerNode(
+		"party member critical health",
+		NextAction::array(0, new NextAction("lay on hands on party", ACTION_EMERGENCY), NULL)));
 
+	triggers.push_back(new TriggerNode(
+		"target critical health",
+		NextAction::array(0, new NextAction("hammer of wrath", ACTION_HIGH + 1), NULL)));
+}
+
+void PaladinCureStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
+{
     triggers.push_back(new TriggerNode(
         "cleanse cure disease",
         NextAction::array(0, new NextAction("cleanse disease", ACTION_DISPEL + 2), NULL)));
@@ -73,16 +81,18 @@ void GenericPaladinStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
     triggers.push_back(new TriggerNode(
         "cleanse party member cure magic",
         NextAction::array(0, new NextAction("cleanse magic on party", ACTION_DISPEL + 1), NULL)));
+}
 
+void PaladinBoostStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
+{
     triggers.push_back(new TriggerNode(
-        "holy wrath",
-        NextAction::array(0, new NextAction("holy wrath", ACTION_HIGH + 3), NULL)));
+        "divine favor",
+        NextAction::array(0, new NextAction("divine favor", ACTION_HIGH + 1), NULL)));
+}
 
+void PaladinCcStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
+{
     triggers.push_back(new TriggerNode(
-        "exorcism",
-        NextAction::array(0, new NextAction("exorcism", ACTION_HIGH + 2), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "blessing of freedom",
-        NextAction::array(0, new NextAction("blessing of freedom", ACTION_EMERGENCY), NULL)));
+        "turn undead",
+        NextAction::array(0, new NextAction("turn undead", ACTION_HIGH + 1), NULL)));
 }

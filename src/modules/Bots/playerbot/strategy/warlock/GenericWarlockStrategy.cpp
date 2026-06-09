@@ -12,7 +12,6 @@ public:
     {
         creators["summon voidwalker"] = &summon_voidwalker;
         creators["banish"] = &banish;
-        creators["curse of agony"] = &curse_of_agony;
     }
 private:
     static ActionNode* summon_voidwalker(PlayerbotAI* ai)
@@ -29,16 +28,9 @@ private:
             /*A*/ NextAction::array(0, new NextAction("fear"), NULL),
             /*C*/ NULL);
     }
-    static ActionNode* curse_of_agony(PlayerbotAI* ai)
-    {
-        return new ActionNode ("curse of agony",
-            /*P*/ NULL,
-            /*A*/ NextAction::array(0, new NextAction("curse of weakness"), NULL),
-            /*C*/ NULL);
-    }
 };
 
-GenericWarlockStrategy::GenericWarlockStrategy(PlayerbotAI* ai) : RangedCombatStrategy(ai)
+GenericWarlockStrategy::GenericWarlockStrategy(PlayerbotAI* ai) : CombatStrategy(ai)
 {
     actionNodeFactories.Add(new GenericWarlockStrategyActionNodeFactory());
 }
@@ -50,37 +42,43 @@ NextAction** GenericWarlockStrategy::getDefaultActions()
 
 void GenericWarlockStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
 {
-    RangedCombatStrategy::InitTriggers(triggers);
+    CombatStrategy::InitTriggers(triggers);
 
     triggers.push_back(new TriggerNode(
-        "curse of agony",
-        NextAction::array(0, new NextAction("curse of agony", 11.0f), NULL)));
+        "shadow trance",
+        NextAction::array(0, new NextAction("shadow bolt", 20.0f), NULL)));
 
     triggers.push_back(new TriggerNode(
-        "medium health",
+        "low health",
         NextAction::array(0, new NextAction("drain life", 40.0f), NULL)));
 
     triggers.push_back(new TriggerNode(
-        "low mana",
+        "medium mana",
         NextAction::array(0, new NextAction("life tap", ACTION_EMERGENCY + 5), NULL)));
 
-    triggers.push_back(new TriggerNode(
-        "target critical health",
-        NextAction::array(0, new NextAction("drain soul", 30.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "banish",
-        NextAction::array(0, new NextAction("banish", 21.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "fear",
-        NextAction::array(0, new NextAction("fear on cc", 20.0f), NULL)));
+	triggers.push_back(new TriggerNode(
+		"target critical health",
+		NextAction::array(0, new NextAction("drain soul", 30.0f), NULL)));
 
     triggers.push_back(new TriggerNode(
         "immolate",
-        NextAction::array(0, new NextAction("immolate", 19.0f), NULL)));
+        NextAction::array(0, new NextAction("immolate", 13.0f), new NextAction("conflagrate", 13.0f), NULL)));
+}
+
+void WarlockBoostStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "amplify curse",
+        NextAction::array(0, new NextAction("amplify curse", 41.0f), NULL)));
+}
+
+void WarlockCcStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "banish",
+        NextAction::array(0, new NextAction("banish on cc", 32.0f), NULL)));
 
     triggers.push_back(new TriggerNode(
-        "target has immolate",
-        NextAction::array(0, new NextAction("conflagrate", 20.0f), NULL)));
+        "fear",
+        NextAction::array(0, new NextAction("fear on cc", 33.0f), NULL)));
 }

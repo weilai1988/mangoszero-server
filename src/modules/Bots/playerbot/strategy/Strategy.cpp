@@ -6,6 +6,7 @@
 using namespace ai;
 using namespace std;
 
+
 class ActionNodeFactoryInternal : public NamedObjectFactory<ActionNode>
 {
 public:
@@ -21,7 +22,6 @@ public:
         creators["drink"] = &drink;
         creators["mana potion"] = &mana_potion;
         creators["healing potion"] = &healing_potion;
-        creators["bandage"] = &bandage;
         creators["flee"] = &flee;
     }
 
@@ -29,7 +29,7 @@ private:
     static ActionNode* melee(PlayerbotAI* ai)
     {
         return new ActionNode ("melee",
-            /*P*/ NextAction::array(0, new NextAction("reach melee"), NULL),
+            /*P*/ NULL,
             /*A*/ NULL,
             /*C*/ NULL);
     }
@@ -44,7 +44,7 @@ private:
     {
         return new ActionNode ("be near",
             /*P*/ NULL,
-            /*A*/ NextAction::array(0, new NextAction("follow master"), NULL),
+            /*A*/ NextAction::array(0, new NextAction("follow"), NULL),
             /*C*/ NULL);
     }
     static ActionNode* attack_anything(PlayerbotAI* ai)
@@ -94,13 +94,6 @@ private:
         return new ActionNode ("healing potion",
             /*P*/ NULL,
             /*A*/ NextAction::array(0, new NextAction("food"), NULL),
-            /*C*/ NULL);
-    }
-    static ActionNode* bandage(PlayerbotAI* ai)
-    {
-        return new ActionNode ("bandage",
-            /*P*/ NULL,
-            /*A*/ NULL,
             /*C*/ NULL);
     }
     static ActionNode* flee(PlayerbotAI* ai)

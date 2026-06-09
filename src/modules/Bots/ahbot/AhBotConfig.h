@@ -8,6 +8,11 @@ class AhBotConfig
 {
 public:
     AhBotConfig();
+    static AhBotConfig& instance()
+    {
+        static AhBotConfig instance;
+        return instance;
+    }
 
 public:
     bool Initialize();
@@ -18,12 +23,17 @@ public:
     uint32 historyDays, maxSellInterval;
     uint32 itemBuyMinInterval, itemBuyMaxInterval;
     uint32 itemSellMinInterval, itemSellMaxInterval;
+    uint32 categoryBuyMinInterval, categoryBuyMaxInterval;
+    uint32 categorySellMinInterval, categorySellMaxInterval;
     uint32 alwaysAvailableMoney;
     float priceMultiplier, priceQualityMultiplier;
-    uint32 defaultMinPrice;
+    uint32 defaultMinPrice, stackReducePrice;
     uint32 maxItemLevel, maxRequiredLevel;
     float underPriceProbability;
     std::set<uint32> ignoreItemIds;
+    std::set<uint32> ignoreVendorItemIds;
+    std::set<uint32> questItemIds;
+    bool sendmail;
 
     float GetSellPriceMultiplier(string category)
     {
@@ -86,3 +96,4 @@ private:
 };
 
 #define sAhBotConfig MaNGOS::Singleton<AhBotConfig>::Instance()
+

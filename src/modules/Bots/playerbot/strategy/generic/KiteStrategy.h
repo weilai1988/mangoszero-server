@@ -6,11 +6,8 @@ namespace ai
     {
     public:
         KiteStrategy(PlayerbotAI* ai);
-        virtual string getName()
-        {
-            return "kite";
-        }
-
+        virtual string getName() { return "kite"; }
+    
     public:
         virtual void InitTriggers(std::list<TriggerNode*> &triggers);
     };

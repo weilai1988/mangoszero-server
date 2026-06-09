@@ -18,6 +18,7 @@ void QuestStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
         NextAction::array(0, new NextAction("accept quest share", relevance), NULL)));
 }
 
+
 void DefaultQuestStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
 {
     QuestStrategy::InitTriggers(triggers);
@@ -41,6 +42,8 @@ DefaultQuestStrategy::DefaultQuestStrategy(PlayerbotAI* ai) : QuestStrategy(ai)
 {
 }
 
+
+
 void AcceptAllQuestsStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
 {
     QuestStrategy::InitTriggers(triggers);
@@ -57,7 +60,7 @@ void AcceptAllQuestsStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
 
     triggers.push_back(new TriggerNode(
         "complete quest",
-        NextAction::array(0,
+        NextAction::array(0, 
             new NextAction("talk to quest giver", relevance), new NextAction("accept all quests", relevance), NULL)));
 }
 

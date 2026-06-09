@@ -1,6 +1,7 @@
 #include "botpch.h"
 #include "../../playerbot.h"
 #include "TellReputationAction.h"
+#include "../../ServerFacade.h"
 
 using namespace ai;
 
@@ -8,33 +9,32 @@ bool TellReputationAction::Execute(Event event)
 {
     Player* master = GetMaster();
     if (!master)
-    {
         return false;
-    }
 
     ObjectGuid selection = master->GetSelectionGuid();
     if (selection.IsEmpty())
-    {
         return false;
-    }
 
     Unit* unit = master->GetMap()->GetUnit(selection);
     if (!unit)
-    {
         return false;
-    }
 
-    const FactionTemplateEntry *factionTemplate = unit->getFactionTemplateEntry();
+    const FactionTemplateEntry *factionTemplate = sServerFacade.GetFactionTemplateEntry(unit);
     uint32 faction = factionTemplate->faction;
-    const FactionEntry* entry = sFactionStore.LookupEntry(faction);
+    const FactionEntry* entry = sFactionStore.LookupEntry
+#ifdef CMANGOS
+    #ifdef MANGOSBOT_ONE
+            <FactionEntry>
+    #endif
+#endif
+            (faction);
     int32 reputation = bot->GetReputationMgr().GetReputation(faction);
 
     ostringstream out;
     out << entry->name[0] << ": ";
     out << "|cff";
     ReputationRank rank = bot->GetReputationMgr().GetRank(entry);
-    switch (rank)
-    {
+    switch (rank) {
         case REP_HATED:
             out << "cc2222hated";
             break;
@@ -68,9 +68,7 @@ bool TellReputationAction::Execute(Event event)
 
     int32 base = ReputationMgr::Reputation_Cap + 1;
     for (int i = MAX_REPUTATION_RANK - 1; i >= rank; --i)
-    {
         base -= ReputationMgr::PointsInRank[i];
-    }
 
     out << " (" << (reputation - base) << "/" << ReputationMgr::PointsInRank[rank] << ")";
     ai->TellMaster(out);

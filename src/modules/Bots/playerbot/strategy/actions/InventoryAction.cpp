@@ -3,131 +3,41 @@
 #include "InventoryAction.h"
 
 #include "../values/ItemCountValue.h"
+#include "../../ServerFacade.h"
 
 using namespace ai;
 
-class FindPotionVisitor : public FindUsableItemVisitor
-{
-public:
-    FindPotionVisitor(Player* bot, uint32 effectId) : FindUsableItemVisitor(bot), effectId(effectId) {}
-
-    virtual bool Accept(const ItemPrototype* proto)
-    {
-        if (proto->Class == ITEM_CLASS_CONSUMABLE &&
-            proto->SubClass == ITEM_SUBCLASS_POTION &&
-            proto->Spells[0].SpellCategory == 4)
-        {
-            for (int j = 0; j < MAX_ITEM_PROTO_SPELLS; j++)
-            {
-                const SpellEntry* const spellInfo = sSpellStore.LookupEntry(proto->Spells[j].SpellId);
-                if (!spellInfo)
-                {
-                    return false;
-                }
-
-                for (int i = 0 ; i < 3; i++)
-                {
-                    if (spellInfo->Effect[i] == effectId)
-                    {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-private:
-    uint32 effectId;
-};
-
-class FindBandageVisitor : public FindUsableItemVisitor
-{
-    public:
-    explicit FindBandageVisitor(Player* bot) : FindUsableItemVisitor(bot) {}
-
-    virtual bool Accept(const ItemPrototype* proto)
-    {
-        return proto->Class == ITEM_CLASS_CONSUMABLE
-            && proto->SubClass == ITEM_SUBCLASS_BANDAGE;
-    }
-};
-
-class FindManaGemVisitor : public FindUsableItemVisitor
-{
-public:
-    FindManaGemVisitor(Player* bot) : FindUsableItemVisitor(bot) {}
-
-    virtual bool Accept(const ItemPrototype* proto)
-    {
-        if (proto->Class == ITEM_CLASS_CONSUMABLE &&
-            (proto->Flags & ITEM_FLAG_CONJURED) &&
-            proto->SubClass != ITEM_SUBCLASS_POTION)
-        {
-            for (int j = 0; j < MAX_ITEM_PROTO_SPELLS; j++)
-            {
-                if (!proto->Spells[j].SpellId)
-                {
-                    continue;
-                }
-
-                const SpellEntry* const spellInfo = sSpellStore.LookupEntry(proto->Spells[j].SpellId);
-                if (!spellInfo)
-                {
-                    continue;
-                }
-
-                for (int i = 0; i < 3; i++)
-                {
-                    if (spellInfo->Effect[i] == SPELL_EFFECT_ENERGIZE)
-                    {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-};
 
 void InventoryAction::IterateItems(IterateItemsVisitor* visitor, IterateItemsMask mask)
 {
     if (mask & ITERATE_ITEMS_IN_BAGS)
-    {
         IterateItemsInBags(visitor);
-    }
 
     if (mask & ITERATE_ITEMS_IN_EQUIP)
-    {
         IterateItemsInEquip(visitor);
-    }
+
+    if (mask == ITERATE_ITEMS_IN_BANK)
+        IterateItemsInBank(visitor);
 }
 
 void InventoryAction::IterateItemsInBags(IterateItemsVisitor* visitor)
 {
-    for (int i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
+    for(int i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
         if (Item *pItem = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
             if (!visitor->Visit(pItem))
-            {
                 return;
-            }
 
-    for (int i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
-    {
+    for(int i = KEYRING_SLOT_START; i < KEYRING_SLOT_END; ++i)
+        if (Item *pItem = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+            if (!visitor->Visit(pItem))
+                return;
+
+    for(int i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
         if (Bag *pBag = (Bag*)bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
-        {
-            for (uint32 j = 0; j < pBag->GetBagSize(); ++j)
-            {
+            for(uint32 j = 0; j < pBag->GetBagSize(); ++j)
                 if (Item* pItem = pBag->GetItemByPos(j))
-                {
                     if (!visitor->Visit(pItem))
-                    {
                         return;
-                    }
-                }
-            }
-        }
-    }
 }
 
 void InventoryAction::IterateItemsInEquip(IterateItemsVisitor* visitor)
@@ -135,39 +45,62 @@ void InventoryAction::IterateItemsInEquip(IterateItemsVisitor* visitor)
     for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; slot++)
     {
         Item* const pItem = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
-        if (!pItem)
-        {
+        if(!pItem)
             continue;
-        }
 
         if (!visitor->Visit(pItem))
-        {
             return;
+    }
+}
+
+void InventoryAction::IterateItemsInBank(IterateItemsVisitor* visitor)
+{
+    for (uint8 slot = BANK_SLOT_ITEM_START; slot < BANK_SLOT_ITEM_END; slot++)
+    {
+        Item* const pItem = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if(!pItem)
+            continue;
+
+        if (!visitor->Visit(pItem))
+            return;
+    }
+
+    for (int i = BANK_SLOT_BAG_START; i < BANK_SLOT_BAG_END; ++i)
+    {
+        if (Bag* pBag = (Bag*)bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+        {
+            if (pBag)
+            {
+                for (uint32 j = 0; j < pBag->GetBagSize(); ++j)
+                {
+                    if (Item* pItem = pBag->GetItemByPos(j))
+                    {
+                        if(!pItem)
+                            continue;
+
+                        if (!visitor->Visit(pItem))
+                            return;
+                    }
+                }
+            }
         }
     }
+
 }
 
 bool compare_items(const ItemPrototype *proto1, const ItemPrototype *proto2)
 {
     if (proto1->Class != proto2->Class)
-    {
         return proto1->Class > proto2->Class;
-    }
 
     if (proto1->SubClass != proto2->SubClass)
-    {
         return proto1->SubClass < proto2->SubClass;
-    }
 
     if (proto1->Quality != proto2->Quality)
-    {
         return proto1->Quality < proto2->Quality;
-    }
 
     if (proto1->ItemLevel != proto2->ItemLevel)
-    {
         return proto1->ItemLevel > proto2->ItemLevel;
-    }
 
     return false;
 }
@@ -177,33 +110,12 @@ bool compare_items_by_level(const Item* item1, const Item* item2)
     return compare_items(item1->GetProto(), item2->GetProto());
 }
 
-Item* InventoryAction::FindPlayerItem(Player *bot, FindItemVisitor *visitor)
-{
-    for (int i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
-    {
-        if (Item* pItem = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
-            visitor->Visit(pItem);
-    }
-    for (int i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
-    {
-        if (Bag* pBag = (Bag*)bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
-        {
-            for (uint32 j = 0; j < pBag->GetBagSize(); ++j)
-            {
-                if (Item* pItem = pBag->GetItemByPos(j))
-                    visitor->Visit(pItem);
-            }
-        }
-    }
-    return visitor->GetResult().empty() ? NULL : visitor->GetResult().front();
-}
-
-void InventoryAction::TellItems(map<uint32, int> itemMap)
+void InventoryAction::TellItems(map<uint32, int> itemMap, map<uint32, bool> soulbound)
 {
     list<ItemPrototype const*> items;
     for (map<uint32, int>::iterator i = itemMap.begin(); i != itemMap.end(); i++)
     {
-        items.push_back(sItemStorage.LookupEntry<ItemPrototype>(i->first));
+        items.push_back(sObjectMgr.GetItemPrototype(i->first));
     }
 
     items.sort(compare_items);
@@ -257,60 +169,37 @@ void InventoryAction::TellItems(map<uint32, int> itemMap)
             }
         }
 
-        TellItem(proto, itemMap[proto->ItemId]);
+        TellItem(proto, itemMap[proto->ItemId], soulbound[proto->ItemId]);
     }
 }
 
-void InventoryAction::TellItem(ItemPrototype const * proto, int count)
+void InventoryAction::TellItem(ItemPrototype const * proto, int count, bool soulbound)
 {
-    ai->TellMaster(chat->formatItem(proto, count));
+    ostringstream out;
+    out << chat->formatItem(proto, count);
+    if (soulbound)
+        out << " (soulbound)";
+    ai->TellMaster(out.str());
 }
 
-list<Item*> InventoryAction::parseItems(string text)
+list<Item*> InventoryAction::parseItems(string text, IterateItemsMask mask)
 {
     set<Item*> found;
     size_t pos = text.find(" ");
     int count = pos!=string::npos ? atoi(text.substr(pos + 1).c_str()) : TRADE_SLOT_TRADED_COUNT;
-    if (count < 1)
-    {
-        count = 1;
-    }
-    else if (count > TRADE_SLOT_TRADED_COUNT)
-    {
-        count = TRADE_SLOT_TRADED_COUNT;
-    }
+    if (count < 1) count = 1;
+    else if (count > TRADE_SLOT_TRADED_COUNT) count = TRADE_SLOT_TRADED_COUNT;
 
-    if (text == "food")
+    if (text == "food" || text == "conjured food")
     {
-        FindFoodVisitor visitor(bot, SPELLCATEGORY_FOOD);
+        FindFoodVisitor visitor(bot, 11, text == "conjured food");
         IterateItems(&visitor, ITERATE_ITEMS_IN_BAGS);
         found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
     }
 
-    if (text == "buff food")
+    if (text == "drink" || text == "water" || text == "conjured drink" || text == "conjured water")
     {
-        FindBuffFoodVisitor visitor(bot);
-        IterateItems(&visitor, ITERATE_ITEMS_IN_BAGS);
-        found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
-    }
-
-    if (text == "drink")
-    {
-        FindFoodVisitor visitor(bot, SPELLCATEGORY_DRINK);
-        IterateItems(&visitor, ITERATE_ITEMS_IN_BAGS);
-        found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
-    }
-
-    if (text == "conjured food")
-    {
-        FindConjuredFoodVisitor visitor(bot, SPELLCATEGORY_FOOD);
-        IterateItems(&visitor, ITERATE_ITEMS_IN_BAGS);
-        found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
-    }
-
-    if (text == "conjured drink")
-    {
-        FindConjuredFoodVisitor visitor(bot, SPELLCATEGORY_DRINK);
+        FindFoodVisitor visitor(bot, 59, text == "conjured drink" || text == "conjured water");
         IterateItems(&visitor, ITERATE_ITEMS_IN_BAGS);
         found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
     }
@@ -329,21 +218,21 @@ list<Item*> InventoryAction::parseItems(string text)
         found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
     }
 
-    if (text == "bandage")
+    if (text == "mount")
     {
-        FindBandageVisitor visitor(bot);
+        FindMountVisitor visitor(bot);
         IterateItems(&visitor, ITERATE_ITEMS_IN_BAGS);
         found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
     }
 
-    if (text == "mana gem")
+    if (text == "pet")
     {
-        FindManaGemVisitor visitor(bot);
+        FindPetVisitor visitor(bot);
         IterateItems(&visitor, ITERATE_ITEMS_IN_BAGS);
         found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
     }
 
-    FindUsableNamedItemVisitor visitor(bot, text);
+    FindNamedItemVisitor visitor(bot, text);
     IterateItems(&visitor, ITERATE_ITEMS_IN_BAGS);
     found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
 
@@ -351,7 +240,7 @@ list<Item*> InventoryAction::parseItems(string text)
     if (quality != MAX_ITEM_QUALITY)
     {
         FindItemsToTradeByQualityVisitor visitor(quality, count);
-        IterateItems(&visitor);
+        IterateItems(&visitor, mask);
         found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
     }
 
@@ -359,7 +248,7 @@ list<Item*> InventoryAction::parseItems(string text)
     if (chat->parseItemClass(text, &itemClass, &itemSubClass))
     {
         FindItemsToTradeByClassVisitor visitor(itemClass, itemSubClass, count);
-        IterateItems(&visitor);
+        IterateItems(&visitor, mask);
         found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
     }
 
@@ -368,26 +257,85 @@ list<Item*> InventoryAction::parseItems(string text)
     {
         Item* item = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, fromSlot);
         if (item)
-        {
             found.insert(item);
-        }
+    }
+
+    ItemIds outfit = FindOutfitItems(text);
+    if (!outfit.empty())
+    {
+        FindItemByIdsVisitor visitor(outfit);
+        IterateItems(&visitor, mask);
+        found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
     }
 
     ItemIds ids = chat->parseItems(text);
     for (ItemIds::iterator i = ids.begin(); i != ids.end(); i++)
     {
         FindItemByIdVisitor visitor(*i);
-        IterateItems(&visitor, ITERATE_ALL_ITEMS);
+        IterateItems(&visitor, mask);
         found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
     }
 
     list<Item*> result;
     for (set<Item*>::iterator i = found.begin(); i != found.end(); ++i)
-    {
         result.push_back(*i);
-    }
 
     result.sort(compare_items_by_level);
 
     return result;
+}
+
+uint32 InventoryAction::GetItemCount(FindItemVisitor* visitor, IterateItemsMask mask)
+{
+    IterateItems(visitor, mask);
+    uint32 count = 0;
+    list<Item*>& items = visitor->GetResult();
+    for (list<Item*>::iterator i = items.begin(); i != items.end(); ++i)
+    {
+        Item* item = *i;
+        count += item->GetCount();
+    }
+    return count;
+}
+
+
+ItemIds InventoryAction::FindOutfitItems(string name)
+{
+    list<string>& outfits = AI_VALUE(list<string>&, "outfit list");
+    for (list<string>::iterator i = outfits.begin(); i != outfits.end(); ++i)
+    {
+        string outfit = *i;
+        if (name == parseOutfitName(outfit))
+            return parseOutfitItems(outfit);
+    }
+    return set<uint32>();
+}
+
+
+string InventoryAction::parseOutfitName(string outfit)
+{
+    int pos = outfit.find("=");
+    if (pos == -1) return "";
+    return outfit.substr(0, pos);
+}
+
+ItemIds InventoryAction::parseOutfitItems(string text)
+{
+    ItemIds itemIds;
+
+    uint8 pos = text.find("=") + 1;
+    while (pos < text.size())
+    {
+        int endPos = text.find(',', pos);
+        if (endPos == -1)
+            endPos = text.size();
+
+        string idC = text.substr(pos, endPos - pos);
+        uint32 id = atol(idC.c_str());
+        pos = endPos + 1;
+        if (id)
+            itemIds.insert(id);
+    }
+
+    return itemIds;
 }

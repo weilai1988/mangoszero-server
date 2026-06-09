@@ -10,21 +10,20 @@ map<string, uint32> ChatHelper::consumableSubClasses;
 map<string, uint32> ChatHelper::tradeSubClasses;
 map<string, uint32> ChatHelper::itemQualities;
 map<string, uint32> ChatHelper::slots;
+map<string, uint32> ChatHelper::skills;
 map<string, ChatMsg> ChatHelper::chats;
 map<uint8, string> ChatHelper::classes;
 map<uint8, string> ChatHelper::races;
 map<uint8, map<uint8, string> > ChatHelper::specs;
 
 template<class T>
-static bool substrContainsInMap(string &searchTerm, map<string, T> searchIn)
+static bool substrContainsInMap(string searchTerm, map<string, T> searchIn)
 {
     for (typename map<string, T>::iterator i = searchIn.begin(); i != searchIn.end(); ++i)
     {
-        string term = i->first;
-        if (term.size() > 1 && searchTerm.find(term) != string::npos)
-        {
+		string term = i->first;
+		if (term.size() > 1 && searchTerm.find(term) != string::npos)
             return true;
-        }
     }
 
     return false;
@@ -84,6 +83,19 @@ ChatHelper::ChatHelper(PlayerbotAI* ai) : PlayerbotAIAware(ai)
     slots["off hand"] = EQUIPMENT_SLOT_OFFHAND;
     slots["ranged"] = EQUIPMENT_SLOT_RANGED;
     slots["tabard"] = EQUIPMENT_SLOT_TABARD;
+
+    skills["first aid"] = SKILL_FIRST_AID;
+    skills["fishing"] = SKILL_FISHING;
+    skills["cooking"] = SKILL_COOKING;
+    skills["alchemy"] = SKILL_ALCHEMY;
+    skills["enchanting"] = SKILL_ENCHANTING;
+    skills["engineering"] = SKILL_ENGINEERING;
+    skills["leatherworking"] = SKILL_LEATHERWORKING;
+    skills["blacksmithing"] = SKILL_BLACKSMITHING;
+    skills["tailoring"] = SKILL_TAILORING;
+    skills["herbalism"] = SKILL_HERBALISM;
+    skills["mining"] = SKILL_MINING;
+    skills["skinning"] = SKILL_SKINNING;
 
     chats["party"] = CHAT_MSG_PARTY;
     chats["p"] = CHAT_MSG_PARTY;
@@ -152,31 +164,36 @@ ChatHelper::ChatHelper(PlayerbotAI* ai) : PlayerbotAIAware(ai)
 string ChatHelper::formatMoney(uint32 copper)
 {
     ostringstream out;
-    if (!copper)
-    {
-        out << "0|TInterface\\AddOns\\AtlasLoot\\Images\\bronze:0|t";
-        return out.str();
-    }
+	if (!copper)
+	{
+		out << "0";
+		return out.str();
+	}
 
     uint32 gold = uint32(copper / 10000);
     copper -= (gold * 10000);
     uint32 silver = uint32(copper / 100);
     copper -= (silver * 100);
-    out << " ";
+
+    bool space = false;
     if (gold > 0)
     {
-        out << gold <<  "|TInterface\\AddOns\\AtlasLoot\\Images\\gold:0|t ";
+        out << gold <<  "g";
+        space = true;
     }
 
     if (silver > 0 && gold < 50)
     {
-        out << silver <<  "|TInterface\\AddOns\\AtlasLoot\\Images\\silver:0|t ";
+        if (space) out << " ";
+        out << silver <<  "s";
+        space = true;
     }
 
-    if (copper > 0 && gold < 10)
-    {
-        out << copper <<  "|TInterface\\AddOns\\AtlasLoot\\Images\\bronze:0|t";
-    }
+	if (copper > 0 && gold < 10)
+	{
+        if (space) out << " ";
+		out << copper <<  "c";
+	}
 
     return out.str();
 }
@@ -204,13 +221,9 @@ uint32 ChatHelper::parseMoney(string& text)
             acum = "";
         }
         else if (text[i] == ' ')
-        {
             break;
-        }
         else if (text[i] >= 48 && text[i] <= 57)
-        {
             acum += text[i];
-        }
         else
         {
             copper = 0;
@@ -229,22 +242,16 @@ ItemIds ChatHelper::parseItems(string& text)
     {
         int i = text.find("Hitem:", pos);
         if (i == -1)
-        {
             break;
-        }
         pos = i + 6;
         int endPos = text.find(':', pos);
         if (endPos == -1)
-        {
             break;
-        }
         string idC = text.substr(pos, endPos - pos);
         uint32 id = atol(idC.c_str());
         pos = endPos;
         if (id)
-        {
             itemIds.insert(id);
-        }
     }
 
     return itemIds;
@@ -271,7 +278,7 @@ string ChatHelper::formatSpell(SpellEntry const *sInfo)
     return out.str();
 }
 
-string ChatHelper::formatItem(ItemPrototype const * proto, int count)
+string ChatHelper::formatItem(ItemPrototype const * proto, int count, int total)
 {
     char color[32];
     sprintf(color, "%x", ItemQualityColors[proto->Quality]);
@@ -282,9 +289,10 @@ string ChatHelper::formatItem(ItemPrototype const * proto, int count)
         << "]|h|r";
 
     if (count > 1)
-    {
         out << "x" << count;
-    }
+
+    if (total > 0)
+        out << " (" << total << ")";
 
     return out.str();
 }
@@ -292,9 +300,7 @@ string ChatHelper::formatItem(ItemPrototype const * proto, int count)
 ChatMsg ChatHelper::parseChat(string& text)
 {
     if (chats.find(text) != chats.end())
-    {
         return chats[text];
-    }
 
     return CHAT_MSG_SYSTEM;
 }
@@ -316,6 +322,7 @@ string ChatHelper::formatChat(ChatMsg chat)
     return "unknown";
 }
 
+
 uint32 ChatHelper::parseSpell(string& text)
 {
     PlayerbotChatHandler handler(ai->GetBot());
@@ -335,16 +342,12 @@ list<ObjectGuid> ChatHelper::parseGameobjects(string& text)
         // extract GO guid
         int i = text.find("Hfound:", pos);     // base H = 11
         if (i == -1)     // break if error
-        {
             break;
-        }
 
         pos = i + 7;     //start of window in text 11 + 7 = 18
         int endPos = text.find(':', pos);     // end of window in text 22
         if (endPos == -1)     //break if error
-        {
             break;
-        }
         istringstream stream(text.substr(pos, endPos - pos));
         uint64 guid; stream >> guid;
 
@@ -352,9 +355,7 @@ list<ObjectGuid> ChatHelper::parseGameobjects(string& text)
         pos = endPos + 1;
         endPos = text.find(':', pos);     // end of window in text
         if (endPos == -1)     //break if error
-        {
             break;
-        }
 
         std::string entryC = text.substr(pos, endPos - pos);     // get string within window i.e entry
         uint32 entry = atol(entryC.c_str());     // convert ascii to float
@@ -362,9 +363,7 @@ list<ObjectGuid> ChatHelper::parseGameobjects(string& text)
         ObjectGuid lootCurrent = ObjectGuid(guid);
 
         if (guid)
-        {
             gos.push_back(lootCurrent);
-        }
     }
 
     return gos;
@@ -379,12 +378,11 @@ string ChatHelper::formatQuestObjective(string name, int available, int required
     return out.str();
 }
 
+
 uint32 ChatHelper::parseItemQuality(string text)
 {
     if (itemQualities.find(text) == itemQualities.end())
-    {
         return MAX_ITEM_QUALITY;
-    }
 
     return itemQualities[text];
 }
@@ -418,9 +416,7 @@ bool ChatHelper::parseItemClass(string text, uint32 *itemClass, uint32 *itemSubC
 uint32 ChatHelper::parseSlot(string text)
 {
     if (slots.find(text) != slots.end())
-    {
         return slots[text];
-    }
 
     return EQUIPMENT_SLOT_END;
 }
@@ -434,6 +430,7 @@ bool ChatHelper::parseable(string text)
             substrContainsInMap<uint32>(text, itemQualities) ||
             substrContainsInMap<uint32>(text, slots) ||
             substrContainsInMap<ChatMsg>(text, chats) ||
+            substrContainsInMap<uint32>(text, skills) ||
             parseMoney(text) > 0;
 }
 
@@ -465,4 +462,54 @@ string ChatHelper::formatClass(uint8 cls)
 string ChatHelper::formatRace(uint8 race)
 {
     return races[race];
+}
+
+uint32 ChatHelper::parseSkill(string& text)
+{
+    if (skills.find(text) != skills.end())
+        return skills[text];
+
+    return SKILL_NONE;
+}
+
+string ChatHelper::formatSkill(uint32 skill)
+{
+    for (map<string, uint32>::iterator i = skills.begin(); i != skills.end(); ++i)
+    {
+        if (i->second == skill)
+            return i->first;
+    }
+
+    return "";
+}
+
+string ChatHelper::formatBoolean(bool flag)
+{
+    return flag ? "|cff00ff00ON|r" : "|cffffff00OFF|r";
+}
+
+string ChatHelper::formatTime(uint32 seconds)
+{
+    ostringstream out;
+    if (seconds < 60)
+    {
+        out << seconds << " sec";
+        return out.str();
+    }
+    if (seconds < 3600)
+    {
+        uint32 mins = seconds / 60;
+        uint32 secs = seconds % 60;
+        out << mins << " min";
+        if (secs) out << ", " << secs << " sec";
+
+        return out.str();
+    }
+
+    uint32 hrs = seconds / 3600;
+    uint32 mins = (seconds % 3600) / 60;
+    out << hrs << " hrs";
+    if (mins) out << ", " << mins << " min";
+
+    return out.str();
 }

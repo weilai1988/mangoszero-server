@@ -4,24 +4,30 @@
 
 namespace ai
 {
-    BEGIN_TRIGGER(HunterNoStingsActiveTrigger, Trigger)
-    END_TRIGGER()
+    class HunterNoStingsActiveTrigger : public Trigger
+    {
+    public:
+        HunterNoStingsActiveTrigger(PlayerbotAI* ai) : Trigger(ai, "hunter no stings active", 1) {}
+
+    public:
+        virtual bool IsActive();
+    };
 
     class HunterAspectOfTheHawkTrigger : public BuffTrigger
     {
     public:
         HunterAspectOfTheHawkTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "aspect of the hawk") {
-            checkInterval = 1;
-        }
+			checkInterval = 0;
+		}
     };
 
-    class HunterAspectOfTheWildTrigger : public BuffTrigger
-    {
-    public:
-        HunterAspectOfTheWildTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "aspect of the wild") {
-            checkInterval = 1;
-        }
-    };
+	class HunterAspectOfTheWildTrigger : public BuffTrigger
+	{
+	public:
+		HunterAspectOfTheWildTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "aspect of the wild") {
+			checkInterval = 0;
+		}
+	};
 
     class HunterAspectOfTheViperTrigger : public BuffTrigger
     {
@@ -37,22 +43,25 @@ namespace ai
     {
     public:
         HunterAspectOfThePackTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "aspect of the pack") {}
-        virtual bool IsActive()
-        {
-            return BuffTrigger::IsActive() && !ai->HasAura("aspect of the cheetah", GetTarget());
+        virtual bool IsActive() {
+			return BuffTrigger::IsActive() && !ai->HasAura("aspect of the cheetah", GetTarget());
         };
     };
 
-    BEGIN_TRIGGER(HuntersPetDeadTrigger, Trigger)
-    END_TRIGGER()
-
-    BEGIN_TRIGGER(HuntersPetLowHealthTrigger, Trigger)
-    END_TRIGGER()
-
-    class HuntersPetUnhappyTrigger : public Trigger
+    class HuntersPetDeadTrigger : public Trigger
     {
     public:
-        HuntersPetUnhappyTrigger(PlayerbotAI* ai) : Trigger(ai, "hunters pet unhappy", 300) {}
+        HuntersPetDeadTrigger(PlayerbotAI* ai) : Trigger(ai, "hunter pet dead", 1) {}
+
+    public:
+        virtual bool IsActive();
+    };
+
+    class HuntersPetLowHealthTrigger : public Trigger
+    {
+    public:
+        HuntersPetLowHealthTrigger(PlayerbotAI* ai) : Trigger(ai, "hunter pet llow health", 1) {}
+
     public:
         virtual bool IsActive();
     };
@@ -75,16 +84,10 @@ namespace ai
         FreezingTrapTrigger(PlayerbotAI* ai) : HasCcTargetTrigger(ai, "freezing trap") {}
     };
 
-    class RapidFireTrigger : public BoostTrigger
+    class RapidFireTrigger : public BuffTrigger
     {
     public:
-        RapidFireTrigger(PlayerbotAI* ai) : BoostTrigger(ai, "rapid fire") {}
-    };
-
-    class BestialWrathTrigger : public BoostTrigger
-    {
-    public:
-        BestialWrathTrigger(PlayerbotAI* ai) : BoostTrigger(ai, "bestial wrath") {}
+        RapidFireTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "rapid fire") {}
     };
 
     class TrueshotAuraTrigger : public BuffTrigger
@@ -99,30 +102,18 @@ namespace ai
         SerpentStingOnAttackerTrigger(PlayerbotAI* ai) : DebuffOnAttackerTrigger(ai, "serpent sting") {}
     };
 
-    class FeignDeathTrigger : public Trigger
+    BEGIN_TRIGGER(HunterPetNotHappy, Trigger)
+    END_TRIGGER()
+
+    class ConsussiveShotSnareTrigger : public SnareTargetTrigger
     {
     public:
-        FeignDeathTrigger(PlayerbotAI* ai) : Trigger(ai, "has feign death", 1) {}
-        virtual bool IsActive()
-        {
-            if (!bot->hasUnitState(UNIT_STAT_DIED))
-                return false;
+        ConsussiveShotSnareTrigger(PlayerbotAI* ai) : SnareTargetTrigger(ai, "concussive shot") {}
+    };
 
-            if (AI_VALUE(uint8, "attacker count") > 0)
-                return false;
-
-            Unit::AuraList const& auras = bot->GetAurasByType(SPELL_AURA_FEIGN_DEATH);
-            if (auras.empty())
-                return false;
-
-            Aura* aura = auras.front();
-            int32 maxDuration = aura->GetAuraMaxDuration();
-            int32 remaining = aura->GetAuraDuration();
-
-            if (maxDuration > 0)
-                return (maxDuration - remaining) >= 5000;
-
-            return true;
-        }
+    class ScareBeastTrigger : public HasCcTargetTrigger
+    {
+    public:
+        ScareBeastTrigger(PlayerbotAI* ai) : HasCcTargetTrigger(ai, "scare beast") {}
     };
 }

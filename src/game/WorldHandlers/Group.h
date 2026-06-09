@@ -507,6 +507,7 @@ class Group
         void NeedBeforeGreed(WorldObject* pSource, Loot* loot);
         void MasterLoot(WorldObject* pSource, Loot* loot);
         bool CountRollVote(Player* player, ObjectGuid const& lootedTarget, uint32 itemSlot, RollVote vote);
+        Roll const* GetRollForLoot(ObjectGuid const& lootedTarget, uint32 itemSlot) const;
         void StartLootRoll(WorldObject* lootTarget, LootMethod method, Loot* loot, uint8 itemSlot);
         void EndRoll();
 

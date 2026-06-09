@@ -2,6 +2,7 @@
 #include "../../playerbot.h"
 #include "QuestAction.h"
 #include "../../PlayerbotAIConfig.h"
+#include "../../ServerFacade.h"
 
 using namespace ai;
 
@@ -11,38 +12,41 @@ bool QuestAction::Execute(Event event)
 
     Player* master = GetMaster();
     if (!master)
-    {
         return false;
-    }
 
     if (!guid)
-    {
         guid = master->GetSelectionGuid();
-    }
 
-    if (!guid)
+    if (guid)
+        return ProcessQuests(guid);
+
+    list<ObjectGuid> npcs = AI_VALUE(list<ObjectGuid>, "nearest npcs");
+    for (list<ObjectGuid>::iterator i = npcs.begin(); i != npcs.end(); i++)
     {
-        return false;
+        Unit* unit = ai->GetUnit(*i);
+        if (unit && bot->GetDistance(unit) <= INTERACTION_DISTANCE)
+            return ProcessQuests(unit);
+    }
+    list<ObjectGuid> gos = AI_VALUE(list<ObjectGuid>, "nearest game objects");
+    for (list<ObjectGuid>::iterator i = gos.begin(); i != gos.end(); i++)
+    {
+        GameObject* go = ai->GetGameObject(*i);
+        if (go && bot->GetDistance(go) <= INTERACTION_DISTANCE)
+            return ProcessQuests(go);
     }
 
-    return ProcessQuests(guid);
+    return false;
 }
 
 bool QuestAction::ProcessQuests(ObjectGuid questGiver)
 {
     GameObject *gameObject = ai->GetGameObject(questGiver);
     if (gameObject && gameObject->GetGoType() == GAMEOBJECT_TYPE_QUESTGIVER)
-    {
         return ProcessQuests(gameObject);
-    }
 
     Creature* creature = ai->GetCreature(questGiver);
     if (creature)
-    {
-        if (!creature->isQuestGiver())
-            return false;
         return ProcessQuests(creature);
-    }
 
     return false;
 }
@@ -53,14 +57,12 @@ bool QuestAction::ProcessQuests(WorldObject* questGiver)
 
     if (bot->GetDistance(questGiver) > INTERACTION_DISTANCE)
     {
-        ai->TellMaster("Cannot talk to quest giver");
+        ai->TellError("Cannot talk to quest giver");
         return false;
     }
 
-    if (!bot->IsInFront(questGiver, sPlayerbotAIConfig.sightDistance, M_PI / 2))
-    {
-        bot->SetFacingTo(bot->GetAngle(questGiver));
-    }
+    if (!sServerFacade.IsInFront(bot, questGiver, sPlayerbotAIConfig.sightDistance, CAST_ANGLE_IN_FRONT))
+        sServerFacade.SetFacingTo(bot, questGiver);
 
     bot->SetSelectionGuid(guid);
     bot->PrepareQuestMenu(guid);
@@ -71,9 +73,7 @@ bool QuestAction::ProcessQuests(WorldObject* questGiver)
         uint32 questID = menuItem.m_qId;
         Quest const* quest = sObjectMgr.GetQuestTemplate(questID);
         if (!quest)
-        {
             continue;
-        }
 
         ProcessQuest(quest, questGiver);
     }
@@ -88,28 +88,18 @@ bool QuestAction::AcceptQuest(Quest const* quest, uint64 questGiver)
     uint32 questId = quest->GetQuestId();
 
     if (bot->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
-    {
         out << "Already completed";
-    }
     else if (! bot->CanTakeQuest(quest, false))
     {
         if (! bot->SatisfyQuestStatus(quest, false))
-        {
             out << "Already on";
-        }
         else
-        {
             out << "Can't take";
-        }
     }
     else if (! bot->SatisfyQuestLog(false))
-    {
         out << "Quest log is full";
-    }
     else if (! bot->CanAddQuest(quest, false))
-    {
         out << "Bags are full";
-    }
 
     else
     {
@@ -128,7 +118,7 @@ bool QuestAction::AcceptQuest(Quest const* quest, uint64 questGiver)
     }
 
     out << " " << chat->formatQuest(quest);
-    ai->TellMaster(out);
+    ai->TellError(out.str());
     return false;
 }
 
@@ -146,17 +136,13 @@ bool QuestObjectiveCompletedAction::Execute(Event event)
         entry &= 0x7FFFFFFF;
         GameObjectInfo const* info = sObjectMgr.GetGameObjectInfo(entry);
         if (info)
-        {
             ai->TellMaster(chat->formatQuestObjective(info->name, available, required));
-        }
     }
     else
     {
         CreatureInfo const* info = sObjectMgr.GetCreatureTemplate(entry);
         if (info)
-        {
             ai->TellMaster(chat->formatQuestObjective(info->Name, available, required));
-        }
     }
 
     return true;

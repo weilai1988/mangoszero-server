@@ -14,21 +14,17 @@ namespace ai
 
             Group* grp = bot->GetGroupInvite();
             if (!grp)
-            {
                 return false;
-            }
 
             Player* inviter = sObjectMgr.GetPlayer(grp->GetLeaderGuid());
             if (!inviter)
-            {
                 return false;
-            }
 
-            if (!ai->GetSecurity()->CheckLevelFor(PLAYERBOT_SECURITY_INVITE, false, inviter))
+			if (!ai->GetSecurity()->CheckLevelFor(PLAYERBOT_SECURITY_INVITE, false, inviter))
             {
                 WorldPacket data(SMSG_GROUP_DECLINE, 10);
                 data << bot->GetName();
-                inviter->GetSession()->SendPacket(&data);
+                sServerFacade.SendPacket(inviter, data);
                 bot->UninviteFromGroup();
                 return false;
             }
@@ -39,9 +35,7 @@ namespace ai
             bot->GetSession()->HandleGroupAcceptOpcode(p);
 
             if (sRandomPlayerbotMgr.IsRandomBot(bot))
-            {
                 bot->GetPlayerbotAI()->SetMaster(inviter);
-            }
 
             ai->ResetStrategies();
             ai->TellMaster("Hello");

@@ -33,6 +33,46 @@
 #include "Path.h"
 #include "WaypointMovementGenerator.h"
 
+namespace
+{
+    /**
+     * @brief Clears taxi state and forces the active flight generator to finalize.
+     *
+     * Some 1.14/Hermes clients can deliver the final taxi spline packet after
+     * the saved taxi destination list has already been consumed. If we leave
+     * the flight generator active, the player keeps client-control-lost/taxi
+     * movement even though the DB taxi path is empty.
+     */
+    void FinishTaxiFlight(Player* player, char const* reason)
+    {
+        if (!player)
+        {
+            return;
+        }
+
+        DEBUG_LOG("WORLD: finishing taxi flight for %s (%s)", player->GetName(), reason);
+
+        player->m_taxi.ClearTaxiDestinations();
+
+        if (player->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE)
+        {
+            player->GetMotionMaster()->MovementExpired();
+        }
+        else
+        {
+            player->clearUnitState(UNIT_STAT_TAXI_FLIGHT);
+            player->Unmount();
+            player->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_CLIENT_CONTROL_LOST | UNIT_FLAG_TAXI_FLIGHT);
+            player->GetHostileRefManager().setOnlineOfflineState(true);
+            if (player->pvpInfo.inHostileArea)
+            {
+                player->CastSpell(player, 2479, true);
+            }
+            player->StopMoving(true);
+        }
+    }
+}
+
 /**
  * @brief Handles a client request for the known status of a taxi node.
  *
@@ -288,6 +328,10 @@ void WorldSession::HandleMoveSplineDoneOpcode(WorldPacket& recv_data)
     uint32 curDest = _player->m_taxi.GetTaxiDestination();
     if (!curDest)
     {
+        if (_player->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE || _player->IsTaxiFlying())
+        {
+            FinishTaxiFlight(_player, "empty destination on spline done");
+        }
         return;
     }
 
@@ -341,12 +385,12 @@ void WorldSession::HandleMoveSplineDoneOpcode(WorldPacket& recv_data)
         }
         else
         {
-            _player->m_taxi.ClearTaxiDestinations();     // clear problematic path and next
+            FinishTaxiFlight(_player, "invalid next taxi path");
         }
     }
     else
     {
-        _player->m_taxi.ClearTaxiDestinations();         // not destinations, clear source node
+        FinishTaxiFlight(_player, "final destination reached");
     }
 }
 

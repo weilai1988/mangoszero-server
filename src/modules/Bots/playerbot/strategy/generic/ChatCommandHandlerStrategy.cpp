@@ -10,15 +10,35 @@ public:
     ChatCommandActionNodeFactoryInternal()
     {
         creators["tank attack chat shortcut"] = &tank_attack_chat_shortcut;
+        creators["grouprefresh chat shortcut"] = &party_buffs_chat_shortcut;
+        creators["brain status chat shortcut"] = &brain_status_chat_shortcut;
     }
 
 private:
     static ActionNode* tank_attack_chat_shortcut(PlayerbotAI* ai)
     {
         return new ActionNode ("tank attack chat shortcut",
+            /*P*/ NextAction::array(0, new NextAction("attack my target", 100.0f), NULL),
+            /*A*/ NULL,
+            /*C*/ NULL);
+    }
+    static ActionNode* party_buffs_chat_shortcut(PlayerbotAI* ai)
+    {
+        return new ActionNode ("grouprefresh chat shortcut",
             /*P*/ NULL,
             /*A*/ NULL,
-            /*C*/ NextAction::array(0, new NextAction("attack my target", 100.0f), NULL));
+            /*C*/ NextAction::array(0,
+                new NextAction("power word: fortitude on party", 120.0f),
+                new NextAction("divine spirit on party", 119.0f),
+                new NextAction("mark of the wild on party", 118.0f),
+                new NextAction("arcane intellect on party", 117.0f),
+                new NextAction("blessing of kings on party", 116.0f),
+                new NextAction("blessing of wisdom on party", 115.0f),
+                NULL));
+    }
+    static ActionNode* brain_status_chat_shortcut(PlayerbotAI* ai)
+    {
+        return new ActionNode("brain status chat shortcut");
     }
 };
 
@@ -45,8 +65,8 @@ void ChatCommandHandlerStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
         NextAction::array(0, new NextAction("use", relevance), NULL)));
 
     triggers.push_back(new TriggerNode(
-        "use",
-        NextAction::array(0, new NextAction("use", relevance), NULL)));
+        "o",
+        NextAction::array(0, new NextAction("open", relevance), NULL)));
 
     triggers.push_back(new TriggerNode(
         "c",
@@ -110,7 +130,7 @@ void ChatCommandHandlerStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
 
     triggers.push_back(new TriggerNode(
         "talk",
-        NextAction::array(0, new NextAction("gossip hello", relevance), NULL)));
+        NextAction::array(0, new NextAction("gossip hello", relevance), new NextAction("talk to quest giver", relevance), NULL)));
 
     triggers.push_back(new TriggerNode(
         "cast",
@@ -133,13 +153,23 @@ void ChatCommandHandlerStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
         NextAction::array(0, new NextAction("max dps chat shortcut", relevance), NULL)));
 
     triggers.push_back(new TriggerNode(
+        "grouprefresh",
+        NextAction::array(0, new NextAction("grouprefresh chat shortcut", relevance), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "think",
+        NextAction::array(0, new NextAction("brain status chat shortcut", relevance), NULL)));
+
+    triggers.push_back(new TriggerNode(
         "attackers",
         NextAction::array(0, new NextAction("tell attackers", relevance), NULL)));
 
     triggers.push_back(new TriggerNode(
-        "jump",
-        NextAction::array(0, new NextAction("jump", relevance), NULL)));
+        "ready",
+        NextAction::array(0, new NextAction("ready check", relevance), NULL)));
 }
+
+
 
 ChatCommandHandlerStrategy::ChatCommandHandlerStrategy(PlayerbotAI* ai) : PassTroughStrategy(ai)
 {
@@ -152,7 +182,10 @@ ChatCommandHandlerStrategy::ChatCommandHandlerStrategy(PlayerbotAI* ai) : PassTr
     supported.push_back("log");
     supported.push_back("los");
     supported.push_back("drop");
+    supported.push_back("share");
     supported.push_back("ll");
+    supported.push_back("vl");
+    supported.push_back("ss");
     supported.push_back("release");
     supported.push_back("teleport");
     supported.push_back("taxi");
@@ -161,7 +194,7 @@ ChatCommandHandlerStrategy::ChatCommandHandlerStrategy(PlayerbotAI* ai) : PassTr
     supported.push_back("spells");
     supported.push_back("co");
     supported.push_back("nc");
-    supported.push_back("dead");
+    supported.push_back("ds");
     supported.push_back("trainer");
     supported.push_back("chat");
     supported.push_back("home");
@@ -169,6 +202,7 @@ ChatCommandHandlerStrategy::ChatCommandHandlerStrategy(PlayerbotAI* ai) : PassTr
     supported.push_back("reset ai");
     supported.push_back("emote");
     supported.push_back("buff");
+    supported.push_back("grouprefresh");
     supported.push_back("help");
     supported.push_back("gb");
     supported.push_back("bank");
@@ -179,8 +213,20 @@ ChatCommandHandlerStrategy::ChatCommandHandlerStrategy(PlayerbotAI* ai) : PassTr
     supported.push_back("summon");
     supported.push_back("who");
     supported.push_back("save mana");
-    supported.push_back("jump");
-    supported.push_back("jump here");
-    supported.push_back("jump forward");
-    supported.push_back("jump master");
+    supported.push_back("formation");
+    supported.push_back("stance");
+    supported.push_back("sendmail");
+    supported.push_back("mail");
+    supported.push_back("outfit");
+    supported.push_back("go");
+    supported.push_back("debug");
+    supported.push_back("cs");
+    supported.push_back("wts");
+    supported.push_back("hire");
+    supported.push_back("craft");
+    supported.push_back("flag");
+    supported.push_back("range");
+    supported.push_back("ra");
+    supported.push_back("ah");
+    supported.push_back("think");
 }

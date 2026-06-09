@@ -6,7 +6,7 @@ namespace ai
 {
     class WorldPacketTrigger : public Trigger {
     public:
-        WorldPacketTrigger(PlayerbotAI* ai, string command) : Trigger(ai, command), triggered(false) {}
+        WorldPacketTrigger(PlayerbotAI* ai, string command) : Trigger(ai, command), triggered(false), owner(NULL) {}
 
         virtual void ExternalEvent(WorldPacket &packet, Player* owner = NULL)
         {
@@ -18,9 +18,7 @@ namespace ai
         virtual Event Check()
         {
             if (!triggered)
-            {
                 return Event();
-            }
 
             return Event(getName(), packet, owner);
         }

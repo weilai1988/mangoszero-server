@@ -4,6 +4,14 @@
 
 #include "../../LootObjectStack.h"
 #include "../../PlayerbotAIConfig.h"
+#include "../../ServerFacade.h"
+
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
+#include "CellImpl.h"
+
+using namespace ai;
+using namespace MaNGOS;
 
 using namespace ai;
 
@@ -11,9 +19,7 @@ bool AddLootAction::Execute(Event event)
 {
     ObjectGuid guid = event.getObject();
     if (!guid)
-    {
         return false;
-    }
 
     return AI_VALUE(LootObjectStack*, "available loot")->Add(guid);
 }
@@ -24,15 +30,11 @@ bool AddAllLootAction::Execute(Event event)
 
     list<ObjectGuid> gos = context->GetValue<list<ObjectGuid> >("nearest game objects")->Get();
     for (list<ObjectGuid>::iterator i = gos.begin(); i != gos.end(); i++)
-    {
         added |= AddLoot(*i);
-    }
 
     list<ObjectGuid> corpses = context->GetValue<list<ObjectGuid> >("nearest corpses")->Get();
     for (list<ObjectGuid>::iterator i = corpses.begin(); i != corpses.end(); i++)
-    {
         added |= AddLoot(*i);
-    }
 
     return added;
 }
@@ -56,41 +58,33 @@ bool AddGatheringLootAction::AddLoot(ObjectGuid guid)
 {
     LootObject loot(bot, guid);
 
-    if (loot.IsEmpty() || !loot.GetWorldObject(bot))
-    {
+    WorldObject *wo = loot.GetWorldObject(bot);
+    if (loot.IsEmpty() || !wo)
         return false;
-    }
+
+    if (!sServerFacade.IsWithinLOSInMap(bot, wo))
+        return false;
 
     if (loot.skillId == SKILL_NONE)
-    {
         return false;
-    }
-
-    if (bot->GetMap()->IsDungeon() && loot.skillId != SKILL_LOCKPICKING)
-    {
-        return false;
-    }
 
     if (!loot.IsLootPossible(bot))
-    {
         return false;
-    }
 
-    return AddAllLootAction::AddLoot(guid);
-}
-
-bool AddGatheringLootAction::isUseful()
-{
-    // NC gathering is a problem if you are supposed to be following
-    Player* master = ai->GetMaster();
-    if (master && bot->GetGroup())
+    if (sServerFacade.IsDistanceGreaterThan(sServerFacade.GetDistance2d(bot, wo), INTERACTION_DISTANCE))
     {
-        float masterDist = bot->GetDistance(master);
-        if (masterDist > sPlayerbotAIConfig.reactDistance)
+        list<Unit*> targets;
+        MaNGOS::AnyUnfriendlyUnitInObjectRangeCheck u_check(bot, sPlayerbotAIConfig.lootDistance);
+        MaNGOS::UnitListSearcher<MaNGOS::AnyUnfriendlyUnitInObjectRangeCheck> searcher(targets, u_check);
+        Cell::VisitAllObjects(wo, searcher, sPlayerbotAIConfig.spellDistance);
+        if (!targets.empty())
         {
+            ostringstream out;
+            out << "Kill that " << targets.front()->GetName() << " so I can loot freely";
+            ai->TellError(out.str());
             return false;
         }
     }
 
-    return AddAllLootAction::isUseful();
+    return AddAllLootAction::AddLoot(guid);
 }

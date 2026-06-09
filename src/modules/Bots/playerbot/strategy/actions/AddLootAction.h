@@ -24,7 +24,6 @@ namespace ai
     class AddGatheringLootAction : public AddAllLootAction {
     public:
         AddGatheringLootAction(PlayerbotAI* ai) : AddAllLootAction(ai, "add gathering loot") {}
-        virtual bool isUseful();
 
     protected:
         virtual bool AddLoot(ObjectGuid guid);

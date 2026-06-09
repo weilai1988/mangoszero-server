@@ -726,12 +726,21 @@ void Group::SendUpdateToPlayer(Player* pPlayer)
         }
     }
 
+    uint32 visibleMemberCount = 0;
+    for (member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
+    {
+        if (citr->guid == pPlayer->GetObjectGuid())
+            continue;
+
+        ++visibleMemberCount;
+    }
+
     // guess size
     WorldPacket data(SMSG_GROUP_LIST, (1 + 1 + 1 + 4 + GetMembersCount() * 20) + 8 + 1 + 8 + 1);
     data << (uint8)m_groupType;                         // group type
     data << (uint8)(subGroup | (IsAssistant(pPlayer->GetObjectGuid()) ? 0x80 : 0)); // own flags (groupid | (assistant?0x80:0))
 
-    data << uint32(GetMembersCount() - 1);
+    data << visibleMemberCount;
     for (member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         if (citr->guid == pPlayer->GetObjectGuid())
@@ -751,7 +760,7 @@ void Group::SendUpdateToPlayer(Player* pPlayer)
     }
 
     data << m_leaderGuid;                               // leader guid
-    if (GetMembersCount() - 1)
+    if (visibleMemberCount)
     {
         data << uint8(m_lootMethod);                    // loot method
         if (m_lootMethod == MASTER_LOOT)
@@ -1179,6 +1188,18 @@ bool Group::CountRollVote(Player* player, ObjectGuid const& lootedTarget, uint32
 
     CountRollVote(player->GetObjectGuid(), rollI, vote);    // result not related this function result meaning, ignore
     return true;
+}
+
+Roll const* Group::GetRollForLoot(ObjectGuid const& lootedTarget, uint32 itemSlot) const
+{
+    for (Rolls::const_iterator rollI = RollId.begin(); rollI != RollId.end(); ++rollI)
+    {
+        Roll const* roll = *rollI;
+        if (roll && roll->isValid() && roll->lootedTargetGUID == lootedTarget && roll->itemSlot == itemSlot)
+            return roll;
+    }
+
+    return NULL;
 }
 
 /**
@@ -1648,12 +1669,21 @@ void Group::SendUpdate()
         {
             continue;
         }
+        uint32 visibleMemberCount = 0;
+        for (member_citerator citr2 = m_memberSlots.begin(); citr2 != m_memberSlots.end(); ++citr2)
+        {
+            if (citr->guid == citr2->guid)
+                continue;
+
+            ++visibleMemberCount;
+        }
+
         // guess size
         WorldPacket data(SMSG_GROUP_LIST, (1 + 1 + 1 + 4 + GetMembersCount() * 20) + 8 + 1 + 8 + 1);
         data << (uint8)m_groupType;                         // group type
         data << (uint8)(citr->group | (citr->assistant ? 0x80 : 0)); // own flags (groupid | (assistant?0x80:0))
 
-        data << uint32(GetMembersCount() - 1);
+        data << visibleMemberCount;
         for (member_citerator citr2 = m_memberSlots.begin(); citr2 != m_memberSlots.end(); ++citr2)
         {
             if (citr->guid == citr2->guid)
@@ -1672,7 +1702,7 @@ void Group::SendUpdate()
         }
 
         data << m_leaderGuid;                               // leader guid
-        if (GetMembersCount() - 1)
+        if (visibleMemberCount)
         {
             data << uint8(m_lootMethod);                    // loot method
             if (m_lootMethod == MASTER_LOOT)

@@ -4,12 +4,42 @@
 
 namespace ai
 {
-    BUFF_ON_PARTY_TRIGGER(PowerWordFortitudeOnPartyTrigger, "power word: fortitude", "power word: fortitude on party")
-    BUFF_TRIGGER(PowerWordFortitudeTrigger, "power word: fortitude", "power word: fortitude")
+    class PowerWordFortitudeOnPartyTrigger : public BuffOnPartyTrigger {
+    public:
+        PowerWordFortitudeOnPartyTrigger(PlayerbotAI* ai) : BuffOnPartyTrigger(ai, "power word: fortitude", 2) {}
 
-    BUFF_ON_PARTY_TRIGGER(DivineSpiritOnPartyTrigger, "divine spirit", "divine spirit on party")
-    BUFF_TRIGGER(DivineSpiritTrigger, "divine spirit", "divine spirit")
-    BUFF_TRIGGER(InnerFireTrigger, "inner fire", "inner fire")
+        virtual bool IsActive() { return BuffOnPartyTrigger::IsActive() && !ai->HasAura("prayer of fortitude", GetTarget()); }
+    };
+
+    class PowerWordFortitudeTrigger : public BuffTrigger {
+    public:
+        PowerWordFortitudeTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "power word: fortitude", 2) {}
+
+        virtual bool IsActive() { return BuffTrigger::IsActive() && !ai->HasAura("prayer of fortitude", GetTarget()); }
+    };
+
+    class DivineSpiritOnPartyTrigger : public BuffOnPartyTrigger {
+    public:
+        DivineSpiritOnPartyTrigger(PlayerbotAI* ai) : BuffOnPartyTrigger(ai, "divine spirit", 2) {}
+
+        virtual bool IsActive() { return BuffOnPartyTrigger::IsActive() && !ai->HasAura("prayer of spirit", GetTarget()); }
+    };
+
+    class DivineSpiritTrigger : public BuffTrigger {
+    public:
+        DivineSpiritTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "divine spirit", 2) {}
+
+        virtual bool IsActive() { return BuffTrigger::IsActive() && !ai->HasAura("prayer of spirit", GetTarget()); }
+    };
+
+
+    class InnerFireTrigger : public BuffTrigger
+    {
+    public:
+        InnerFireTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "inner fire", 2) {}
+        virtual bool IsActive();
+    };
+
     BUFF_TRIGGER(VampiricEmbraceTrigger, "vampiric embrace", "vampiric embrace")
 
     class PowerWordPainOnAttackerTrigger : public DebuffOnAttackerTrigger
@@ -49,24 +79,36 @@ namespace ai
     class ShadowformTrigger : public BuffTrigger {
     public:
         ShadowformTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "shadowform") {}
-        virtual bool IsActive()
-        {
-            return !ai->HasAura("shadowform", bot);
-        }
+        virtual bool IsActive() { return !ai->HasAura("shadowform", bot); }
     };
 
-    class ShackleUndeadTrigger : public DebuffOnAttackerTrigger
+    class PowerInfusionTrigger : public BuffTrigger
     {
     public:
-        ShackleUndeadTrigger(PlayerbotAI* ai) : DebuffOnAttackerTrigger(ai, "shackle undead") {}
-        virtual bool IsActive()
-        {
-            Unit* target = GetTargetValue()->Get();
-            if (!target || target->GetCreatureType() != CREATURE_TYPE_UNDEAD)
-                return false;
-            return DebuffTrigger::IsActive();
-        }
+        PowerInfusionTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "power infusion") {}
     };
 
-    BUFF_ON_PARTY_TRIGGER(PowerInfusionTrigger, "power infusion", "power infusion")
+    class InnerFocusTrigger : public BuffTrigger
+    {
+    public:
+        InnerFocusTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "inner focus") {}
+    };
+
+    class ShadowProtectionOnPartyTrigger : public BuffOnPartyTrigger
+    {
+    public:
+        ShadowProtectionOnPartyTrigger(PlayerbotAI* ai) : BuffOnPartyTrigger(ai, "shadow protection", 2) {}
+    };
+
+    class ShadowProtectionTrigger : public BuffTrigger
+    {
+    public:
+        ShadowProtectionTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "shadow protection", 2) {}
+    };
+
+    class ShackleUndeadTrigger : public HasCcTargetTrigger
+    {
+    public:
+        ShackleUndeadTrigger(PlayerbotAI* ai) : HasCcTargetTrigger(ai, "shackle undead") {}
+    };
 }

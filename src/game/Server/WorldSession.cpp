@@ -676,6 +676,7 @@ void WorldSession::LogoutPlayer(bool Save)
 
 #ifdef ENABLE_PLAYERBOTS
         uint32 guid = GetPlayer()->GetGUIDLow();
+        bool isPlayerbot = GetPlayer()->GetPlayerbotAI();
 #endif
 
         ///- Used by Eluna
@@ -712,11 +713,21 @@ void WorldSession::LogoutPlayer(bool Save)
 
         static SqlStatementID updChars;
 #ifdef ENABLE_PLAYERBOTS
-        SqlStatement stmt = CharacterDatabase.CreateStatement(updChars, "UPDATE `characters` SET `online` = 0 WHERE `account` = ?");
+        if (isPlayerbot)
+        {
+            static SqlStatementID updBotChar;
+            SqlStatement stmt = CharacterDatabase.CreateStatement(updBotChar, "UPDATE `characters` SET `online` = 0 WHERE `guid` = ?");
+            stmt.PExecute(guid);
+        }
+        else
+        {
+            SqlStatement stmt = CharacterDatabase.CreateStatement(updChars, "UPDATE `characters` SET `online` = 0 WHERE `account` = ?");
+            stmt.PExecute(GetAccountId());
+        }
 #else
-        stmt = CharacterDatabase.CreateStatement(updChars, "UPDATE `characters` SET `online` = 0 WHERE `account` = ?");
-#endif
+        SqlStatement stmt = CharacterDatabase.CreateStatement(updChars, "UPDATE `characters` SET `online` = 0 WHERE `account` = ?");
         stmt.PExecute(GetAccountId());
+#endif
 
         DEBUG_LOG("SESSION: Sent SMSG_LOGOUT_COMPLETE Message");
     }

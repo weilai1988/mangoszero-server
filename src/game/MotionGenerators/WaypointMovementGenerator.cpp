@@ -545,8 +545,10 @@ void FlightPathMovementGenerator::Finalize(Player& player)
     player.Unmount();
     player.RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_CLIENT_CONTROL_LOST | UNIT_FLAG_TAXI_FLIGHT);
 
-    if (player.m_taxi.empty())
+    if (player.m_taxi.empty() || player.m_taxi.IsLastDestination())
     {
+        player.m_taxi.ClearTaxiDestinations();
+
         player.GetHostileRefManager().setOnlineOfflineState(true);
         if (player.pvpInfo.inHostileArea)
         {

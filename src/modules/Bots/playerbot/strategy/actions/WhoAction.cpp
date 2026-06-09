@@ -8,15 +8,11 @@
 
 using namespace ai;
 
-map<uint32, string> WhoAction::skills;
-
 #ifndef WIN32
 inline int strcmpi(const char* s1, const char* s2)
 {
     for (; *s1 && *s2 && (toupper(*s1) == toupper(*s2)); ++s1, ++s2);
-    {
-        return *s1 - *s2;
-    }
+    return *s1 - *s2;
 }
 #endif
 
@@ -24,41 +20,47 @@ bool WhoAction::Execute(Event event)
 {
     Player* owner = event.getOwner();
     if (!owner)
-    {
         return false;
-    }
 
-    string tell = "";
+    ostringstream out;
     string text = event.getParam();
     if (!text.empty())
     {
-        if (!sRandomPlayerbotMgr.IsRandomBot(bot))
-        {
-            return false;
-        }
+        out << QuerySkill(text);
 
-        tell = QuerySkill(text);
-        if (tell.empty())
-        {
-            tell = QueryTrade(text);
-        }
+        if (sRandomPlayerbotMgr.IsRandomBot(bot))
+            out << QueryTrade(text);
     }
     else
     {
-        tell = QuerySpec(text);
+        out << QuerySpec(text);
     }
 
-    if (tell.empty())
+    if (!out.str().empty())
     {
-        return false;
+        if (AreaTableEntry const* areaEntry = GetAreaEntryByAreaID(bot->GetAreaId()))
+        {
+            out << ", (|cffb04040" << areaEntry->area_name[0] << "|r)";
+        }
     }
+
+    if (ai->GetMaster())
+    {
+        if (!out.str().empty()) out << ", ";
+        out << "playing with " << ai->GetMaster()->GetName();
+    }
+
+    string tell = out.str();
+    if (tell.empty())
+        return false;
 
     // ignore random bot chat filter
-    bot->Whisper(tell, LANG_UNIVERSAL, owner->GetObjectGuid());
+	bot->Whisper(tell, LANG_UNIVERSAL, owner->GetObjectGuid());
     return true;
 }
 
-string WhoAction::QueryTrade(string &text)
+
+string WhoAction::QueryTrade(string text)
 {
     ostringstream out;
 
@@ -68,9 +70,7 @@ string WhoAction::QueryTrade(string &text)
         Item* sell = *i;
         int32 sellPrice = auctionbot.GetSellPrice(sell->GetProto()) * sRandomPlayerbotMgr.GetSellMultiplier(bot) * sell->GetCount();
         if (!sellPrice)
-        {
             continue;
-        }
 
         out << "Selling " << chat->formatItem(sell->GetProto(), sell->GetCount()) << " for " << chat->formatMoney(sellPrice);
         return out.str();
@@ -82,39 +82,39 @@ string WhoAction::QueryTrade(string &text)
 string WhoAction::QuerySkill(string text)
 {
     ostringstream out;
-    InitSkills();
+    uint32 skill = chat->parseSkill(text);
+    if (!skill || !ai->HasSkill((SkillType)skill))
+        return "";
 
-    for (map<uint32, string>::iterator i = skills.begin(); i != skills.end(); ++i)
-    {
-        string name = i->second;
-        uint16 skill = i->first;
-        if (!strcmpi(text.c_str(), name.c_str()) && bot->HasSkill(skill))
-        {
-            string skillName = i->second;
-            uint32 spellId = AI_VALUE2(uint32, "spell id", skillName);
-            uint16 value = bot->GetSkillValue(skill);
-            uint16 maxSkill = bot->GetMaxSkillValue(skill);
-            ObjectGuid guid = bot->GetObjectGuid();
-            string data = "0";
-            out << "|cFFFFFF00|Htrade:" << spellId << ":" << value << ":" << maxSkill << ":"
-                    << std::hex << std::uppercase << guid.GetRawValue()
-                    << std::nouppercase << std::dec << ":" << data
-                    << "|h[" << skills[skill] << "]|h|r"
-                    << " |h|cff00ff00" << value << "|h|cffffffff/"
-                    << "|h|cff00ff00" << maxSkill << "|h|cffffffff ";
-        }
-    }
+    string skillName = chat->formatSkill(skill);
+    uint32 spellId = AI_VALUE2(uint32, "spell id", skillName);
+    uint16 value = bot->GetSkillValue(skill);
+#ifdef MANGOS
+    uint16 maxSkill = bot->GetMaxSkillValue(skill);
+#endif
+#ifdef CMANGOS
+    uint16 maxSkill = bot->GetSkillMax(skill);
+#endif
+    ObjectGuid guid = bot->GetObjectGuid();
+    string data = "0";
+    out << "|cFFFFFF00|Htrade:" << spellId << ":" << value << ":" << maxSkill << ":"
+            << std::hex << std::uppercase << guid.GetRawValue()
+            << std::nouppercase << std::dec << ":" << data
+            << "|h[" << skillName << "]|h|r"
+            << " |h|cff00ff00" << value << "|h|cffffffff/"
+            << "|h|cff00ff00" << maxSkill << "|h|cffffffff ";
 
     return out.str();
 }
 
-string WhoAction::QuerySpec(string &text)
+string WhoAction::QuerySpec(string text)
 {
     ostringstream out;
 
     int spec = AiFactory::GetPlayerSpecTab(bot);
-    out << "|h|cffffffff" << chat->formatClass(bot, spec);
-    out << " (|h|cff00ff00" << bot->getLevel() << "|h|cffffffff lvl), ";
+    out << "|h|cffffffff" << chat->formatRace(bot->getRace()) << " [" << (bot->getGender() == GENDER_MALE ? "M" : "F") << "] " << chat->formatClass(bot, spec);
+    out << " (|h|cff00ff00" << (uint32)bot->getLevel() << "|h|cffffffff lvl), ";
+    out << "|h|cff00ff00" << ai->GetEquipGearScore(bot, false, false) << "|h|cffffffff GS (";
 
     ItemCountByQuality visitor;
     IterateItems(&visitor, ITERATE_ITEMS_IN_EQUIP);
@@ -128,20 +128,14 @@ string WhoAction::QuerySpec(string &text)
 
     if (visitor.count[ITEM_QUALITY_RARE])
     {
-        if (needSlash)
-        {
-            out << "/";
-        }
+        if (needSlash) out << "/";
         out << "|h|cff8080ff" << visitor.count[ITEM_QUALITY_RARE] << "|h|cffffffff";
         needSlash = true;
     }
 
     if (visitor.count[ITEM_QUALITY_UNCOMMON])
     {
-        if (needSlash)
-        {
-            out << "/";
-        }
+        if (needSlash) out << "/";
         out << "|h|cff00ff00" << visitor.count[ITEM_QUALITY_UNCOMMON] << "|h|cffffffff";
         needSlash = true;
     }
@@ -149,25 +143,4 @@ string WhoAction::QuerySpec(string &text)
     out << ")";
 
     return out.str();
-}
-
-void WhoAction::InitSkills()
-{
-    if (!skills.empty())
-    {
-        return;
-    }
-
-    skills[SKILL_ALCHEMY] = "Alchemy";
-    skills[SKILL_ENCHANTING] = "Enchanting";
-    skills[SKILL_SKINNING] = "Skinning";
-    skills[SKILL_TAILORING] = "Tailoring";
-    skills[SKILL_LEATHERWORKING] = "Leatherworking";
-    skills[SKILL_ENGINEERING] = "Engineering";
-    skills[SKILL_HERBALISM] = "Herbalism";
-    skills[SKILL_MINING] = "Mining";
-    skills[SKILL_BLACKSMITHING] = "Blacksmithing";
-    skills[SKILL_COOKING] = "Cooking";
-    skills[SKILL_FIRST_AID] = "First Aid";
-    skills[SKILL_FISHING] = "Fishing";
 }

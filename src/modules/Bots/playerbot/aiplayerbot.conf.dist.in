@@ -50,7 +50,7 @@ AiPlayerbot.RandomClassSpecProbability.11.2 = 45
 #
 
 # Prefix for bot chat commands (e.g. follow, stay)
-AiPlayerbot.CommandPrefix = ~
+AiPlayerbot.CommandPrefix =
 
 # Max AI iterations per tick
 #AiPlayerbot.IterationsPerTick = 10
@@ -70,8 +70,11 @@ AiPlayerbot.CommandPrefix = ~
 # Inactivity delay
 #AiPlayerbot.PassiveDelay = 3000
 
+# Minimum delay between repeating actions (chat messages, emotes etc)
+#AiPlayerbot.RepeatDelay = 3000
+
 # Distances
-#AiPlayerbot.SightDistance = 50.0
+#AiPlayerbot.SightDistance = 75.0
 #AiPlayerbot.SpellDistance = 30.0
 #AiPlayerbot.ReactDistance = 150.0
 #AiPlayerbot.GrindDistance = 100.0
@@ -81,8 +84,6 @@ AiPlayerbot.CommandPrefix = ~
 #AiPlayerbot.MeleeDistance = 1.0
 #AiPlayerbot.FollowDistance = 1.5
 #AiPlayerbot.WhisperDistance = 6000.0
-# If enabled, bot suggestion whispers will only target players in the same zone
-#AiPlayerbot.WhisperToZoneOnly = false
 #AiPlayerbot.ContactDistance = 0.5
 
 # Bot can flee for enemy
@@ -90,13 +91,11 @@ AiPlayerbot.CommandPrefix = ~
 
 # Health/Mana levels
 #AiPlayerbot.CriticalHealth = 25
-#AiPlayerbot.LowHealth = 45
-#AiPlayerbot.MediumHealth = 65
-#AiPlayerbot.AlmostFullHealth = 85
-#AiPlayerbot.HungryHealth = 65
+#AiPlayerbot.LowHealth = 60
+#AiPlayerbot.MediumHealth = 80
+#AiPlayerbot.AlmostFullHealth = 92
 #AiPlayerbot.LowMana = 15
 #AiPlayerbot.MediumMana = 40
-#AiPlayerbot.ThirstyMana = 65
 
 # Enable random bot system
 #AiPlayerbot.RandomBotAutologin = 1
@@ -105,12 +104,6 @@ AiPlayerbot.CommandPrefix = ~
 #AiPlayerbot.RandomBotCombatStrategies = +dps,+attack weak
 #AiPlayerbot.RandomBotNonCombatStrategies = +grind,+move random,+loot
 
-# Group strategies (applied by role to all bots when in a group, replacing solo strategies)
-#AiPlayerbot.BotTankStrategies = +tank aoe
-#AiPlayerbot.BotDpsStrategies = +dps assist
-#AiPlayerbot.BotHealStrategies =
-#AiPlayerbot.BotGroupNonCombatStrategies = +follow master,+loot
-
 # Create random bot characters automatically
 #AiPlayerbot.RandomBotAutoCreate = 1
 
@@ -118,7 +111,7 @@ AiPlayerbot.CommandPrefix = ~
 #AiPlayerbot.MinRandomBots = 50
 #AiPlayerbot.MaxRandomBots = 200
 #AiPlayerbot.RandomBotMinLevel = 1
-#AiPlayerbot.RandomBotMaxLevel = 255 (ignored if more than MaxPlayerLevel mangosd.conf value)
+#AiPlayerbot.RandomBotMaxLevel = 60
 
 # Accounts to create for random bots
 #AiPlayerbot.RandomBotAccountPrefix = rndbot
@@ -127,8 +120,27 @@ AiPlayerbot.CommandPrefix = ~
 # Delete all random bot accounts
 #AiPlayerbot.DeleteRandomBotAccounts = 0
 
+# Random bot guild count
+#AiPlayerbot.RandomBotGuildCount = 50
+
+# Guild Task system
+#AiPlayerbot.EnableGuildTasks = 1
+
+# How often tasks are changed
+#AiPlayerbot.MinGuildTaskChangeTime = 172800
+#AiPlayerbot.MaxGuildTaskChangeTime = 432000
+# Mail spam interval
+#AiPlayerbot.MinGuildTaskAdvertisementTime = 300
+#AiPlayerbot.MaxGuildTaskAdvertisementTime = 28800
+# Delay before reward is sent
+#AiPlayerbot.MinGuildTaskRewardTime = 300
+#AiPlayerbot.MaxGuildTaskRewardTime = 3600
+
+# Delete all random bot guilds
+#AiPlayerbot.DeleteRandomBotGuilds = 0
+
 # Maps to teleport random bots
-#AiPlayerbot.RandomBotMaps = 0,1,530,571
+#AiPlayerbot.RandomBotMaps = 0,1
 
 # Change random bot has lower gear
 #AiPlayerbot.RandomGearLoweringChance = 0.15
@@ -139,8 +151,8 @@ AiPlayerbot.CommandPrefix = ~
 # Quest items to leave (do not destroy)
 #AiPlayerbot.RandomBotQuestItems = 6948,5175,5176,5177,5178
 
-# Spells every random bot will learn on randomize (54197 - cold weather flying)
-#AiPlayerbot.RandomBotSpellIds = 54197
+# Spells every random bot will learn on randomize
+#AiPlayerbot.RandomBotSpellIds =
 
 # Enable LFG for random bots
 #AiPlayerbot.RandomBotJoinLfg = 1
@@ -164,13 +176,6 @@ AiPlayerbot.RandomBotTeleLevel = 3
 # Log on all random bots on start
 #AiPlayerbot.RandomBotLoginAtStartup = 1
 
-# Preserve bot group assignments across server restarts
-#AiPlayerbot.RandomBotKeepGroups = 0
-
-# Only tick ungrouped random bots when a real player is in their zone.
-# Reduces CPU load on empty zones at the cost of bots being frozen there.
-#AiPlayerbot.RandomBotActiveZoneOnly = 0
-
 # How far random bots are teleported after death
 #AiPlayerbot.RandomBotTeleportDistance = 1000
 
@@ -182,3 +187,6 @@ AiPlayerbot.RandomBotTeleLevel = 3
 
 # Command server port, 0 - disabled
 #AiPlayerbot.CommandServerPort = 8888
+
+# auto-login all player alts as bots on player login
+#AiPlayerbot.BotAutologin = 0

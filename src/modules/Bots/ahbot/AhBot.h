@@ -6,6 +6,7 @@
 #include "AuctionHouseMgr.h"
 #include "ObjectGuid.h"
 #include "WorldSession.h"
+#include "../botpch.h"
 
 #define MAX_AUCTIONS 3
 #define AHBOT_WON_EXPIRE 0
@@ -14,6 +15,7 @@
 #define AHBOT_WON_BID 3
 #define AHBOT_WON_DELAY 4
 #define AHBOT_SELL_DELAY 5
+#define AHBOT_SENDMAIL 6
 
 namespace ahbot
 {
@@ -24,8 +26,14 @@ namespace ahbot
     public:
         AhBot() : nextAICheckTime(0), updating(false) {}
         virtual ~AhBot();
+        static AhBot& instance()
+        {
+            static AhBot instance;
+            return instance;
+        }
 
     public:
+        static bool HandleAhBotCommand(ChatHandler* handler, char const* args);
         ObjectGuid GetAHBplayerGUID();
         void Init();
         void Update();
@@ -36,12 +44,15 @@ namespace ahbot
 
         double GetCategoryMultiplier(string category)
         {
-            return categoryMultipliers[category];
+            double multiplier = categoryMultipliers[category];
+            return multiplier > 0.0 ? multiplier : 1.0;
         }
 
         int32 GetSellPrice(const ItemPrototype* proto);
         int32 GetBuyPrice(const ItemPrototype* proto);
         double GetRarityPriceMultiplier(const ItemPrototype* proto);
+        double GetQualityPriceMultiplier(const ItemPrototype* proto);
+        bool IsUsedBySkill(const ItemPrototype* proto, uint32 skillId);
 
     private:
         int Answer(int auction, Category* category, ItemBag* inAuctionItems);
@@ -62,11 +73,14 @@ namespace ahbot
                 int& auction);
         void FindMinPrice(const AuctionHouseObject::AuctionEntryMap& auctionEntryMap, AuctionEntry*& entry, Item*& item, uint32* minBid,
                 uint32* minBuyout);
-        uint32 GetBuyTime(uint32 entry, uint32 itemId, uint32 auctionHouse, Category*& category, double priceLevel);
+        uint32 GetBuyTime(uint32 entry, uint32 itemId, uint32 auctionHouse, Category*& category, double priceLevel, bool update = false);
         uint32 GetTime(string category, uint32 id, uint32 auctionHouse, uint32 type);
         void SetTime(string category, uint32 id, uint32 auctionHouse, uint32 type, uint32 value);
-        uint32 GetSellTime(uint32 itemId, uint32 auctionHouse, Category*& category);
-        void PurgeMailedItems();
+        uint32 GetSellTime(uint32 itemId, uint32 auctionHouse, Category*& category, bool update = false);
+        void CheckSendMail(uint32 bidder, uint32 price, AuctionEntry *entry);
+        void Dump();
+        void CleanupPropositions();
+        void DeleteMail(list<uint32> buffer);
 
     public:
         static uint32 auctionIds[MAX_AUCTIONS];
@@ -86,3 +100,4 @@ namespace ahbot
 };
 
 #define auctionbot MaNGOS::Singleton<ahbot::AhBot>::Instance()
+

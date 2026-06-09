@@ -19,6 +19,7 @@ namespace ai
             creators["use game object"] = &WorldPacketTriggerContext::use_game_object;
             creators["complete quest"] = &WorldPacketTriggerContext::complete_quest;
             creators["accept quest"] = &WorldPacketTriggerContext::accept_quest;
+            creators["confirm quest"] = &WorldPacketTriggerContext::confirm_quest;
             creators["quest share"] = &WorldPacketTriggerContext::quest_share;
             creators["loot roll"] = &WorldPacketTriggerContext::loot_roll;
             creators["resurrect request"] = &WorldPacketTriggerContext::resurrect_request;
@@ -43,10 +44,14 @@ namespace ai
             creators["lfg role check"] = &WorldPacketTriggerContext::lfg_role_check;
             creators["lfg leave"] = &WorldPacketTriggerContext::lfg_leave;
             creators["guild invite"] = &WorldPacketTriggerContext::guild_invite;
+            creators["lfg teleport"] = &WorldPacketTriggerContext::lfg_teleport;
+            creators["inventory change failure"] = &WorldPacketTriggerContext::inventory_change_failure;
         }
 
     private:
+        static Trigger* inventory_change_failure(PlayerbotAI* ai) { return new WorldPacketTrigger(ai, "inventory change failure"); }
         static Trigger* guild_invite(PlayerbotAI* ai) { return new WorldPacketTrigger(ai, "guild invite"); }
+        static Trigger* lfg_teleport(PlayerbotAI* ai) { return new WorldPacketTrigger(ai, "lfg teleport"); }
         static Trigger* lfg_leave(PlayerbotAI* ai) { return new WorldPacketTrigger(ai, "lfg leave"); }
         static Trigger* lfg_proposal(PlayerbotAI* ai) { return new WorldPacketTrigger(ai, "lfg proposal"); }
         static Trigger* lfg_role_check(PlayerbotAI* ai) { return new WorldPacketTrigger(ai, "lfg role check"); }
@@ -76,6 +81,7 @@ namespace ai
         static Trigger* use_game_object(PlayerbotAI* ai) { return new WorldPacketTrigger(ai, "use game object"); }
         static Trigger* complete_quest(PlayerbotAI* ai) { return new WorldPacketTrigger(ai, "complete quest"); }
         static Trigger* accept_quest(PlayerbotAI* ai) { return new WorldPacketTrigger(ai, "accept quest"); }
+        static Trigger* confirm_quest(PlayerbotAI* ai) { return new WorldPacketTrigger(ai, "confirm quest"); }
         static Trigger* quest_share(PlayerbotAI* ai) { return new WorldPacketTrigger(ai, "quest share"); }
         static Trigger* loot_roll(PlayerbotAI* ai) { return new WorldPacketTrigger(ai, "loot roll"); }
         static Trigger* taxi(PlayerbotAI* ai) { return new WorldPacketTrigger(ai, "activate taxi"); }

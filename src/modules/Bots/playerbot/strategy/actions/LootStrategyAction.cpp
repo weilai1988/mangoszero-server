@@ -1,111 +1,156 @@
 #include "botpch.h"
 #include "../../playerbot.h"
 #include "LootStrategyAction.h"
+#include "../values/LootStrategyValue.h"
+#include "LootAction.h"
 
 using namespace ai;
+
 
 bool LootStrategyAction::Execute(Event event)
 {
     string strategy = event.getParam();
 
-    LootObjectStack* lootItems = AI_VALUE(LootObjectStack*, "available loot");
-    set<uint32>& alwaysLootItems = AI_VALUE(set<uint32>&, "always loot list");
-    Value<LootStrategy>* lootStrategy = context->GetValue<LootStrategy>("loot strategy");
-
+    Value<LootStrategy*>* lootStrategy = context->GetValue<LootStrategy*>("loot strategy");
     if (strategy == "?")
     {
-        ostringstream out;
-        out << "Loot strategy: ";
-        out << LootStrategy2string(lootStrategy->Get());
-        out << ", always loot items: ";
-
-        for (set<uint32>::iterator i = alwaysLootItems.begin(); i != alwaysLootItems.end(); i++)
         {
-            ItemPrototype const *proto = sItemStorage.LookupEntry<ItemPrototype>(*i);
-            if (!proto)
-            {
-                continue;
-            }
-
-            out << chat->formatItem(proto);
+            ostringstream out;
+            out << "Loot strategy: ";
+            out << lootStrategy->Get()->GetName();
+            ai->TellMaster(out);
         }
-        ai->TellMaster(out);
+
+        TellLootList("always loot list");
+        TellLootList("skip loot list");
+        TellGoList("skip go loot list");
     }
     else
     {
         ItemIds items = chat->parseItems(strategy);
+        list<ObjectGuid> gos = chat->parseGameobjects(strategy);
 
-        if (items.size() == 0)
+        if (items.size() == 0 && gos.size() == 0)
         {
-            lootStrategy->Set(String2LootStrategy(strategy));
+            lootStrategy->Set(LootStrategyValue::instance(strategy));
             ostringstream out;
-            out << "Loot strategy set to " << LootStrategy2string(lootStrategy->Get());
+            out << "Loot strategy set to " << lootStrategy->Get()->GetName();
             ai->TellMaster(out);
             return true;
         }
 
+        bool clear = strategy.size() > 1 && strategy.substr(0, 1) == "!";
         bool remove = strategy.size() > 1 && strategy.substr(0, 1) == "-";
+        bool query = strategy.size() > 1 && strategy.substr(0, 1) == "?";
+        bool add = !clear && !remove && !query;
+        bool changes = false;
+        set<uint32>& alwaysLootItems = AI_VALUE(set<uint32>&, "always loot list");
+        set<uint32>& skipLootItems = AI_VALUE(set<uint32>&, "skip loot list");
         for (ItemIds::iterator i = items.begin(); i != items.end(); i++)
         {
             uint32 itemid = *i;
-            if (remove)
+            if (query)
+            {
+                ItemPrototype const *proto = sObjectMgr.GetItemPrototype(itemid);
+                if (proto)
+                {
+                    ostringstream out;
+                    out << (StoreLootAction::IsLootAllowed(itemid, ai) ? "|cFF000000Will loot " : "|c00FF0000Won't loot ") << ChatHelper::formatItem(proto);
+                    ai->TellMaster(out.str());
+                }
+            }
+
+            if (clear || add)
+            {
+                set<uint32>::iterator j = skipLootItems.find(itemid);
+                if (j != skipLootItems.end()) skipLootItems.erase(j);
+                changes = true;
+            }
+
+            if (clear || remove)
             {
                 set<uint32>::iterator j = alwaysLootItems.find(itemid);
-                if (j != alwaysLootItems.end())
-                {
-                    alwaysLootItems.erase(j);
-                }
-
-                ai->TellMaster("Item(s) removed from always loot list");
+                if (j != alwaysLootItems.end()) alwaysLootItems.erase(j);
+                changes = true;
             }
-            else
+
+            if (remove)
+            {
+                skipLootItems.insert(itemid);
+                changes = true;
+            }
+
+            if (add)
             {
                 alwaysLootItems.insert(itemid);
-                ai->TellMaster("Item(s) added to always loot list");
+                changes = true;
             }
+        }
+
+        set<uint32>& skipGoLootList = AI_VALUE(set<uint32>&, "skip go loot list");
+        for (list<ObjectGuid>::iterator i = gos.begin(); i != gos.end(); ++i)
+        {
+            GameObject *go = ai->GetGameObject(*i);
+            if (!go) continue;
+            uint32 goId = go->GetGOInfo()->id;
+
+            if (clear || add)
+            {
+                set<uint32>::iterator j = skipGoLootList.find(goId);
+                if (j != skipGoLootList.end()) skipGoLootList.erase(j);
+                changes = true;
+            }
+
+            if (remove)
+            {
+                skipGoLootList.insert(goId);
+                changes = true;
+            }
+        }
+
+        if (changes)
+        {
+            TellLootList("always loot list");
+            TellLootList("skip loot list");
+            TellGoList("skip go loot list");
+            AI_VALUE(LootObjectStack*, "available loot")->Clear();
         }
     }
 
     return true;
 }
 
-LootStrategy LootStrategyAction::String2LootStrategy(string strategy)
+void LootStrategyAction::TellLootList(string name)
 {
-    if (strategy == "*" || strategy == "all")
+    set<uint32>& alwaysLootItems = AI_VALUE(set<uint32>&, name);
+    ostringstream out;
+    out << "My " << name << ":";
+
+    for (set<uint32>::iterator i = alwaysLootItems.begin(); i != alwaysLootItems.end(); i++)
     {
-        return LOOTSTRATEGY_ALL;
+        ItemPrototype const *proto = sItemStorage.LookupEntry<ItemPrototype>(*i);
+        if (!proto)
+            continue;
+
+        out << " " << chat->formatItem(proto);
     }
-    else if (strategy == "q" || strategy == "quest")
-    {
-        return LOOTSTRATEGY_QUEST;
-    }
-    else if (strategy == "s" || strategy == "skill")
-    {
-        return LOOTSTRATEGY_SKILL;
-    }
-    else if (strategy == "g" || strategy == "gray")
-    {
-        return LOOTSTRATEGY_GRAY;
-    }
-    else
-    {
-        return LOOTSTRATEGY_NORMAL;
-    }
+    ai->TellMaster(out);
 }
 
-string LootStrategyAction::LootStrategy2string(LootStrategy lootStrategy)
+void LootStrategyAction::TellGoList(string name)
 {
-    switch (lootStrategy)
+    set<uint32>& alwaysLootItems = AI_VALUE(set<uint32>&, name);
+    ostringstream out;
+    out << "My " << name << ":";
+
+    for (set<uint32>::iterator i = alwaysLootItems.begin(); i != alwaysLootItems.end(); i++)
     {
-    case LOOTSTRATEGY_ALL:
-        return "all";
-    case LOOTSTRATEGY_QUEST:
-        return "quest";
-    case LOOTSTRATEGY_SKILL:
-        return "skill";
-    case LOOTSTRATEGY_GRAY:
-        return "gray";
-    default:
-        return "normal";
+        uint32 id = *i;
+        GameObjectInfo const *proto = sGOStorage.LookupEntry<GameObjectInfo>(id);
+        if (!proto)
+            continue;
+
+        out << " |cFFFFFF00|Hfound:" << 0 << ":" << id << ":" <<  "|h[" << proto->name << "]|h|r";
     }
+    ai->TellMaster(out);
 }

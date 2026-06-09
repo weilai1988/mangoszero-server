@@ -53,30 +53,22 @@ void HealShamanStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
         NextAction::array(0, new NextAction("mana tide totem", ACTION_EMERGENCY + 5), NULL)));
 
     triggers.push_back(new TriggerNode(
-        "cleanse spirit poison",
-        NextAction::array(0, new NextAction("cleanse spirit", 24.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "cleanse spirit curse",
-        NextAction::array(0, new NextAction("cleanse spirit", 24.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "cleanse spirit disease",
-        NextAction::array(0, new NextAction("cleanse spirit", 24.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "party member cleanse spirit poison",
-        NextAction::array(0, new NextAction("cleanse spirit poison on party", 23.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "party member cleanse spirit curse",
-        NextAction::array(0, new NextAction("cleanse spirit curse on party", 23.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "party member cleanse spirit disease",
-        NextAction::array(0, new NextAction("cleanse spirit disease on party", 23.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
         "medium aoe",
         NextAction::array(0, new NextAction("healing stream totem", ACTION_LIGHT_HEAL), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "brain party member emergency heal",
+        NextAction::array(0, new NextAction("lesser healing wave on party", ACTION_EMERGENCY + 8), new NextAction("healing wave on party", ACTION_EMERGENCY + 7), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "brain party member critical heal",
+        NextAction::array(0, new NextAction("lesser healing wave on party", ACTION_CRITICAL_HEAL + 8), new NextAction("healing wave on party", ACTION_CRITICAL_HEAL + 7), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "brain party member steady heal",
+        NextAction::array(0, new NextAction("lesser healing wave on party", ACTION_MEDIUM_HEAL + 8), new NextAction("healing wave on party", ACTION_MEDIUM_HEAL + 7), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "party member to heal out of spell range",
+        NextAction::array(0, new NextAction("reach party member to heal", ACTION_CRITICAL_HEAL + 1), NULL)));
 }

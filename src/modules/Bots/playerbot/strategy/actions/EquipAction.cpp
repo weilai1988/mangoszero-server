@@ -9,24 +9,51 @@ using namespace ai;
 bool EquipAction::Execute(Event event)
 {
     string text = event.getParam();
+    if (text == "?")
+    {
+        ListItems();
+        return true;
+    }
 
     ItemIds ids = chat->parseItems(text);
+    EquipItems(ids);
 
+    return true;
+}
+
+void EquipAction::ListItems()
+{
+    ai->TellMaster("=== Equip ===");
+
+    map<uint32, int> items;
+    map<uint32, bool> soulbound;
+    for (int i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; ++i)
+        if (Item* pItem = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+            if (pItem)
+            {
+                items[pItem->GetProto()->ItemId] += pItem->GetCount();
+            }
+
+
+    TellItems(items, soulbound);
+}
+
+void EquipAction::EquipItems(ItemIds ids)
+{
     for (ItemIds::iterator i =ids.begin(); i != ids.end(); i++)
     {
         FindItemByIdVisitor visitor(*i);
         EquipItem(&visitor);
     }
-
-    return true;
 }
 
 void EquipAction::EquipItem(FindItemVisitor* visitor)
 {
     IterateItems(visitor);
     list<Item*> items = visitor->GetResult();
-    if (!items.empty()) EquipItem(**items.begin());
+	if (!items.empty()) EquipItem(**items.begin());
 }
+
 
 void EquipAction::EquipItem(Item& item)
 {
@@ -40,9 +67,9 @@ void EquipAction::EquipItem(Item& item)
     }
     else
     {
-        WorldPacket* const packet = new WorldPacket(CMSG_AUTOEQUIP_ITEM, 2);
-            *packet << bagIndex << slot;
-        bot->GetSession()->QueuePacket(packet);
+        WorldPacket packet(CMSG_AUTOEQUIP_ITEM, 2);
+        packet << bagIndex << slot;
+        bot->GetSession()->HandleAutoEquipItemOpcode(packet);
     }
 
     ostringstream out; out << "equipping " << chat->formatItem(item.GetProto());

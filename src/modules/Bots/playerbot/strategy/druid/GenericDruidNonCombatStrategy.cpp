@@ -52,10 +52,6 @@ void GenericDruidNonCombatStrategy::InitTriggers(std::list<TriggerNode*> &trigge
         NextAction::array(0, new NextAction("mark of the wild", 12.0f), NULL)));
 
     triggers.push_back(new TriggerNode(
-        "mark of the wild on party",
-        NextAction::array(0, new NextAction("mark of the wild on party", 11.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
         "cure poison",
         NextAction::array(0, new NextAction("abolish poison", 21.0f), NULL)));
 
@@ -63,19 +59,20 @@ void GenericDruidNonCombatStrategy::InitTriggers(std::list<TriggerNode*> &trigge
         "party member cure poison",
         NextAction::array(0, new NextAction("abolish poison on party", 20.0f), NULL)));
 
-    triggers.push_back(new TriggerNode(
-        "remove curse",
-        NextAction::array(0, new NextAction("remove curse", ACTION_DISPEL + 2), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "remove curse on party",
-        NextAction::array(0, new NextAction("remove curse on party", ACTION_DISPEL + 1), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "party member dead",
-        NextAction::array(0, new NextAction("revive", 22.0f), NULL)));
+	triggers.push_back(new TriggerNode(
+		"party member dead",
+		NextAction::array(0, new NextAction("revive", ACTION_EMERGENCY + 4), NULL)));
 
     triggers.push_back(new TriggerNode(
         "low mana",
         NextAction::array(0, new NextAction("innervate", ACTION_EMERGENCY + 5), NULL)));
+}
+
+void GenericDruidBuffStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
+{
+    NonCombatStrategy::InitTriggers(triggers);
+
+    triggers.push_back(new TriggerNode(
+        "mark of the wild on party",
+        NextAction::array(0, new NextAction("mark of the wild on party", 36.0f), NULL)));
 }

@@ -1,49 +1,34 @@
 #pragma once
-#include "Config/Config.h"
 #include "Category.h"
+
+struct SpellEntry;
 
 using namespace std;
 
 namespace ahbot
 {
-    class Engineering : public Trade
+    class TradeSkill : public Trade
     {
     public:
-        Engineering() : Trade() {}
+        TradeSkill(uint32 skill, bool reagent) : Trade(), skill(skill), reagent(reagent), rebuildRequired(false) {}
 
     public:
-        virtual bool Contains(ItemPrototype const* proto)
-        {
-            return Trade::Contains(proto) &&
-                    (proto->SubClass == ITEM_SUBCLASS_PARTS ||
-                    proto->SubClass == ITEM_SUBCLASS_DEVICES ||
-                    proto->SubClass == ITEM_SUBCLASS_EXPLOSIVES);
-        }
+        virtual bool Contains(ItemPrototype const* proto);
+        virtual string GetName();
+        virtual string GetLabel();
+        virtual uint32 GetSkillId() { return skill; }
+        virtual void LoadCache();
+        virtual void SaveCache();
 
-        virtual string GetName()
-        {
-            return "Engineering";
-        }
+    private:
+        bool ContainsInternal(ItemPrototype const* proto);
+        bool IsCraftedBySpell(ItemPrototype const* proto, uint32 spellId);
+        bool IsCraftedBy(ItemPrototype const* proto, uint32 craftId);
+        bool IsCraftedBySpell(ItemPrototype const* proto, SpellEntry const *entry);
+        uint32 skill;
+        map<uint32, bool> itemCache;
+        bool reagent;
+        bool rebuildRequired;
     };
 
-    class OtherTrade : public Trade
-    {
-    public:
-        OtherTrade() : Trade() {}
-
-    public:
-        virtual bool Contains(ItemPrototype const* proto)
-        {
-            return Trade::Contains(proto) &&
-                proto->SubClass != ITEM_SUBCLASS_PARTS &&
-                proto->SubClass != ITEM_SUBCLASS_DEVICES &&
-                proto->SubClass != ITEM_SUBCLASS_EXPLOSIVES;
-        }
-
-        virtual string GetName()
-        {
-            return "OtherTrade";
-        }
-
-    };
 };

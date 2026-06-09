@@ -4,6 +4,7 @@
 
 using namespace ai;
 
+
 void MeleeCombatStrategy::InitTriggers(list<TriggerNode*> &triggers)
 {
     CombatStrategy::InitTriggers(triggers);
@@ -19,4 +20,13 @@ void MeleeCombatStrategy::InitTriggers(list<TriggerNode*> &triggers)
     triggers.push_back(new TriggerNode(
         "enemy too close for melee",
         NextAction::array(0, new NextAction("move out of enemy contact", ACTION_NORMAL + 8), NULL)));
+}
+
+void SetBehindCombatStrategy::InitTriggers(list<TriggerNode*> &triggers)
+{
+    CombatStrategy::InitTriggers(triggers);
+
+    triggers.push_back(new TriggerNode(
+        "not behind target",
+        NextAction::array(0, new NextAction("set behind", ACTION_NORMAL + 9), NULL)));
 }

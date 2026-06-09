@@ -2,6 +2,7 @@
 #include "../../playerbot.h"
 #include "CcTargetValue.h"
 #include "../../PlayerbotAIConfig.h"
+#include "../../ServerFacade.h"
 #include "../Action.h"
 
 using namespace ai;
@@ -19,39 +20,33 @@ public:
     virtual void CheckAttacker(Unit* creature, ThreatManager* threatManager)
     {
         Player* bot = ai->GetBot();
-        if (*ai->GetAiObjectContext()->GetValue<Unit*>("current target") == creature)
+
+        if (!ai->CanCastSpell(spell, creature))
+            return;
+
+        if (*ai->GetAiObjectContext()->GetValue<Unit*>("rti cc target") == creature)
         {
+            result = creature;
             return;
         }
+
+        if (*ai->GetAiObjectContext()->GetValue<Unit*>("current target") == creature)
+            return;
 
         uint8 health = creature->GetHealthPercent();
         if (health < sPlayerbotAIConfig.mediumHealth)
-        {
             return;
-        }
 
-        if (!ai->CanCastSpell(spell, creature))
-        {
-            return;
-        }
-
-        if (*ai->GetAiObjectContext()->GetValue<Unit*>("rti target") == creature)
-        {
-            result = creature;
-            return;
-        }
-
-        float minDistance = sPlayerbotAIConfig.spellDistance;
+        float minDistance = ai->GetRange("spell");
         Group* group = bot->GetGroup();
         if (!group)
-        {
             return;
-        }
 
-        if (group->GetTargetIcon(4) == creature->GetObjectGuid())
+        if (*ai->GetAiObjectContext()->GetValue<uint8>("aoe count") > 2)
         {
-            result = creature;
-            return;
+            WorldLocation aoe = *ai->GetAiObjectContext()->GetValue<WorldLocation>("aoe position");
+            if (sServerFacade.IsDistanceLessOrEqualThan(sServerFacade.GetDistance2d(creature, aoe.coord_x, aoe.coord_y), sPlayerbotAIConfig.aoeRadius))
+                return;
         }
 
         int tankCount, dpsCount;
@@ -66,21 +61,15 @@ public:
         for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
         {
             Player *member = sObjectMgr.GetPlayer(itr->guid);
-            if ( !member || !member->IsAlive() || member == bot)
-            {
+            if( !member || !sServerFacade.IsAlive(member) || member == bot)
                 continue;
-            }
 
             if (!ai->IsTank(member))
-            {
                 continue;
-            }
 
             float distance = member->GetDistance(creature);
             if (distance < minDistance)
-            {
                 minDistance = distance;
-            }
         }
 
         if (!result || minDistance > maxDistance)

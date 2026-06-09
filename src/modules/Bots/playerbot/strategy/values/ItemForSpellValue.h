@@ -6,8 +6,8 @@ namespace ai
 {
 
     class ItemForSpellValue : public CalculatedValue<Item*>, public Qualified
-    {
-    public:
+	{
+	public:
         ItemForSpellValue(PlayerbotAI* ai) : CalculatedValue<Item*>(ai) {}
 
     public:
@@ -15,7 +15,6 @@ namespace ai
 
     private:
         Item* GetItemFitsToSpellRequirements(uint8 slot, SpellEntry const *spellInfo);
-        uint32 GetPetFoodScore(Pet *pet, Item *item, SpellEntry const *spellInfo);
 
     };
 }

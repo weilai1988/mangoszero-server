@@ -51,40 +51,13 @@ void GenericMageNonCombatStrategy::InitTriggers(std::list<TriggerNode*> &trigger
         "arcane intellect",
         NextAction::array(0, new NextAction("arcane intellect", 21.0f), NULL)));
 
-    triggers.push_back(new TriggerNode(
-        "arcane intellect on party",
-        NextAction::array(0,
-            new NextAction("arcane brilliance", 21.0f),
-            new NextAction("arcane intellect on party", 20.0f),
-            NULL)));
+	triggers.push_back(new TriggerNode(
+		"no drink",
+		NextAction::array(0, new NextAction("conjure water", 16.0f), NULL)));
 
-    triggers.push_back(new TriggerNode(
-        "no conjured drink",
-        NextAction::array(0, new NextAction("conjure water", 16.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "no conjured food",
-        NextAction::array(0, new NextAction("conjure food", 15.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "no mana gem",
-        NextAction::array(0, new NextAction("conjure mana gem", 14.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "remove curse",
-        NextAction::array(0, new NextAction("remove curse", 41.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "remove curse on party",
-        NextAction::array(0, new NextAction("remove curse on party", 40.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "party member needs food",
-        NextAction::array(0, new NextAction("give conjured food", 13.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "party member needs water",
-        NextAction::array(0, new NextAction("give conjured water", 13.0f), NULL)));
+	triggers.push_back(new TriggerNode(
+		"no food",
+		NextAction::array(0, new NextAction("conjure food", 15.0f), NULL)));
 }
 
 void MageBuffManaStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
@@ -99,4 +72,19 @@ void MageBuffDpsStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
     triggers.push_back(new TriggerNode(
         "mage armor",
         NextAction::array(0, new NextAction("molten armor", 19.0f), NULL)));
+}
+
+void MageBuffStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "arcane intellect on party",
+        NextAction::array(0, new NextAction("arcane intellect on party", 36.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "give water",
+        NextAction::array(0, new NextAction("give water", 14.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "give food",
+        NextAction::array(0, new NextAction("give food", 13.0f), NULL)));
 }

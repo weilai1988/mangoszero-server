@@ -19,15 +19,13 @@ public:
         creators["rebirth"] = &rebirth;
         creators["entangling roots on cc"] = &entangling_roots_on_cc;
         creators["innervate"] = &innervate;
-        creators["remove curse"] = &remove_curse;
-        creators["remove curse on party"] = &remove_curse_on_party;
     }
 
 private:
     static ActionNode* melee(PlayerbotAI* ai)
     {
         return new ActionNode ("melee",
-            /*P*/ NextAction::array(0, new NextAction("reach melee"), NULL),
+            /*P*/ NULL,
             /*A*/ NULL,
             /*C*/ NULL);
     }
@@ -87,20 +85,6 @@ private:
             /*A*/ NextAction::array(0, new NextAction("mana potion"), NULL),
             /*C*/ NULL);
     }
-    static ActionNode* remove_curse(PlayerbotAI* ai)
-    {
-        return new ActionNode ("remove curse",
-            /*P*/ NextAction::array(0, new NextAction("caster form"), NULL),
-            /*A*/ NULL,
-            /*C*/ NULL);
-    }
-    static ActionNode* remove_curse_on_party(PlayerbotAI* ai)
-    {
-        return new ActionNode ("remove curse on party",
-            /*P*/ NextAction::array(0, new NextAction("caster form"), NULL),
-            /*A*/ NULL,
-            /*C*/ NULL);
-    }
 };
 
 GenericDruidStrategy::GenericDruidStrategy(PlayerbotAI* ai) : CombatStrategy(ai)
@@ -120,6 +104,7 @@ void GenericDruidStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
         "party member low health",
         NextAction::array(0, new NextAction("regrowth on party", ACTION_MEDIUM_HEAL + 1), NULL)));
 
+
     triggers.push_back(new TriggerNode(
         "critical health",
         NextAction::array(0, new NextAction("regrowth", ACTION_CRITICAL_HEAL + 2), new NextAction("healing touch", ACTION_CRITICAL_HEAL + 2), NULL)));
@@ -128,6 +113,18 @@ void GenericDruidStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
         "party member critical health",
         NextAction::array(0,  new NextAction("regrowth on party", ACTION_CRITICAL_HEAL + 1), new NextAction("healing touch on party", ACTION_CRITICAL_HEAL + 1), NULL)));
 
+
+	triggers.push_back(new TriggerNode(
+		"party member dead",
+		NextAction::array(0, new NextAction("rebirth", ACTION_HIGH + 1), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "low mana",
+        NextAction::array(0, new NextAction("innervate", ACTION_EMERGENCY + 5), NULL)));
+}
+
+void DruidCureStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
+{
     triggers.push_back(new TriggerNode(
         "cure poison",
         NextAction::array(0, new NextAction("abolish poison", ACTION_DISPEL + 2), NULL)));
@@ -135,20 +132,22 @@ void GenericDruidStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
     triggers.push_back(new TriggerNode(
         "party member cure poison",
         NextAction::array(0, new NextAction("abolish poison on party", ACTION_DISPEL + 1), NULL)));
+}
+
+void DruidBoostStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "nature's swiftness",
+        NextAction::array(0, new NextAction("nature's swiftness", ACTION_HIGH + 9), NULL)));
+}
+
+void DruidCcStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "entangling roots",
+        NextAction::array(0, new NextAction("entangling roots on cc", ACTION_HIGH + 2), NULL)));
 
     triggers.push_back(new TriggerNode(
-        "remove curse",
-        NextAction::array(0, new NextAction("remove curse", ACTION_DISPEL + 2), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "remove curse on party",
-        NextAction::array(0, new NextAction("remove curse on party", ACTION_DISPEL + 1), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "party member dead",
-        NextAction::array(0, new NextAction("rebirth", ACTION_HIGH + 1), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "low mana",
-        NextAction::array(0, new NextAction("innervate", ACTION_EMERGENCY + 5), NULL)));
+        "hibernate",
+        NextAction::array(0, new NextAction("hibernate on cc", ACTION_HIGH + 3), NULL)));
 }

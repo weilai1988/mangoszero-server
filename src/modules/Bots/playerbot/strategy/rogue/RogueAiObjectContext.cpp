@@ -2,15 +2,14 @@
 #include "../../playerbot.h"
 #include "RogueActions.h"
 #include "RogueTriggers.h"
-#include "../triggers/ChatCommandTrigger.h"
 #include "RogueAiObjectContext.h"
 #include "DpsRogueStrategy.h"
 #include "GenericRogueNonCombatStrategy.h"
-#include "RogueAmbushStrategy.h"
-#include "RogueSapStrategy.h"
+#include "../generic/PullStrategy.h"
 #include "../NamedObjectContext.h"
 
 using namespace ai;
+
 
 namespace ai
 {
@@ -25,15 +24,17 @@ namespace ai
             {
                 creators["dps"] = &rogue::StrategyFactoryInternal::dps;
                 creators["nc"] = &rogue::StrategyFactoryInternal::nc;
-                creators["ambush"] = &rogue::StrategyFactoryInternal::ambush;
-                creators["sap"] = &rogue::StrategyFactoryInternal::sap_strategy;
+                creators["pull"] = &rogue::StrategyFactoryInternal::pull;
+                creators["aoe"] = &rogue::StrategyFactoryInternal::aoe;
+                creators["boost"] = &rogue::StrategyFactoryInternal::boost;
             }
 
         private:
+            static Strategy* boost(PlayerbotAI* ai) { return new RogueBoostStrategy(ai); }
+            static Strategy* aoe(PlayerbotAI* ai) { return new RogueAoeStrategy(ai); }
             static Strategy* dps(PlayerbotAI* ai) { return new DpsRogueStrategy(ai); }
             static Strategy* nc(PlayerbotAI* ai) { return new GenericRogueNonCombatStrategy(ai); }
-            static Strategy* ambush(PlayerbotAI* ai) { return new RogueAmbushStrategy(ai); }
-            static Strategy* sap_strategy(PlayerbotAI* ai) { return new RogueSapStrategy(ai); }
+            static Strategy* pull(PlayerbotAI* ai) { return new PullStrategy(ai, "shoot"); }
         };
     };
 };
@@ -54,24 +55,21 @@ namespace ai
                 creators["slice and dice"] = &TriggerFactoryInternal::slice_and_dice;
                 creators["expose armor"] = &TriggerFactoryInternal::expose_armor;
                 creators["kick on enemy healer"] = &TriggerFactoryInternal::kick_on_enemy_healer;
-                creators["combo points for target available"] = &TriggerFactoryInternal::combo_points_for_target_available;
-                creators["stealth"] = &TriggerFactoryInternal::stealth;
-                creators["sap"] = &TriggerFactoryInternal::sap;
+                creators["adrenaline rush"] = &TriggerFactoryInternal::adrenaline_rush;
 
             }
 
         private:
+            static Trigger* adrenaline_rush(PlayerbotAI* ai) { return new AdrenalineRushTrigger(ai); }
             static Trigger* kick(PlayerbotAI* ai) { return new KickInterruptSpellTrigger(ai); }
             static Trigger* rupture(PlayerbotAI* ai) { return new RuptureTrigger(ai); }
             static Trigger* slice_and_dice(PlayerbotAI* ai) { return new SliceAndDiceTrigger(ai); }
             static Trigger* expose_armor(PlayerbotAI* ai) { return new ExposeArmorTrigger(ai); }
             static Trigger* kick_on_enemy_healer(PlayerbotAI* ai) { return new KickInterruptEnemyHealerSpellTrigger(ai); }
-            static Trigger* combo_points_for_target_available(PlayerbotAI* ai) { return new ComboPointsForTargetAvailableTrigger(ai); }
-            static Trigger* stealth(PlayerbotAI* ai) { return new StealthTrigger(ai); }
-            static Trigger* sap(PlayerbotAI* ai) { return new ChatCommandTrigger(ai, "sap"); }
         };
     };
 };
+
 
 namespace ai
 {
@@ -98,17 +96,13 @@ namespace ai
                 creators["backstab"] = &AiObjectContextInternal::backstab;
                 creators["expose armor"] = &AiObjectContextInternal::expose_armor;
                 creators["kick on enemy healer"] = &AiObjectContextInternal::kick_on_enemy_healer;
-                creators["sap"] = &AiObjectContextInternal::sap;
-                creators["begin sap"] = &AiObjectContextInternal::begin_sap;
-                creators["end sap"] = &AiObjectContextInternal::end_sap;
-                creators["garrote"] = &AiObjectContextInternal::garrote;
-                creators["cheap shot"] = &AiObjectContextInternal::cheap_shot;
-                creators["stealth"] = &AiObjectContextInternal::stealth;
-                creators["begin ambush"] = &AiObjectContextInternal::begin_ambush;
-                creators["end ambush"] = &AiObjectContextInternal::end_ambush;
+                creators["blade flurry"] = &AiObjectContextInternal::blade_flurry;
+                creators["adrenaline rush"] = &AiObjectContextInternal::adrenaline_rush;
             }
 
         private:
+            static Action* adrenaline_rush(PlayerbotAI* ai) { return new CastAdrenalineRushAction(ai); }
+            static Action* blade_flurry(PlayerbotAI* ai) { return new CastBladeFlurryAction(ai); }
             static Action* riposte(PlayerbotAI* ai) { return new CastRiposteAction(ai); }
             static Action* mutilate(PlayerbotAI* ai) { return new CastMutilateAction(ai); }
             static Action* sinister_strike(PlayerbotAI* ai) { return new CastSinisterStrikeAction(ai); }
@@ -123,14 +117,6 @@ namespace ai
             static Action* backstab(PlayerbotAI* ai) { return new CastBackstabAction(ai); }
             static Action* expose_armor(PlayerbotAI* ai) { return new CastExposeArmorAction(ai); }
             static Action* kick_on_enemy_healer(PlayerbotAI* ai) { return new CastKickOnEnemyHealerAction(ai); }
-            static Action* sap(PlayerbotAI* ai) { return new CastSapAction(ai); }
-            static Action* begin_sap(PlayerbotAI* ai) { return new BeginSapAction(ai); }
-            static Action* end_sap(PlayerbotAI* ai) { return new EndSapAction(ai); }
-            static Action* garrote(PlayerbotAI* ai) { return new CastGarroteAction(ai); }
-            static Action* cheap_shot(PlayerbotAI* ai) { return new CastCheapShotAction(ai); }
-            static Action* stealth(PlayerbotAI* ai) { return new CastStealthAction(ai); }
-            static Action* begin_ambush(PlayerbotAI* ai) { return new BeginAmbushAction(ai); }
-            static Action* end_ambush(PlayerbotAI* ai) { return new RogueEndAmbushAction(ai); }
         };
     };
 };

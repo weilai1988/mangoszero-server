@@ -3,198 +3,191 @@
 
 namespace ai
 {
-    // Base for judgement actions that guards against judging with no active seal
-    class CastJudgementBaseAction : public CastMeleeSpellAction
+    class CastJudgementOfLightAction : public CastMeleeSpellAction
     {
     public:
-        CastJudgementBaseAction(PlayerbotAI* ai, string spell) : CastMeleeSpellAction(ai, spell) {}
-        virtual bool isPossible()
-        {
-            Unit* bot = ai->GetBot();
-            if (!ai->HasAura("seal of righteousness", bot) &&
-                !ai->HasAura("seal of the crusader", bot) &&
-                !ai->HasAura("seal of command", bot) &&
-                !ai->HasAura("seal of vengeance", bot) &&
-                !ai->HasAura("seal of justice", bot) &&
-                !ai->HasAura("seal of light", bot) &&
-                !ai->HasAura("seal of wisdom", bot))
-                return false;
-            return CastMeleeSpellAction::isPossible();
-        }
+        CastJudgementOfLightAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "judgement of light") {}
     };
 
-    class CastJudgementOfLightAction : public CastJudgementBaseAction
+    class CastJudgementOfWisdomAction : public CastMeleeSpellAction
     {
     public:
-        CastJudgementOfLightAction(PlayerbotAI* ai) : CastJudgementBaseAction(ai, "judgement of light") {}
+        CastJudgementOfWisdomAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "judgement of wisdom") {}
     };
 
-    class CastJudgementOfWisdomAction : public CastJudgementBaseAction
+    class CastJudgementOfJusticeAction : public CastMeleeSpellAction
     {
     public:
-        CastJudgementOfWisdomAction(PlayerbotAI* ai) : CastJudgementBaseAction(ai, "judgement of wisdom") {}
+        CastJudgementOfJusticeAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "judgement of justice") {}
     };
 
-    class CastJudgementOfJusticeAction : public CastJudgementBaseAction
+	class CastRighteousFuryAction : public CastBuffSpellAction
+	{
+	public:
+		CastRighteousFuryAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "righteous fury") {}
+	};
+
+	class CastDevotionAuraAction : public CastBuffSpellAction
+	{
+	public:
+		CastDevotionAuraAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "devotion aura") {}
+	};
+
+	class CastRetributionAuraAction : public CastBuffSpellAction
+	{
+	public:
+		CastRetributionAuraAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "retribution aura") {}
+	};
+
+	class CastConcentrationAuraAction : public CastBuffSpellAction
+	{
+	public:
+		CastConcentrationAuraAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "concentration aura") {}
+	};
+
+	class CastDivineStormAction : public CastBuffSpellAction
+	{
+	public:
+		CastDivineStormAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "divine storm") {}
+	};
+
+	class CastCrusaderStrikeAction : public CastMeleeSpellAction
+	{
+	public:
+		CastCrusaderStrikeAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "crusader strike") {}
+	};
+
+	class CastShadowResistanceAuraAction : public CastBuffSpellAction
+	{
+	public:
+		CastShadowResistanceAuraAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "shadow resistance aura") {}
+	};
+
+	class CastFrostResistanceAuraAction : public CastBuffSpellAction
+	{
+	public:
+		CastFrostResistanceAuraAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "frost resistance aura") {}
+	};
+
+	class CastFireResistanceAuraAction : public CastBuffSpellAction
+	{
+	public:
+		CastFireResistanceAuraAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "fire resistance aura") {}
+	};
+
+	class CastCrusaderAuraAction : public CastBuffSpellAction
+	{
+	public:
+		CastCrusaderAuraAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "crusader aura") {}
+	};
+
+    class CastSealSpellAction : public CastBuffSpellAction
     {
     public:
-        CastJudgementOfJusticeAction(PlayerbotAI* ai) : CastJudgementBaseAction(ai, "judgement of justice") {}
+        CastSealSpellAction(PlayerbotAI* ai, string name) : CastBuffSpellAction(ai, name) {}
+        virtual bool isUseful() { return AI_VALUE2(bool, "combat", "self target"); }
     };
 
-    class CastRighteousFuryAction : public CastBuffSpellAction
+	class CastSealOfRighteousnessAction : public CastSealSpellAction
+	{
+	public:
+		CastSealOfRighteousnessAction(PlayerbotAI* ai) : CastSealSpellAction(ai, "seal of righteousness") {}
+	};
+
+	class CastSealOfJusticeAction : public CastSealSpellAction
+	{
+	public:
+		CastSealOfJusticeAction(PlayerbotAI* ai) : CastSealSpellAction(ai, "seal of justice") {}
+	};
+
+
+	class CastSealOfLightAction : public CastSealSpellAction
+	{
+	public:
+		CastSealOfLightAction(PlayerbotAI* ai) : CastSealSpellAction(ai, "seal of light") {}
+	};
+
+	class CastSealOfWisdomAction : public CastSealSpellAction
+	{
+	public:
+		CastSealOfWisdomAction(PlayerbotAI* ai) : CastSealSpellAction(ai, "seal of wisdom") {}
+	};
+
+	class CastSealOfCommandAction : public CastSealSpellAction
+	{
+	public:
+		CastSealOfCommandAction(PlayerbotAI* ai) : CastSealSpellAction(ai, "seal of command") {}
+	};
+
+	class CastSealOfVengeanceAction : public CastSealSpellAction
+	{
+	public:
+	    CastSealOfVengeanceAction(PlayerbotAI* ai) : CastSealSpellAction(ai, "seal of vengeance") {}
+	};
+
+
+	class CastBlessingOfMightAction : public CastBuffSpellAction
+	{
+	public:
+		CastBlessingOfMightAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "blessing of might") {}
+		virtual bool Execute(Event event);
+	};
+
+    class CastBlessingOnPartyAction : public BuffOnPartyAction
     {
     public:
-        CastRighteousFuryAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "righteous fury") {}
+	    CastBlessingOnPartyAction(PlayerbotAI* ai, string name) : BuffOnPartyAction(ai, name) {}
+        virtual Value<Unit*>* GetTargetValue();
     };
 
-    class CastDevotionAuraAction : public CastBuffSpellAction
-    {
-    public:
-        CastDevotionAuraAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "devotion aura") {}
-    };
+	class CastBlessingOfMightOnPartyAction : public CastBlessingOnPartyAction
+	{
+	public:
+		CastBlessingOfMightOnPartyAction(PlayerbotAI* ai) : CastBlessingOnPartyAction(ai, "blessing of might") {}
+        virtual string getName() { return "blessing of might on party";}
+        virtual bool Execute(Event event);
+	};
 
-    class CastRetributionAuraAction : public CastBuffSpellAction
-    {
-    public:
-        CastRetributionAuraAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "retribution aura") {}
-    };
+	class CastBlessingOfWisdomAction : public CastBuffSpellAction
+	{
+	public:
+		CastBlessingOfWisdomAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "blessing of wisdom") {}
+		virtual bool Execute(Event event);
+	};
 
-    class CastConcentrationAuraAction : public CastBuffSpellAction
-    {
-    public:
-        CastConcentrationAuraAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "concentration aura") {}
-    };
+	class CastBlessingOfWisdomOnPartyAction : public CastBlessingOnPartyAction
+	{
+	public:
+		CastBlessingOfWisdomOnPartyAction(PlayerbotAI* ai) : CastBlessingOnPartyAction(ai, "blessing of wisdom") {}
+        virtual string getName() { return "blessing of wisdom on party";}
+        virtual bool Execute(Event event);
+	};
 
-    class CastShadowResistanceAuraAction : public CastBuffSpellAction
-    {
-    public:
-        CastShadowResistanceAuraAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "shadow resistance aura") {}
-    };
+	class CastBlessingOfKingsAction : public CastBuffSpellAction
+	{
+	public:
+		CastBlessingOfKingsAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "blessing of kings") {}
+	};
 
-    class CastFrostResistanceAuraAction : public CastBuffSpellAction
-    {
-    public:
-        CastFrostResistanceAuraAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "frost resistance aura") {}
-    };
+	class CastBlessingOfKingsOnPartyAction : public CastBlessingOnPartyAction
+	{
+	public:
+		CastBlessingOfKingsOnPartyAction(PlayerbotAI* ai) : CastBlessingOnPartyAction(ai, "blessing of kings") {}
+        virtual string getName() { return "blessing of kings on party";}
+	};
 
-    class CastFireResistanceAuraAction : public CastBuffSpellAction
-    {
-    public:
-        CastFireResistanceAuraAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "fire resistance aura") {}
-    };
+	class CastBlessingOfSanctuaryAction : public CastBuffSpellAction
+	{
+	public:
+		CastBlessingOfSanctuaryAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "blessing of sanctuary") {}
+	};
 
-    class CastSealOfRighteousnessAction : public CastBuffSpellAction
-    {
-    public:
-        CastSealOfRighteousnessAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "seal of righteousness") {}
-    };
-
-    class CastSealOfTheCrusaderAction : public CastBuffSpellAction
-    {
-    public:
-        CastSealOfTheCrusaderAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "seal of the crusader") {}
-        virtual bool isPossible()
-        {
-            Unit* target = AI_VALUE(Unit*, "current target");
-            if (target && ai->HasAura("judgement of the crusader", target))
-                return false;
-            return CastBuffSpellAction::isPossible();
-        }
-    };
-
-    class CastJudgementAction : public CastJudgementBaseAction
-    {
-    public:
-        CastJudgementAction(PlayerbotAI* ai) : CastJudgementBaseAction(ai, "judgement") {}
-    };
-
-    class CastSealOfJusticeAction : public CastBuffSpellAction
-    {
-    public:
-        CastSealOfJusticeAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "seal of justice") {}
-    };
-
-    class CastSealOfLightAction : public CastBuffSpellAction
-    {
-    public:
-        CastSealOfLightAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "seal of light") {}
-    };
-
-    class CastSealOfWisdomAction : public CastBuffSpellAction
-    {
-    public:
-        CastSealOfWisdomAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "seal of wisdom") {}
-    };
-
-    class CastSealOfCommandAction : public CastBuffSpellAction
-    {
-    public:
-        CastSealOfCommandAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "seal of command") {}
-    };
-
-    class CastBlessingOfMightAction : public CastBuffSpellAction
-    {
-    public:
-        CastBlessingOfMightAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "blessing of might") {}
-    };
-
-    class CastBlessingOfMightOnPartyAction : public BuffOnPartyAction
-    {
-    public:
-        CastBlessingOfMightOnPartyAction(PlayerbotAI* ai) : BuffOnPartyAction(ai, "blessing of might") {}
-        virtual string getName()
-        {
-            return "blessing of might on party";
-        }
-    };
-
-    class CastBlessingOfWisdomAction : public CastBuffSpellAction
-    {
-    public:
-        CastBlessingOfWisdomAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "blessing of wisdom") {}
-    };
-
-    class CastBlessingOfWisdomOnPartyAction : public BuffOnPartyAction
-    {
-    public:
-        CastBlessingOfWisdomOnPartyAction(PlayerbotAI* ai) : BuffOnPartyAction(ai, "blessing of wisdom") {}
-        virtual string getName()
-        {
-            return "blessing of wisdom on party";
-        }
-    };
-
-    class CastBlessingOfKingsAction : public CastBuffSpellAction
-    {
-    public:
-        CastBlessingOfKingsAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "blessing of kings") {}
-    };
-
-    class CastBlessingOfKingsOnPartyAction : public BuffOnPartyAction
-    {
-    public:
-        CastBlessingOfKingsOnPartyAction(PlayerbotAI* ai) : BuffOnPartyAction(ai, "blessing of kings") {}
-        virtual string getName()
-        {
-            return "blessing of kings on party";
-        }
-    };
-
-    class CastBlessingOfSanctuaryAction : public CastBuffSpellAction
-    {
-    public:
-        CastBlessingOfSanctuaryAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "blessing of sanctuary") {}
-    };
-
-    class CastBlessingOfSanctuaryOnPartyAction : public BuffOnPartyAction
-    {
-    public:
-        CastBlessingOfSanctuaryOnPartyAction(PlayerbotAI* ai) : BuffOnPartyAction(ai, "blessing of sanctuary") {}
-        virtual string getName()
-        {
-            return "blessing of sanctuary on party";
-        }
-    };
+	class CastBlessingOfSanctuaryOnPartyAction : public CastBlessingOnPartyAction
+	{
+	public:
+		CastBlessingOfSanctuaryOnPartyAction(PlayerbotAI* ai) : CastBlessingOnPartyAction(ai, "blessing of sanctuary") {}
+        virtual string getName() { return "blessing of sanctuary on party";}
+	};
 
     class CastHolyLightAction : public CastHealingSpellAction
     {
@@ -207,10 +200,7 @@ namespace ai
     public:
         CastHolyLightOnPartyAction(PlayerbotAI* ai) : HealPartyMemberAction(ai, "holy light") {}
 
-        virtual string getName()
-        {
-            return "holy light on party";
-        }
+        virtual string getName() { return "holy light on party"; }
     };
 
     class CastFlashOfLightAction : public CastHealingSpellAction
@@ -224,10 +214,7 @@ namespace ai
     public:
         CastFlashOfLightOnPartyAction(PlayerbotAI* ai) : HealPartyMemberAction(ai, "flash of light") {}
 
-        virtual string getName()
-        {
-            return "flash of light on party";
-        }
+        virtual string getName() { return "flash of light on party"; }
     };
 
     class CastLayOnHandsAction : public CastHealingSpellAction
@@ -241,39 +228,33 @@ namespace ai
     public:
         CastLayOnHandsOnPartyAction(PlayerbotAI* ai) : HealPartyMemberAction(ai, "lay on hands") {}
 
-        virtual string getName()
-        {
-            return "lay on hands on party";
-        }
+        virtual string getName() { return "lay on hands on party"; }
     };
 
-    class CastDivineProtectionAction : public CastBuffSpellAction
-    {
-    public:
-        CastDivineProtectionAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "divine protection") {}
-    };
+	class CastDivineProtectionAction : public CastBuffSpellAction
+	{
+	public:
+		CastDivineProtectionAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "divine protection") {}
+	};
 
     class CastDivineProtectionOnPartyAction : public HealPartyMemberAction
     {
     public:
         CastDivineProtectionOnPartyAction(PlayerbotAI* ai) : HealPartyMemberAction(ai, "divine protection") {}
 
-        virtual string getName()
-        {
-            return "divine protection on party";
-        }
+        virtual string getName() { return "divine protection on party"; }
     };
 
-    class CastDivineShieldAction: public CastBuffSpellAction
-    {
-    public:
-        CastDivineShieldAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "divine shield") {}
-    };
+	class CastDivineShieldAction: public CastBuffSpellAction
+	{
+	public:
+		CastDivineShieldAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "divine shield") {}
+	};
 
     class CastConsecrationAction : public CastMeleeSpellAction
     {
     public:
-        CastConsecrationAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "consecration") {}
+	    CastConsecrationAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "consecration") {}
     };
 
     class CastHolyWrathAction : public CastMeleeSpellAction
@@ -288,117 +269,111 @@ namespace ai
         CastHammerOfJusticeAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "hammer of justice") {}
     };
 
-    class CastHammerOfWrathAction : public CastMeleeSpellAction
-    {
-    public:
-        CastHammerOfWrathAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "hammer of wrath") {}
-    };
+	class CastHammerOfWrathAction : public CastMeleeSpellAction
+	{
+	public:
+		CastHammerOfWrathAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "hammer of wrath") {}
+	};
 
-    class CastPurifyPoisonAction : public CastCureSpellAction
-    {
-    public:
-        CastPurifyPoisonAction(PlayerbotAI* ai) : CastCureSpellAction(ai, "purify") {}
-    };
+	class CastHammerOfTheRighteousAction : public CastMeleeSpellAction
+	{
+	public:
+		CastHammerOfTheRighteousAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "hammer of the righteous") {}
+	};
 
-    class CastPurifyDiseaseAction : public CastCureSpellAction
-    {
-    public:
-        CastPurifyDiseaseAction(PlayerbotAI* ai) : CastCureSpellAction(ai, "purify") {}
-    };
+	class CastPurifyPoisonAction : public CastCureSpellAction
+	{
+	public:
+		CastPurifyPoisonAction(PlayerbotAI* ai) : CastCureSpellAction(ai, "purify") {}
+	};
+
+	class CastPurifyDiseaseAction : public CastCureSpellAction
+	{
+	public:
+		CastPurifyDiseaseAction(PlayerbotAI* ai) : CastCureSpellAction(ai, "purify") {}
+	};
 
     class CastPurifyPoisonOnPartyAction : public CurePartyMemberAction
     {
     public:
         CastPurifyPoisonOnPartyAction(PlayerbotAI* ai) : CurePartyMemberAction(ai, "purify", DISPEL_POISON) {}
 
-        virtual string getName()
-        {
-            return "purify poison on party";
-        }
+        virtual string getName() { return "purify poison on party"; }
     };
 
-    class CastPurifyDiseaseOnPartyAction : public CurePartyMemberAction
-    {
-    public:
-        CastPurifyDiseaseOnPartyAction(PlayerbotAI* ai) : CurePartyMemberAction(ai, "purify", DISPEL_DISEASE) {}
+	class CastPurifyDiseaseOnPartyAction : public CurePartyMemberAction
+	{
+	public:
+		CastPurifyDiseaseOnPartyAction(PlayerbotAI* ai) : CurePartyMemberAction(ai, "purify", DISPEL_DISEASE) {}
 
-        virtual string getName()
-        {
-            return "purify disease on party";
-        }
-    };
+		virtual string getName() { return "purify disease on party"; }
+	};
 
-    class CastCleansePoisonAction : public CastCureSpellAction
-    {
-    public:
-        CastCleansePoisonAction(PlayerbotAI* ai) : CastCureSpellAction(ai, "cleanse") {}
-    };
+	class CastHandOfReckoningAction : public CastSpellAction
+	{
+	public:
+		CastHandOfReckoningAction(PlayerbotAI* ai) : CastSpellAction(ai, "hand of reckoning") {}
+	};
 
-    class CastCleanseDiseaseAction : public CastCureSpellAction
-    {
-    public:
-        CastCleanseDiseaseAction(PlayerbotAI* ai) : CastCureSpellAction(ai, "cleanse") {}
-    };
+	class CastCleansePoisonAction : public CastCureSpellAction
+	{
+	public:
+		CastCleansePoisonAction(PlayerbotAI* ai) : CastCureSpellAction(ai, "cleanse") {}
+	};
 
-    class CastCleanseMagicAction : public CastCureSpellAction
-    {
-    public:
-        CastCleanseMagicAction(PlayerbotAI* ai) : CastCureSpellAction(ai, "cleanse") {}
-    };
+	class CastCleanseDiseaseAction : public CastCureSpellAction
+	{
+	public:
+		CastCleanseDiseaseAction(PlayerbotAI* ai) : CastCureSpellAction(ai, "cleanse") {}
+	};
+
+	class CastCleanseMagicAction : public CastCureSpellAction
+	{
+	public:
+		CastCleanseMagicAction(PlayerbotAI* ai) : CastCureSpellAction(ai, "cleanse") {}
+	};
 
     class CastCleansePoisonOnPartyAction : public CurePartyMemberAction
     {
     public:
         CastCleansePoisonOnPartyAction(PlayerbotAI* ai) : CurePartyMemberAction(ai, "cleanse", DISPEL_POISON) {}
 
-        virtual string getName()
-        {
-            return "cleanse poison on party";
-        }
+        virtual string getName() { return "cleanse poison on party"; }
     };
 
-    class CastCleanseDiseaseOnPartyAction : public CurePartyMemberAction
-    {
-    public:
-        CastCleanseDiseaseOnPartyAction(PlayerbotAI* ai) : CurePartyMemberAction(ai, "cleanse", DISPEL_DISEASE) {}
+	class CastCleanseDiseaseOnPartyAction : public CurePartyMemberAction
+	{
+	public:
+		CastCleanseDiseaseOnPartyAction(PlayerbotAI* ai) : CurePartyMemberAction(ai, "cleanse", DISPEL_DISEASE) {}
 
-        virtual string getName()
-        {
-            return "cleanse disease on party";
-        }
-    };
+		virtual string getName() { return "cleanse disease on party"; }
+	};
 
-    class CastCleanseMagicOnPartyAction : public CurePartyMemberAction
-    {
-    public:
-        CastCleanseMagicOnPartyAction(PlayerbotAI* ai) : CurePartyMemberAction(ai, "cleanse", DISPEL_MAGIC) {}
+	class CastCleanseMagicOnPartyAction : public CurePartyMemberAction
+	{
+	public:
+		CastCleanseMagicOnPartyAction(PlayerbotAI* ai) : CurePartyMemberAction(ai, "cleanse", DISPEL_MAGIC) {}
 
-        virtual string getName()
-        {
-            return "cleanse magic on party";
-        }
-    };
+		virtual string getName() { return "cleanse magic on party"; }
+	};
 
-    BEGIN_SPELL_ACTION(CastExorcismAction, "exorcism")
+    BEGIN_SPELL_ACTION(CastAvengersShieldAction, "avenger's shield")
     END_SPELL_ACTION()
 
-    class CastBlessingOfFreedomAction : public CastBuffSpellAction
-    {
-    public:
-        CastBlessingOfFreedomAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "blessing of freedom") {}
-    };
+	BEGIN_SPELL_ACTION(CastExorcismAction, "exorcism")
+	END_SPELL_ACTION()
 
-    class CastHolyShieldAction : public CastBuffSpellAction
-    {
-    public:
-        CastHolyShieldAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "holy shield") {}
-    };
+	class CastHolyShieldAction : public CastBuffSpellAction
+	{
+	public:
+		CastHolyShieldAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "holy shield") {}
+	};
 
-    class CastRedemptionAction : public ResurrectPartyMemberAction
-    {
-    public:
-        CastRedemptionAction(PlayerbotAI* ai) : ResurrectPartyMemberAction(ai, "redemption") {}
-    };
+	class CastRedemptionAction : public ResurrectPartyMemberAction
+	{
+	public:
+		CastRedemptionAction(PlayerbotAI* ai) : ResurrectPartyMemberAction(ai, "redemption") {}
+	};
 
     class CastHammerOfJusticeOnEnemyHealerAction : public CastSpellOnEnemyHealerAction
     {
@@ -406,11 +381,22 @@ namespace ai
         CastHammerOfJusticeOnEnemyHealerAction(PlayerbotAI* ai) : CastSpellOnEnemyHealerAction(ai, "hammer of justice") {}
     };
 
-    class CastBlessingOnPartyAction : public Action
+    class CastHammerOfJusticeSnareAction : public CastSnareSpellAction
     {
     public:
-        CastBlessingOnPartyAction(PlayerbotAI* ai) : Action(ai, "blessing on party") {}
-        virtual bool Execute(Event event);
-        virtual bool isUseful();
+        CastHammerOfJusticeSnareAction(PlayerbotAI* ai) : CastSnareSpellAction(ai, "hammer of justice") {}
+    };
+
+    class CastDivineFavorAction : public CastBuffSpellAction
+    {
+    public:
+        CastDivineFavorAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "divine favor") {}
+    };
+
+    class CastTurnUndeadAction : public CastBuffSpellAction
+    {
+    public:
+        CastTurnUndeadAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "turn undead") {}
+        virtual Value<Unit*>* GetTargetValue() { return context->GetValue<Unit*>("cc target", getName()); }
     };
 }

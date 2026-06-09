@@ -1,6 +1,8 @@
 #include "botpch.h"
 #include "../../playerbot.h"
 #include "TellCastFailedAction.h"
+#include "../../ServerFacade.h"
+
 
 using namespace ai;
 
@@ -14,11 +16,9 @@ bool TellCastFailedAction::Execute(Event event)
     ai->SpellInterrupted(spellId);
 
     if (result == SPELL_CAST_OK)
-    {
         return false;
-    }
 
-    const SpellEntry *const pSpellInfo =  sSpellStore.LookupEntry(spellId);
+    const SpellEntry *const pSpellInfo =  sServerFacade.LookupSpellInfo(spellId);
     ostringstream out; out << chat->formatSpell(pSpellInfo) << ": ";
     switch (result)
     {
@@ -44,30 +44,29 @@ bool TellCastFailedAction::Execute(Event event)
     default:
         out << "cannot cast";
     }
-    int32 castTime = GetSpellCastTime(pSpellInfo);
+    int32 castTime = GetSpellCastTime(pSpellInfo
+#ifdef CMANGOS
+            , bot
+#endif
+    );
     if (castTime >= 2000)
-    {
-        ai->TellMasterNoFacing(out.str());
-    }
+        ai->TellError(out.str());
     return true;
 }
+
 
 bool TellSpellAction::Execute(Event event)
 {
     string spell = event.getParam();
     uint32 spellId = AI_VALUE2(uint32, "spell id", spell);
     if (!spellId)
-    {
         return false;
-    }
 
-    SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellId );
+    SpellEntry const *spellInfo = sServerFacade.LookupSpellInfo(spellId );
     if (!spellInfo)
-    {
         return false;
-    }
 
     ostringstream out; out << chat->formatSpell(spellInfo);
-    ai->TellMaster(out);
+    ai->TellError(out.str());
     return true;
 }

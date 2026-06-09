@@ -11,6 +11,7 @@
 
 using namespace ai;
 
+
 namespace ai
 {
     namespace priest
@@ -28,13 +29,23 @@ namespace ai
                 creators["shadow aoe"] = &priest::StrategyFactoryInternal::shadow_aoe;
                 creators["dps debuff"] = &priest::StrategyFactoryInternal::shadow_debuff;
                 creators["shadow debuff"] = &priest::StrategyFactoryInternal::shadow_debuff;
+                creators["cure"] = &priest::StrategyFactoryInternal::cure;
+                creators["buff"] = &priest::StrategyFactoryInternal::buff;
+                creators["boost"] = &priest::StrategyFactoryInternal::boost;
+                creators["rshadow"] = &priest::StrategyFactoryInternal::rshadow;
+                creators["cc"] = &priest::StrategyFactoryInternal::cc;
             }
 
         private:
+            static Strategy* cc(PlayerbotAI* ai) { return new PriestCcStrategy(ai); }
+            static Strategy* rshadow(PlayerbotAI* ai) { return new PriestShadowResistanceStrategy(ai); }
+            static Strategy* boost(PlayerbotAI* ai) { return new PriestBoostStrategy(ai); }
+            static Strategy* buff(PlayerbotAI* ai) { return new PriestBuffStrategy(ai); }
             static Strategy* nc(PlayerbotAI* ai) { return new PriestNonCombatStrategy(ai); }
             static Strategy* shadow_aoe(PlayerbotAI* ai) { return new ShadowPriestAoeStrategy(ai); }
             static Strategy* pull(PlayerbotAI* ai) { return new PullStrategy(ai, "shoot"); }
             static Strategy* shadow_debuff(PlayerbotAI* ai) { return new ShadowPriestDebuffStrategy(ai); }
+            static Strategy* cure(PlayerbotAI* ai) { return new PriestCureStrategy(ai); }
         };
 
         class CombatStrategyFactoryInternal : public NamedObjectContext<Strategy>
@@ -82,14 +93,16 @@ namespace ai
                 creators["vampiric touch"] = &TriggerFactoryInternal::vampiric_touch;
                 creators["shadowform"] = &TriggerFactoryInternal::shadowform;
                 creators["vampiric embrace"] = &TriggerFactoryInternal::vampiric_embrace;
-                creators["shackle undead"] = &TriggerFactoryInternal::shackle_undead;
                 creators["power infusion"] = &TriggerFactoryInternal::power_infusion;
+                creators["inner focus"] = &TriggerFactoryInternal::inner_focus;
+                creators["shadow protection"] = &TriggerFactoryInternal::shadow_protection;
+                creators["shadow protection on party"] = &TriggerFactoryInternal::shadow_protection_on_party;
+                creators["shackle undead"] = &TriggerFactoryInternal::shackle_undead;
+
             }
 
         private:
             static Trigger* vampiric_embrace(PlayerbotAI* ai) { return new VampiricEmbraceTrigger(ai); }
-            static Trigger* shackle_undead(PlayerbotAI* ai) { return new ShackleUndeadTrigger(ai); }
-            static Trigger* power_infusion(PlayerbotAI* ai) { return new PowerInfusionTrigger(ai); }
             static Trigger* shadowform(PlayerbotAI* ai) { return new ShadowformTrigger(ai); }
             static Trigger* vampiric_touch(PlayerbotAI* ai) { return new VampiricTouchTrigger(ai); }
             static Trigger* devouring_plague(PlayerbotAI* ai) { return new DevouringPlagueTrigger(ai); }
@@ -104,9 +117,16 @@ namespace ai
             static Trigger* divine_spirit(PlayerbotAI* ai) { return new DivineSpiritTrigger(ai); }
             static Trigger* divine_spirit_on_party(PlayerbotAI* ai) { return new DivineSpiritOnPartyTrigger(ai); }
             static Trigger* inner_fire(PlayerbotAI* ai) { return new InnerFireTrigger(ai); }
+            static Trigger* power_infusion(PlayerbotAI* ai) { return new PowerInfusionTrigger(ai); }
+            static Trigger* inner_focus(PlayerbotAI* ai) { return new InnerFocusTrigger(ai); }
+            static Trigger* shadow_protection_on_party(PlayerbotAI* ai) { return new ShadowProtectionOnPartyTrigger(ai); }
+            static Trigger* shadow_protection(PlayerbotAI* ai) { return new ShadowProtectionTrigger(ai); }
+            static Trigger* shackle_undead(PlayerbotAI* ai) { return new ShackleUndeadTrigger(ai); }
         };
     };
 };
+
+
 
 namespace ai
 {
@@ -119,6 +139,8 @@ namespace ai
         public:
             AiObjectContextInternal()
             {
+                creators["power infusion"] = &AiObjectContextInternal::power_infusion;
+                creators["inner focus"] = &AiObjectContextInternal::inner_focus;
                 creators["shadow word: pain"] = &AiObjectContextInternal::shadow_word_pain;
                 creators["shadow word: pain on attacker"] = &AiObjectContextInternal::shadow_word_pain_on_attacker;
                 creators["devouring plague"] = &AiObjectContextInternal::devouring_plague;
@@ -155,21 +177,26 @@ namespace ai
                 creators["fade"] = &AiObjectContextInternal::fade;
                 creators["inner fire"] = &AiObjectContextInternal::inner_fire;
                 creators["resurrection"] = &AiObjectContextInternal::resurrection;
-                creators["psychic scream"] = &AiObjectContextInternal::psychic_scream;
-                creators["vampiric embrace"] = &AiObjectContextInternal::vampiric_embrace;
-                creators["vampiric touch"] = &AiObjectContextInternal::vampiric_touch;
-                creators["shackle undead"] = &AiObjectContextInternal::shackle_undead;
-                creators["power infusion"] = &AiObjectContextInternal::power_infusion;
                 creators["circle of healing"] = &AiObjectContextInternal::circle_of_healing;
+                creators["psychic scream"] = &AiObjectContextInternal::psychic_scream;
+                creators["vampiric touch"] = &AiObjectContextInternal::vampiric_touch;
+                creators["vampiric embrace"] = &AiObjectContextInternal::vampiric_embrace;
+                creators["dispersion"] = &AiObjectContextInternal::dispersion;
+                creators["shadow protection"] = &AiObjectContextInternal::shadow_protection;
+                creators["shadow protection on party"] = &AiObjectContextInternal::shadow_protection_on_party;
+                creators["shackle undead"] = &AiObjectContextInternal::shackle_undead;
             }
 
         private:
+            static Action* shadow_protection_on_party(PlayerbotAI* ai) { return new CastShadowProtectionOnPartyAction(ai); }
+            static Action* shadow_protection(PlayerbotAI* ai) { return new CastShadowProtectionAction(ai); }
+            static Action* power_infusion(PlayerbotAI* ai) { return new CastPowerInfusionAction(ai); }
+            static Action* inner_focus(PlayerbotAI* ai) { return new CastInnerFocusAction(ai); }
+            static Action* dispersion(PlayerbotAI* ai) { return new CastDispersionAction(ai); }
             static Action* vampiric_embrace(PlayerbotAI* ai) { return new CastVampiricEmbraceAction(ai); }
             static Action* vampiric_touch(PlayerbotAI* ai) { return new CastVampiricTouchAction(ai); }
-            static Action* shackle_undead(PlayerbotAI* ai) { return new CastShackleUndeadAction(ai); }
-            static Action* power_infusion(PlayerbotAI* ai) { return new CastPowerInfusionAction(ai); }
-            static Action* circle_of_healing(PlayerbotAI* ai) { return new CastCircleOfHealingAction(ai); }
             static Action* psychic_scream(PlayerbotAI* ai) { return new CastPsychicScreamAction(ai); }
+            static Action* circle_of_healing(PlayerbotAI* ai) { return new CastCircleOfHealingAction(ai); }
             static Action* resurrection(PlayerbotAI* ai) { return new CastResurrectionAction(ai); }
             static Action* shadow_word_pain(PlayerbotAI* ai) { return new CastPowerWordPainAction(ai); }
             static Action* shadow_word_pain_on_attacker(PlayerbotAI* ai) { return new CastPowerWordPainOnAttackerAction(ai); }
@@ -206,6 +233,7 @@ namespace ai
             static Action* abolish_disease_on_party(PlayerbotAI* ai) { return new CastAbolishDiseaseOnPartyAction(ai); }
             static Action* fade(PlayerbotAI* ai) { return new CastFadeAction(ai); }
             static Action* inner_fire(PlayerbotAI* ai) { return new CastInnerFireAction(ai); }
+            static Action* shackle_undead(PlayerbotAI* ai) { return new CastShackleUndeadAction(ai); }
         };
     };
 };

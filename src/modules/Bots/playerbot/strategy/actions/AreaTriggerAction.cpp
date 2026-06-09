@@ -3,6 +3,7 @@
 #include "AreaTriggerAction.h"
 #include "../../PlayerbotAIConfig.h"
 
+
 using namespace ai;
 
 bool ReachAreaTriggerAction::Execute(Event event)
@@ -13,10 +14,8 @@ bool ReachAreaTriggerAction::Execute(Event event)
     p >> triggerId;
 
     AreaTriggerEntry const* atEntry = sAreaTriggerStore.LookupEntry(triggerId);
-    if (!atEntry)
-    {
+    if(!atEntry)
         return false;
-    }
 
     AreaTrigger const* at = sObjectMgr.GetAreaTrigger(triggerId);
     if (!at)
@@ -29,61 +28,45 @@ bool ReachAreaTriggerAction::Execute(Event event)
         return true;
     }
 
-    if (at->condition && !sObjectMgr.IsPlayerMeetToCondition(at->condition, bot, bot->GetMap(), NULL, CONDITION_AREA_TRIGGER))
-    {
-        ai->TellMaster("I won't follow: I don't meet the conditions");
-        return false;
-    }
-
     if (bot->GetMapId() != atEntry->mapid || bot->GetDistance(atEntry->x, atEntry->y, atEntry->z) > sPlayerbotAIConfig.sightDistance)
     {
-        ai->TellMaster("I won't follow: too far away");
+        ai->TellError("I won't follow: too far away");
         return true;
     }
 
-    bool wasFollowing = ai->HasStrategy("follow master", BOT_STATE_NON_COMBAT);
-    ai->ChangeStrategy("-follow master,+stay", BOT_STATE_NON_COMBAT);
-
     MotionMaster &mm = *bot->GetMotionMaster();
-    mm.Clear();
-    mm.MovePoint(atEntry->mapid, atEntry->x, atEntry->y, atEntry->z);
+	mm.MovePoint(atEntry->mapid, atEntry->x, atEntry->y, atEntry->z);
     float distance = bot->GetDistance(atEntry->x, atEntry->y, atEntry->z);
     float delay = 1000.0f * distance / bot->GetSpeed(MOVE_RUN) + sPlayerbotAIConfig.reactDelay;
-    ai->TellMaster("Wait for me");
+    ai->TellError("Wait for me");
     ai->SetNextCheckDelay(delay);
-    context->GetValue<LastMovement&>("last movement")->Get().lastAreaTrigger = triggerId;
-    context->GetValue<LastMovement&>("last movement")->Get().lastFollowState = wasFollowing;
+    context->GetValue<LastMovement&>("last area trigger")->Get().lastAreaTrigger = triggerId;
+
     return true;
 }
 
+
+
 bool AreaTriggerAction::Execute(Event event)
 {
-    LastMovement& movement = context->GetValue<LastMovement&>("last movement")->Get();
+    LastMovement& movement = context->GetValue<LastMovement&>("last area trigger")->Get();
 
     uint32 triggerId = movement.lastAreaTrigger;
     movement.lastAreaTrigger = 0;
 
     AreaTriggerEntry const* atEntry = sAreaTriggerStore.LookupEntry(triggerId);
-    if (!atEntry)
-    {
+    if(!atEntry)
         return false;
-    }
 
     AreaTrigger const* at = sObjectMgr.GetAreaTrigger(triggerId);
     if (!at)
-    {
         return true;
-    }
-
-    ai->ChangeStrategy("-follow master,+stay", BOT_STATE_NON_COMBAT);
-
-    MotionMaster &mm = *bot->GetMotionMaster();
-    mm.Clear();
 
     WorldPacket p(CMSG_AREATRIGGER);
     p << triggerId;
     p.rpos(0);
     bot->GetSession()->HandleAreaTriggerOpcode(p);
+
     ai->TellMaster("Hello");
     return true;
 }

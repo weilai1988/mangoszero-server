@@ -12,12 +12,11 @@ list<Item*> InventoryItemValueBase::Find(string qualifier)
 
     list<Item*> items = InventoryAction::parseItems(qualifier);
     for (list<Item*>::iterator i = items.begin(); i != items.end(); i++)
-    {
         result.push_back(*i);
-    }
 
     return result;
 }
+
 
 uint8 ItemCountValue::Calculate()
 {

@@ -8,15 +8,7 @@ namespace ai
     {
     public:
         TankWarlockStrategy(PlayerbotAI* ai);
-        virtual string getName()
-        {
-            return "tank";
-        }
-
-        virtual int GetType()
-        {
-            return STRATEGY_TYPE_TANK | STRATEGY_TYPE_RANGED;
-        }
+        virtual string getName() { return "tank"; }
 
     public:
         virtual void InitTriggers(std::list<TriggerNode*> &triggers);

@@ -4,6 +4,7 @@
 #include "../../PlayerbotAIConfig.h"
 #include "../actions/GenericSpellActions.h"
 #include "../values/LastSpellCastValue.h"
+#include "../../ServerFacade.h"
 
 using namespace ai;
 
@@ -20,38 +21,43 @@ float ConserveManaMultiplier::GetValue(Action* action)
     string name = action->getName();
 
     if (health < sPlayerbotAIConfig.lowHealth)
-    {
         return 1.0f;
-    }
 
-    if (name == "melee" || name == "reach melee" || name == "reach spell")
-    {
+    CastSpellAction* spellAction = dynamic_cast<CastSpellAction*>(action);
+    if (!spellAction)
         return 1.0f;
-    }
+
+    string spell = spellAction->getName();
+    if (spell.find(" on party") != string::npos) spell = spell.substr(0, spell.size() - 9);
+    uint32 spellId = AI_VALUE2(uint32, "spell id", spell);
+    const SpellEntry* const spellInfo = sServerFacade.LookupSpellInfo(spellId);
+    if (!spellInfo || spellInfo->powerType != POWER_MANA)
+        return 1.0f;
 
     if (mediumMana && dynamic_cast<CastBuffSpellAction*>(action))
-    {
         return 0.0f;
-    }
 
-    if (action->GetTarget() != AI_VALUE(Unit*, "current target"))
+    if (dynamic_cast<HealPartyMemberAction*>(action) && bot->GetGroup() && !ai->IsHeal(bot))
     {
-        return 1.0f;
-    }
+        Group::MemberSlotList const& groupSlot = bot->GetGroup()->GetMemberSlots();
+        bool foundHealers = false;
+        bool foundLowManaHealers = false;
+        for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
+        {
+            Player *member = sObjectMgr.GetPlayer(itr->guid);
+            if (!member || !sServerFacade.IsAlive(member) || member == bot)
+                continue;
 
-    if (AI_VALUE(uint8, "balance") <= 50)
-    {
-        return 1.0f;
-    }
+            if (ai->IsHeal(member) && bot->GetMapId() == member->GetMapId() &&
+                    sServerFacade.IsDistanceLessOrEqualThan(sServerFacade.GetDistance2d(bot, member), sPlayerbotAIConfig.spellDistance))
+            {
+                float manaLevel = (static_cast<float> (member->GetPower(POWER_MANA)) / member->GetMaxPower(POWER_MANA)) * 100;
+                foundHealers = true;
+                if (manaLevel < sPlayerbotAIConfig.lowMana) foundLowManaHealers = true;
+            }
+        }
 
-    if (targetHealth < sPlayerbotAIConfig.lowHealth && dynamic_cast<CastDebuffSpellAction*>(action))
-    {
-        return 0.0f;
-    }
-
-    if (mediumMana && dynamic_cast<CastDebuffSpellAction*>(action))
-    {
-        return 0.0f;
+        if (foundHealers && !foundLowManaHealers) return 0.0f;
     }
 
     return 1.0f;
@@ -60,56 +66,42 @@ float ConserveManaMultiplier::GetValue(Action* action)
 float SaveManaMultiplier::GetValue(Action* action)
 {
     if (action == NULL)
-    {
         return 1.0f;
-    }
+
+    if (action->GetTarget() != AI_VALUE(Unit*, "current target"))
+        return 1.0f;
 
     double saveLevel = AI_VALUE(double, "mana save level");
     if (saveLevel <= 1.0)
-    {
         return 1.0f;
-    }
 
     CastSpellAction* spellAction = dynamic_cast<CastSpellAction*>(action);
     if (!spellAction)
-    {
         return 1.0f;
-    }
 
     string spell = spellAction->getName();
     uint32 spellId = AI_VALUE2(uint32, "spell id", spell);
-    const SpellEntry* const spellInfo = sSpellStore.LookupEntry(spellId);
+    const SpellEntry* const spellInfo = sServerFacade.LookupSpellInfo(spellId);
     if (!spellInfo || spellInfo->powerType != POWER_MANA)
-    {
         return 1.0f;
-    }
 
     int32 cost = spellInfo->manaCost;
-    if (spellInfo->ManaCostPercentage)
-    {
-        cost += spellInfo->ManaCostPercentage * bot->GetCreateMana() / 100;
-    }
-
-    uint32 mana = bot->GetMaxPower(POWER_MANA);
-    double percent = (double)cost / (double)mana * 100.0f;
+    if (!cost)
+        return 1.0f;
 
     time_t lastCastTime = AI_VALUE2(time_t, "last spell cast time", spell);
     if (!lastCastTime)
-    {
         return 1.0f;
-    }
 
     time_t elapsed = time(0) - lastCastTime;
-    if ((double)elapsed < 10 + pow(saveLevel, sqrt(percent)))
-    {
+    if ((double)elapsed < 10 * saveLevel)
         return 0.0f;
-    }
 
     return 1.0f;
 }
 
+
 void ConserveManaStrategy::InitMultipliers(std::list<Multiplier*> &multipliers)
 {
     multipliers.push_back(new ConserveManaMultiplier(ai));
-    multipliers.push_back(new SaveManaMultiplier(ai));
 }

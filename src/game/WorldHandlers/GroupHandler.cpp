@@ -53,6 +53,9 @@
 #include "Group.h"
 #include "SocialMgr.h"
 #include "Util.h"
+#ifdef ENABLE_PLAYERBOTS
+#include "playerbot.h"
+#endif
 
 /* differences from off:
     -you can uninvite yourself - is is useful
@@ -163,6 +166,53 @@ void WorldSession::HandleGroupInviteOpcode(WorldPacket& recv_data)
             return;
         }
     }
+
+#ifdef ENABLE_PLAYERBOTS
+    if (player->GetPlayerbotAI())
+    {
+        PlayerbotAI* botAI = player->GetPlayerbotAI();
+        Player* currentMaster = botAI->GetMaster();
+        if (currentMaster && currentMaster != GetPlayer() &&
+                !currentMaster->GetPlayerbotAI() &&
+                GetSecurity() < SEC_GAMEMASTER)
+        {
+            SendPartyResult(PARTY_OP_INVITE, membername, ERR_ALREADY_IN_GROUP_S);
+            return;
+        }
+
+        if (!botAI->GetSecurity()->CheckLevelFor(PLAYERBOT_SECURITY_INVITE, false, GetPlayer()))
+        {
+            SendPartyResult(PARTY_OP_INVITE, membername, ERR_IGNORING_YOU_S);
+            return;
+        }
+
+        if (player->GetGroupInvite())
+            player->UninviteFromGroup();
+
+        if (!group)
+        {
+            group = new Group;
+            if (!group->AddLeaderInvite(GetPlayer()))
+            {
+                delete group;
+                SendPartyResult(PARTY_OP_INVITE, membername, ERR_ALREADY_IN_GROUP_S);
+                return;
+            }
+        }
+
+        if (!group->AddInvite(player))
+        {
+            SendPartyResult(PARTY_OP_INVITE, membername, ERR_ALREADY_IN_GROUP_S);
+            return;
+        }
+
+        WorldPacket data(CMSG_GROUP_ACCEPT, 0);
+        player->GetSession()->HandleGroupAcceptOpcode(data);
+
+        SendPartyResult(PARTY_OP_INVITE, membername, ERR_PARTY_RESULT_OK);
+        return;
+    }
+#endif
 
     // ok, but group not exist, start a new group
     // but don't create and save the group to the DB until

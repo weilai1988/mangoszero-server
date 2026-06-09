@@ -20,7 +20,6 @@ public:
         creators["insect swarm"] = &insect_swarm;
         creators["moonfire"] = &moonfire;
         creators["starfire"] = &starfire;
-        creators["nature's grasp"] = &natures_grasp;
     }
 private:
     static ActionNode* faerie_fire(PlayerbotAI* ai)
@@ -35,14 +34,14 @@ private:
         return new ActionNode ("hibernate",
             /*P*/ NextAction::array(0, new NextAction("moonkin form"), NULL),
             /*A*/ NextAction::array(0, new NextAction("entangling roots"), NULL),
-            /*C*/ NextAction::array(0, new NextAction("flee", 49.0f), NULL));
+            /*C*/ NULL);
     }
     static ActionNode* entangling_roots(PlayerbotAI* ai)
     {
         return new ActionNode ("entangling roots",
             /*P*/ NextAction::array(0, new NextAction("moonkin form"), NULL),
             /*A*/ NULL,
-            /*C*/ NextAction::array(0, new NextAction("flee", 49.0f), NULL));
+            /*C*/ NULL);
     }
     static ActionNode* entangling_roots_on_cc(PlayerbotAI* ai)
     {
@@ -86,13 +85,6 @@ private:
             /*A*/ NULL,
             /*C*/ NULL);
     }
-    static ActionNode* natures_grasp(PlayerbotAI* ai)
-    {
-        return new ActionNode ("nature's grasp",
-            /*P*/ NextAction::array(0, new NextAction("moonkin form"), NULL),
-            /*A*/ NULL,
-            /*C*/ NULL);
-    }
 };
 
 CasterDruidStrategy::CasterDruidStrategy(PlayerbotAI* ai) : GenericDruidStrategy(ai)
@@ -130,13 +122,14 @@ void CasterDruidStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
         "party member almost full health",
         NextAction::array(0, new NextAction("rejuvenation on party", ACTION_LIGHT_HEAL + 1), NULL)));
 
-    triggers.push_back(new TriggerNode(
-        "insect swarm",
-        NextAction::array(0, new NextAction("insect swarm", ACTION_NORMAL + 5), NULL)));
 
-    triggers.push_back(new TriggerNode(
-        "moonfire",
-        NextAction::array(0, new NextAction("moonfire", ACTION_NORMAL + 4), NULL)));
+	triggers.push_back(new TriggerNode(
+		"insect swarm",
+		NextAction::array(0, new NextAction("insect swarm", ACTION_NORMAL + 5), NULL)));
+
+	triggers.push_back(new TriggerNode(
+		"moonfire",
+		NextAction::array(0, new NextAction("moonfire", ACTION_NORMAL + 4), NULL)));
 
     triggers.push_back(new TriggerNode(
         "eclipse (solar)",
@@ -150,20 +143,18 @@ void CasterDruidStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
         "moonfire",
         NextAction::array(0, new NextAction("moonfire", ACTION_NORMAL + 4), NULL)));
 
-    triggers.push_back(new TriggerNode(
-        "nature's grasp",
-        NextAction::array(0, new NextAction("nature's grasp", ACTION_EMERGENCY), NULL)));
 
-    triggers.push_back(new TriggerNode(
-        "entangling roots",
-        NextAction::array(0, new NextAction("entangling roots on cc", ACTION_HIGH + 2), NULL)));
+
+	triggers.push_back(new TriggerNode(
+		"critical health",
+		NextAction::array(0, new NextAction("nature's grasp", ACTION_EMERGENCY), NULL)));
 }
 
 void CasterDruidAoeStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
 {
-    triggers.push_back(new TriggerNode(
-        "high aoe",
-        NextAction::array(0, new NextAction("starfall", ACTION_HIGH + 1), NULL)));
+	triggers.push_back(new TriggerNode(
+		"high aoe",
+		NextAction::array(0, new NextAction("starfall", ACTION_HIGH + 1), NULL)));
 }
 
 void CasterDruidDebuffStrategy::InitTriggers(std::list<TriggerNode*> &triggers)

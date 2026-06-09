@@ -1,11 +1,6 @@
 #pragma once
+#include "../ServerFacade.h"
 
-#include "DBCStore.h"
-#include "DBCStores.h"
-
-/**
- * Performs a case-insensitive substring search in C strings.
- */
 char * strstri (const char* str1, const char* str2);
 
 namespace ai
@@ -20,23 +15,18 @@ namespace ai
 
     class FindItemVisitor : public IterateItemsVisitor {
     public:
-        FindItemVisitor() : IterateItemsVisitor() {}
+        FindItemVisitor() : IterateItemsVisitor(), result(NULL) {}
 
         virtual bool Visit(Item* item)
         {
             if (!Accept(item->GetProto()))
-            {
                 return true;
-            }
 
             result.push_back(item);
             return true;
         }
 
-        list<Item*>& GetResult()
-        {
-            return result;
-        }
+        list<Item*>& GetResult() { return result; }
 
     protected:
         virtual bool Accept(const ItemPrototype* proto) = 0;
@@ -49,6 +39,7 @@ namespace ai
     {
         ITERATE_ITEMS_IN_BAGS = 1,
         ITERATE_ITEMS_IN_EQUIP = 2,
+        ITERATE_ITEMS_IN_BANK = 4,
         ITERATE_ALL_ITEMS = 255
     };
 
@@ -62,15 +53,15 @@ namespace ai
         virtual bool Visit(Item* item)
         {
             if (bot->CanUseItem(item->GetProto()) == EQUIP_ERR_OK)
-            {
                 return FindItemVisitor::Visit(item);
-            }
+
             return true;
         }
 
     private:
         Player* bot;
     };
+
 
     class FindItemsByQualityVisitor : public IterateItemsVisitor
     {
@@ -84,14 +75,10 @@ namespace ai
         virtual bool Visit(Item* item)
         {
             if (item->GetProto()->Quality != quality)
-            {
                 return true;
-            }
 
             if (result.size() >= (size_t)count)
-            {
                 return false;
-            }
 
             result.push_back(item);
             return true;
@@ -116,9 +103,7 @@ namespace ai
         virtual bool Visit(Item* item)
         {
             if (item->IsSoulBound())
-            {
                 return true;
-            }
 
             return FindItemsByQualityVisitor::Visit(item);
         }
@@ -133,19 +118,13 @@ namespace ai
         virtual bool Visit(Item* item)
         {
             if (item->IsSoulBound())
-            {
                 return true;
-            }
 
             if (item->GetProto()->Class != itemClass || item->GetProto()->SubClass != itemSubClass)
-            {
                 return true;
-            }
 
             if (result.size() >= (size_t)count)
-            {
                 return false;
-            }
 
             result.push_back(item);
             return true;
@@ -175,22 +154,18 @@ namespace ai
         virtual bool Visit(Item* item)
         {
             if (item->GetProto()->ItemId == itemId)
-            {
                 count += item->GetCount();
-            }
 
             return true;
         }
 
-        int GetCount()
-        {
-            return count;
-        }
+        int GetCount() { return count; }
 
     protected:
         int count;
         uint32 itemId;
     };
+
 
     class QueryNamedItemCountVisitor : public QueryItemCountVisitor
     {
@@ -203,10 +178,8 @@ namespace ai
         virtual bool Visit(Item* item)
         {
             const ItemPrototype* proto = item->GetProto();
-            if (proto && proto->Name1 && strstri(proto->Name1, name.c_str()))
-            {
+            if (proto && !proto->Name1 && strstri(proto->Name1, name.c_str()))
                 count += item->GetCount();
-            }
 
             return true;
         }
@@ -215,9 +188,9 @@ namespace ai
         string name;
     };
 
-    class FindUsableNamedItemVisitor : public FindUsableItemVisitor {
+    class FindNamedItemVisitor : public FindItemVisitor {
     public:
-        FindUsableNamedItemVisitor(Player* bot, string name) : FindUsableItemVisitor(bot)
+        FindNamedItemVisitor(Player* bot, string name) : FindItemVisitor()
         {
             this->name = name;
         }
@@ -247,23 +220,39 @@ namespace ai
         uint32 id;
     };
 
+    class FindItemByIdsVisitor : public FindItemVisitor {
+    public:
+        FindItemByIdsVisitor(ItemIds ids) : FindItemVisitor()
+        {
+            this->ids = ids;
+        }
+
+        virtual bool Accept(const ItemPrototype* proto)
+        {
+            return ids.find(proto->ItemId) != ids.end();
+        }
+
+    private:
+        ItemIds ids;
+    };
+
     class ListItemsVisitor : public IterateItemsVisitor
     {
     public:
         ListItemsVisitor() : IterateItemsVisitor() {}
 
         map<uint32, int> items;
+        map<uint32, bool> soulbound;
 
         virtual bool Visit(Item* item)
         {
             uint32 id = item->GetProto()->ItemId;
 
             if (items.find(id) == items.end())
-            {
                 items[id] = 0;
-            }
 
             items[id] += item->GetCount();
+            soulbound[id] = item->IsSoulBound();
             return true;
         }
     };
@@ -274,9 +263,7 @@ namespace ai
         ItemCountByQuality() : IterateItemsVisitor()
         {
             for (uint32 i = 0; i < MAX_ITEM_QUALITY; ++i)
-            {
                 count[i] = 0;
-            }
         }
 
         virtual bool Visit(Item* item)
@@ -289,93 +276,117 @@ namespace ai
         map<uint32, int> count;
     };
 
-    inline bool IsBuffFood(const ItemPrototype* proto)
+
+    class FindPotionVisitor : public FindUsableItemVisitor
     {
-        if (proto->Class != ITEM_CLASS_CONSUMABLE ||
-            proto->SubClass == ITEM_SUBCLASS_BANDAGE ||
-            proto->Spells[0].SpellCategory != SPELLCATEGORY_FOOD)
+    public:
+        FindPotionVisitor(Player* bot, uint32 effectId) : FindUsableItemVisitor(bot), effectId(effectId) {}
+
+        virtual bool Accept(const ItemPrototype* proto)
+        {
+            if (proto->Class == ITEM_CLASS_CONSUMABLE && (proto->SubClass == ITEM_SUBCLASS_POTION || proto->SubClass == ITEM_SUBCLASS_FLASK))
+            {
+                for (int j = 0; j < MAX_ITEM_PROTO_SPELLS; j++)
+                {
+                    const SpellEntry* const spellInfo = sServerFacade.LookupSpellInfo(proto->Spells[j].SpellId);
+                    if (!spellInfo)
+                        return false;
+
+                    for (int i = 0 ; i < 3; i++)
+                    {
+                        if (spellInfo->Effect[i] == effectId)
+                            return true;
+                    }
+                }
+            }
             return false;
-        SpellEntry const* sp = sSpellStore.LookupEntry(proto->Spells[0].SpellId);
-        return sp && ((sp->AttributesEx2 & SPELL_ATTR_EX2_FOOD_BUFF) || sp->Effect[1] != 0 || sp->Effect[2] != 0);
-    }
+        }
+
+    private:
+        uint32 effectId;
+    };
 
     class FindFoodVisitor : public FindUsableItemVisitor
     {
     public:
-        FindFoodVisitor(Player* bot, uint32 spellCategory) : FindUsableItemVisitor(bot)
+        FindFoodVisitor(Player* bot, uint32 spellCategory, bool conjured = false) : FindUsableItemVisitor(bot)
         {
             this->spellCategory = spellCategory;
+            this->conjured = conjured;
         }
 
         virtual bool Accept(const ItemPrototype* proto)
         {
-            return proto->Class == ITEM_CLASS_CONSUMABLE
-                && proto->Spells[0].SpellCategory == spellCategory;
+            return proto->Class == ITEM_CLASS_CONSUMABLE &&
+                (proto->SubClass == ITEM_SUBCLASS_CONSUMABLE || proto->SubClass == ITEM_SUBCLASS_FOOD) &&
+                proto->Spells[0].SpellCategory == spellCategory &&
+                (!conjured || proto->IsConjuredConsumable());
         }
+
     private:
         uint32 spellCategory;
+        bool conjured;
     };
 
-    class FindBuffFoodVisitor : public FindUsableItemVisitor
+    class FindMountVisitor : public FindUsableItemVisitor
     {
     public:
-        FindBuffFoodVisitor(Player* bot) : FindUsableItemVisitor(bot) {}
+        FindMountVisitor(Player* bot) : FindUsableItemVisitor(bot) {}
 
         virtual bool Accept(const ItemPrototype* proto)
         {
-            return IsBuffFood(proto);
-        }
-    };
-
-    inline bool HasFoodBuff(Player* bot, const list<Item*>& buffFoods)
-    {
-        for (Item* item : buffFoods)
-        {
-            SpellEntry const* sp = sSpellStore.LookupEntry(item->GetProto()->Spells[0].SpellId);
-            if (!sp)
-                continue;
-            if (bot->HasAura(sp->Id))
-                return true;
-            for (int i = 1; i < MAX_EFFECT_INDEX; ++i)
+            for (int j = 0; j < MAX_ITEM_PROTO_SPELLS; j++)
             {
-                uint32 triggerSpell = sp->EffectTriggerSpell[i];
-                if (triggerSpell && bot->HasAura(triggerSpell))
-                    return true;
+                const SpellEntry* const spellInfo = sServerFacade.LookupSpellInfo(proto->Spells[j].SpellId);
+                if (!spellInfo)
+                    return false;
+
+                for (int i = 0 ; i < 3; i++)
+                {
+                    if (spellInfo->EffectApplyAuraName[i] == SPELL_AURA_MOUNTED)
+                        return true;
+                }
             }
         }
-        return false;
-    }
 
-    class FindConjuredFoodVisitor : public FindUsableItemVisitor
-    {
-    public:
-        FindConjuredFoodVisitor(Player* bot, uint32 spellCategory) : FindUsableItemVisitor(bot)
-        {
-            this->spellCategory = spellCategory;
-        }
-
-        virtual bool Accept(const ItemPrototype* proto)
-        {
-            return proto->IsConjuredConsumable()
-                && proto->Spells[0].SpellCategory == spellCategory;
-        }
     private:
-        uint32 spellCategory;
+        uint32 effectId;
     };
 
-    class FindLikeItemVisitor : public FindItemVisitor
+    class FindPetVisitor : public FindUsableItemVisitor
     {
     public:
-        FindLikeItemVisitor(Item *item) : FindItemVisitor()
-        {
-            this->itemId = item->GetProto()->ItemId;
-        }
+        FindPetVisitor(Player* bot) : FindUsableItemVisitor(bot) {}
 
         virtual bool Accept(const ItemPrototype* proto)
         {
-            return proto->ItemId == itemId;
+            if (proto->Class == ITEM_CLASS_MISC)
+            {
+                for (int j = 0; j < MAX_ITEM_PROTO_SPELLS; j++)
+                {
+                    const SpellEntry* const spellInfo = sServerFacade.LookupSpellInfo(proto->Spells[j].SpellId);
+                    if (!spellInfo)
+                        return false;
+
+                    for (int i = 0 ; i < 3; i++)
+                    {
+#ifdef MANGOSBOT_ZERO
+                        if (spellInfo->Effect[i] == SPELL_EFFECT_SUMMON_CRITTER)
+                            return true;
+#endif
+#ifdef MANGOSBOT_ONE
+                        if (spellInfo->Effect[i] == SPELL_EFFECT_SUMMON_PET)
+                            return true;
+#endif
+#ifdef MANGOSBOT_TWO
+                        if (spellInfo->Effect[i] == SPELL_EFFECT_SUMMON_PET)
+                            return true;
+#endif
+                    }
+                }
+            }
+            return false;
         }
-    private:
-        uint32 itemId;
+
     };
 }

@@ -373,6 +373,10 @@ struct Mail
             if (itr->item_guid == item_guid)
             {
                 items.erase(itr);
+                if (items.empty() && !mailTemplateId)
+                {
+                    has_items = false;
+                }
                 return true;
             }
         }

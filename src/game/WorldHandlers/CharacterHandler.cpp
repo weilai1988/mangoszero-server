@@ -94,6 +94,8 @@ class LoginQueryHolder : public SqlQueryHolder
 };
 
 #ifdef ENABLE_PLAYERBOTS
+static set<uint64> pendingPlayerbotLoginGuids;
+
 class PlayerbotLoginQueryHolder : public LoginQueryHolder
 {
 private:
@@ -205,8 +207,13 @@ class CharacterHandler
             }
 
             PlayerbotLoginQueryHolder* lqh = (PlayerbotLoginQueryHolder*)holder;
+            pendingPlayerbotLoginGuids.erase(lqh->GetGuid().GetRawValue());
+            sLog.outString("PlayerBot login callback: guid " UI64FMTD ", account %u, master account %u",
+                    lqh->GetGuid().GetRawValue(), lqh->GetAccountId(), lqh->GetMasterAccountId());
             if (sObjectMgr.GetPlayer(lqh->GetGuid()))
             {
+                sLog.outString("PlayerBot login callback: guid " UI64FMTD " already online, skipping",
+                        lqh->GetGuid().GetRawValue());
                 delete holder;
                 return;
             }
@@ -214,6 +221,15 @@ class CharacterHandler
             PlayerbotHolder* playerbotHolder = lqh->GetPlayerbotHolder();
             uint32 masterAccount = lqh->GetMasterAccountId();
             WorldSession* masterSession = masterAccount ? sWorld.FindSession(masterAccount) : NULL;
+            Player* masterPlayer = masterSession ? masterSession->GetPlayer() : NULL;
+
+            if (masterAccount && (!masterSession || !masterPlayer))
+            {
+                sLog.outString("PlayerBot login callback: guid " UI64FMTD " skipped, master session missing",
+                        lqh->GetGuid().GetRawValue());
+                delete holder;
+                return;
+            }
 
             // The bot's WorldSession is owned by the bot's Player object
             // The bot's WorldSession is deleted by PlayerbotMgr::LogoutPlayerBot
@@ -224,6 +240,8 @@ class CharacterHandler
             Player* bot = botSession->GetPlayer();
             if (!bot)
             {
+                sLog.outString("PlayerBot login callback: guid " UI64FMTD " failed, bot session has no player",
+                        lqh->GetGuid().GetRawValue());
                 return;
             }
 
@@ -243,13 +261,29 @@ class CharacterHandler
 
             if (allowed)
             {
+                if (masterPlayer && masterPlayer->GetPlayerbotMgr())
+                    playerbotHolder = masterPlayer->GetPlayerbotMgr();
+
+                if (!playerbotHolder)
+                {
+                    botSession->LogoutPlayer(true);
+                    delete botSession;
+                    return;
+                }
+
                 playerbotHolder->OnBotLogin(bot);
             }
             else if (masterSession)
             {
                 ChatHandler ch(masterSession);
                 ch.PSendSysMessage("You are not allowed to control bot %s...", bot->GetName());
-                playerbotHolder->LogoutPlayerBot(bot->GetObjectGuid().GetRawValue());
+                botSession->LogoutPlayer(true);
+                delete botSession;
+            }
+            else
+            {
+                botSession->LogoutPlayer(true);
+                delete botSession;
             }
         }
 #endif
@@ -268,18 +302,30 @@ void PlayerbotHolder::AddPlayerBot(uint64 playerGuid, uint32 masterAccountId)
     // has bot already been added?
     if (sObjectMgr.GetPlayer(ObjectGuid(playerGuid)))
     {
+        sLog.outString("PlayerBot login request: guid " UI64FMTD " already online", playerGuid);
+        return;
+    }
+
+    if (pendingPlayerbotLoginGuids.find(playerGuid) != pendingPlayerbotLoginGuids.end())
+    {
+        sLog.outString("PlayerBot login request: guid " UI64FMTD " already pending", playerGuid);
         return;
     }
 
     uint32 accountId = sObjectMgr.GetPlayerAccountIdByGUID(ObjectGuid(playerGuid));
     if (accountId == 0)
     {
+        sLog.outString("PlayerBot login request: guid " UI64FMTD " has no account", playerGuid);
         return;
     }
 
+    sLog.outString("PlayerBot login request: guid " UI64FMTD ", account %u, master account %u",
+            playerGuid, accountId, masterAccountId);
+    pendingPlayerbotLoginGuids.insert(playerGuid);
     PlayerbotLoginQueryHolder *holder = new PlayerbotLoginQueryHolder(this, masterAccountId, accountId, ObjectGuid(playerGuid));
     if (!holder->Initialize())
     {
+        pendingPlayerbotLoginGuids.erase(playerGuid);
         delete holder;                                      // delete all unprocessed queries
         return;
     }

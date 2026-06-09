@@ -8,81 +8,53 @@ namespace ai
 {
     class Engine;
 
-    class RangePair {
-    public:
-        RangePair()
-        {
-            min = -1.0f;
-            max = -1.0f;
-        }
+	class FleePoint {
+	public:
+		FleePoint(PlayerbotAI* ai, float x, float y, float z) : ai(ai), sumDistance(0.0f), minDistance(0.0f) {
+			this->x = x;
+			this->y = y;
+			this->z = z;
+		}
 
-    public:
-        float min;
-        float max;
+	public:
+		float x;
+		float y;
+		float z;
 
-    public:
-        void probe(float d) {
-            if (min < 0 || min > d)
-            {
-                min = d;
-            }
+		float sumDistance;
+		float minDistance;
 
-            if (max < 0 || max < d)
-            {
-                max = d;
-            }
-        }
-    };
+	private:
+		PlayerbotAI* ai;
+	};
 
-    class FleePoint {
-    public:
-        FleePoint(float x, float y, float z) {
-            this->x = x;
-            this->y = y;
-            this->z = z;
-        }
+	class FleeManager
+	{
+	public:
+		FleeManager(Player* bot, float maxAllowedDistance, float followAngle, bool forceMaxDistance = false) {
+			this->bot = bot;
+			this->maxAllowedDistance = maxAllowedDistance;
+			this->followAngle = followAngle;
+			this->forceMaxDistance = forceMaxDistance;
+		}
 
-    public:
-        bool isReasonable();
-        bool isBetterByCreatures(FleePoint* other);
-        bool isBetterByAll(FleePoint* other);
+	public:
+		bool CalculateDestination(float* rx, float* ry, float* rz);
+		bool isUseful();
 
-    public:
-        float x;
-        float y;
-        float z;
+	private:
+		void calculatePossibleDestinations(list<FleePoint*> &points);
+		void calculateDistanceToCreatures(FleePoint *point);
+		void cleanup(list<FleePoint*> &points);
+		FleePoint* selectOptimalDestination(list<FleePoint*> &points);
+		bool isBetterThan(FleePoint* point, FleePoint* other);
+		bool isTooCloseToEdge(float x, float y, float z, float angle);
 
-        RangePair toCreatures;
-        RangePair toAllPlayers;
-        RangePair toMeleePlayers;
-        RangePair toRangedPlayers;
-    };
-
-    class FleeManager
-    {
-    public:
-        FleeManager(Player* bot, float maxAllowedDistance, float followAngle) {
-            this->bot = bot;
-            this->maxAllowedDistance = maxAllowedDistance;
-            this->followAngle = followAngle;
-        }
-
-    public:
-        bool CalculateDestination(float* rx, float* ry, float* rz);
-
-    private:
-        void calculatePossibleDestinations(list<FleePoint*> &points);
-        void calculateDistanceToPlayers(FleePoint *point);
-        void calculateDistanceToCreatures(FleePoint *point);
-        void cleanup(list<FleePoint*> &points);
-        FleePoint* selectOptimalDestination(list<FleePoint*> &points);
-        bool isReasonable(FleePoint* point);
-        bool isBetterThan(FleePoint* point, FleePoint* other);
-
-    private:
-        Player* bot;
-        float maxAllowedDistance;
-        float followAngle;
-    };
+	private:
+		Player* bot;
+		float maxAllowedDistance;
+		float followAngle;
+		bool forceMaxDistance;
+	};
 
 };

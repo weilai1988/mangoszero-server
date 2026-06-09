@@ -3576,13 +3576,28 @@ void Player::RemoveMail(uint32 id)
  */
 void Player::SendMailResult(uint32 mailId, MailResponseType mailAction, MailResponseResult mailError, uint32 equipError, uint32 item_guid, uint32 item_count)
 {
-    WorldPacket data(SMSG_SEND_MAIL_RESULT, (4 + 4 + 4 + (mailError == MAIL_ERR_EQUIP_ERROR ? 4 : 0)));
+    size_t packetSize = 4 + 4 + 4;
+    if (mailError == MAIL_ERR_EQUIP_ERROR)
+    {
+        packetSize += 4;
+    }
+    else if (mailAction == MAIL_ITEM_TAKEN)
+    {
+        packetSize += 4 + 4;
+    }
+
+    WorldPacket data(SMSG_SEND_MAIL_RESULT, packetSize);
     data << (uint32) mailId;
     data << (uint32) mailAction;
     data << (uint32) mailError;
     if (mailError == MAIL_ERR_EQUIP_ERROR)
     {
         data << (uint32) equipError;
+    }
+    else if (mailAction == MAIL_ITEM_TAKEN)
+    {
+        data << (uint32) item_guid;
+        data << (uint32) item_count;
     }
     GetSession()->SendPacket(&data);
 }
@@ -20526,9 +20541,9 @@ void Player::SaveToDB()
         uberInsert.addFloat(finiteAlways(GetTeleportDest().orientation));
     }
 
-    std::ostringstream ss;
-    ss << m_taxi;                                   // string with TaxiMaskSize numbers
-    uberInsert.addString(ss);
+    std::ostringstream taxiMaskStream;
+    taxiMaskStream << m_taxi;                       // string with TaxiMaskSize numbers
+    uberInsert.addString(taxiMaskStream);
 
     uberInsert.addUInt32(IsInWorld() ? 1 : 0);
 
@@ -20570,8 +20585,13 @@ void Player::SaveToDB()
 
     uberInsert.addUInt64(uint64(m_deathExpireTime));
 
-    ss << m_taxi.SaveTaxiDestinationsToString();       // string
-    uberInsert.addString(ss);
+    if (!m_taxi.empty() && GetMotionMaster()->GetCurrentMovementGeneratorType() != FLIGHT_MOTION_TYPE)
+    {
+        sLog.outDebug("Player::SaveToDB: clearing stale taxi destinations for %s", GetName());
+        m_taxi.ClearTaxiDestinations();
+    }
+
+    uberInsert.addString(m_taxi.SaveTaxiDestinationsToString());       // string
 
     uberInsert.addUInt32(uint32(m_highest_rank.rank));
     uberInsert.addInt32(m_standing_pos);
@@ -20591,21 +20611,23 @@ void Player::SaveToDB()
         uberInsert.addUInt32(GetPower(Powers(i)));
     }
 
+    std::ostringstream exploredZonesStream;
     for (uint32 i = 0; i < PLAYER_EXPLORED_ZONES_SIZE; ++i) // string
     {
-        ss << GetUInt32Value(PLAYER_EXPLORED_ZONES_1 + i) << " ";
+        exploredZonesStream << GetUInt32Value(PLAYER_EXPLORED_ZONES_1 + i) << " ";
     }
-    uberInsert.addString(ss); // exploredZOnes
+    uberInsert.addString(exploredZonesStream); // exploredZOnes
 
+    std::ostringstream equipmentCacheStream;
     for (uint32 i = 0; i < EQUIPMENT_SLOT_END; ++i)         // string: item id, ench (perm/temp)
     {
-        ss << GetUInt32Value(PLAYER_VISIBLE_ITEM_1_0 + i * MAX_VISIBLE_ITEM_OFFSET) << " ";
+        equipmentCacheStream << GetUInt32Value(PLAYER_VISIBLE_ITEM_1_0 + i * MAX_VISIBLE_ITEM_OFFSET) << " ";
 
         uint32 ench1 = GetUInt32Value(PLAYER_VISIBLE_ITEM_1_0 + i * MAX_VISIBLE_ITEM_OFFSET + 1 + PERM_ENCHANTMENT_SLOT);
         uint32 ench2 = GetUInt32Value(PLAYER_VISIBLE_ITEM_1_0 + i * MAX_VISIBLE_ITEM_OFFSET + 1 + TEMP_ENCHANTMENT_SLOT);
-        ss << uint32(MAKE_PAIR32(ench1, ench2)) << " ";
+        equipmentCacheStream << uint32(MAKE_PAIR32(ench1, ench2)) << " ";
     }
-    uberInsert.addString(ss); // EquipmentCache
+    uberInsert.addString(equipmentCacheStream); // EquipmentCache
 
     uberInsert.addUInt32(GetUInt32Value(PLAYER_AMMO_ID));
 

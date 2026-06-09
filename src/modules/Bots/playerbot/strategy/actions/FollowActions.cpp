@@ -2,32 +2,53 @@
 #include "../../playerbot.h"
 #include "FollowActions.h"
 #include "../../PlayerbotAIConfig.h"
+#include "../../ServerFacade.h"
+#include "../values/Formations.h"
 
 using namespace ai;
 
-bool FollowLineAction::Execute(Event event)
-{
-    return Follow(AI_VALUE(Unit*, "line target"), sPlayerbotAIConfig.followDistance, 0.0f);
-}
 
-bool FollowMasterAction::Execute(Event event)
+bool FollowAction::Execute(Event event)
 {
-    return Follow(AI_VALUE(Unit*, "master target"));
-}
-
-bool FollowMasterRandomAction::Execute(Event event)
-{
-    Player* master = GetMaster();
-    if (!master)
+    Formation* formation = AI_VALUE(Formation*, "formation");
+    string target = formation->GetTargetName();
+    bool moved = false;
+    if (!target.empty())
     {
-        return false;
+        moved = Follow(AI_VALUE(Unit*, target));
+    }
+    else
+    {
+        WorldLocation loc = formation->GetLocation();
+        if (Formation::IsNullLocation(loc) || loc.mapid == -1)
+            return false;
+
+        moved = MoveTo(loc.mapid, loc.coord_x, loc.coord_y, loc.coord_z);
     }
 
-    float range = rand() % 10 + 2;
-    float angle = GetFollowAngle();
-    float x = master->GetPositionX() + cos(angle) * range;
-    float y = master->GetPositionY() + sin(angle) * range;
-    float z = master->GetPositionZ();
-
-    return MoveTo(master->GetMapId(), x, y, z);
+    if (moved) ai->SetNextCheckDelay(sPlayerbotAIConfig.globalCoolDown);
+    return moved;
 }
+
+bool FollowAction::isUseful()
+{
+    Formation* formation = AI_VALUE(Formation*, "formation");
+    float distance = 0;
+    string target = formation->GetTargetName();
+
+    if (!target.empty())
+    {
+        distance = AI_VALUE2(float, "distance", target);
+    }
+    else
+    {
+        WorldLocation loc = formation->GetLocation();
+        if (Formation::IsNullLocation(loc) || bot->GetMapId() != loc.mapid)
+            return false;
+
+        distance = sServerFacade.GetDistance2d(bot, loc.coord_x, loc.coord_y);
+    }
+
+    return sServerFacade.IsDistanceGreaterThan(distance, formation->GetMaxDistance());
+}
+

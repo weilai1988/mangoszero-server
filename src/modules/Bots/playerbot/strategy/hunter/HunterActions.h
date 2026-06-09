@@ -7,8 +7,12 @@ namespace ai
     BEGIN_RANGED_SPELL_ACTION(CastHuntersMarkAction, "hunter's mark")
     END_SPELL_ACTION()
 
-    BEGIN_RANGED_SPELL_ACTION(CastAutoShotAction, "auto shot")
-    END_SPELL_ACTION()
+    class CastAutoShotAction : public CastSpellAction
+    {
+    public:
+        CastAutoShotAction(PlayerbotAI* ai) : CastSpellAction(ai, "auto shot") {}
+        virtual bool isUseful();
+    };
 
     BEGIN_RANGED_SPELL_ACTION(CastArcaneShotAction, "arcane shot")
     END_SPELL_ACTION()
@@ -16,11 +20,18 @@ namespace ai
     BEGIN_RANGED_SPELL_ACTION(CastExplosiveShotAction, "explosive shot")
     END_SPELL_ACTION()
 
+
     BEGIN_RANGED_SPELL_ACTION(CastAimedShotAction, "aimed shot")
     END_SPELL_ACTION()
 
-    BEGIN_RANGED_SPELL_ACTION(CastConcussiveShotAction, "concussive shot")
+    BEGIN_RANGED_SPELL_ACTION(CastChimeraShotAction, "chimera shot")
     END_SPELL_ACTION()
+
+    class CastConcussiveShotAction : public CastSnareSpellAction
+    {
+    public:
+        CastConcussiveShotAction(PlayerbotAI* ai) : CastSnareSpellAction(ai, "concussive shot") {}
+    };
 
     BEGIN_RANGED_SPELL_ACTION(CastDistractingShotAction, "distracting shot")
     END_SPELL_ACTION()
@@ -28,8 +39,8 @@ namespace ai
     BEGIN_RANGED_SPELL_ACTION(CastMultiShotAction, "multi-shot")
     END_SPELL_ACTION()
 
-    BEGIN_RANGED_SPELL_ACTION(CastVolleyAction, "volley")
-    END_SPELL_ACTION()
+	BEGIN_RANGED_SPELL_ACTION(CastVolleyAction, "volley")
+	END_SPELL_ACTION()
 
     BEGIN_RANGED_SPELL_ACTION(CastSerpentStingAction, "serpent sting")
     virtual bool isUseful();
@@ -45,54 +56,55 @@ namespace ai
     BEGIN_RANGED_SPELL_ACTION(CastScorpidStingAction, "scorpid sting")
     END_SPELL_ACTION()
 
-    class CastAspectOfTheHawkAction : public CastBuffSpellAction
-    {
-    public:
-        CastAspectOfTheHawkAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "aspect of the hawk") {}
-    };
+	class CastAspectOfTheHawkAction : public CastBuffSpellAction
+	{
+	public:
+		CastAspectOfTheHawkAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "aspect of the hawk") {}
+	};
 
-    class CastAspectOfTheWildAction : public CastBuffSpellAction
-    {
-    public:
-        CastAspectOfTheWildAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "aspect of the wild") {}
-    };
+	class CastAspectOfTheWildAction : public CastBuffSpellAction
+	{
+	public:
+		CastAspectOfTheWildAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "aspect of the wild") {}
+	};
 
-    class CastAspectOfTheCheetahAction : public CastBuffSpellAction
-    {
-    public:
-        CastAspectOfTheCheetahAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "aspect of the cheetah") {}
-        virtual bool isUseful();
-    };
+	class CastAspectOfTheCheetahAction : public CastBuffSpellAction
+	{
+	public:
+		CastAspectOfTheCheetahAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "aspect of the cheetah") {}
+		virtual bool isUseful();
+	};
 
-    class CastAspectOfThePackAction : public CastBuffSpellAction
-    {
-    public:
-        CastAspectOfThePackAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "aspect of the pack") {}
-    };
+	class CastAspectOfThePackAction : public CastBuffSpellAction
+	{
+	public:
+		CastAspectOfThePackAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "aspect of the pack") {}
+	};
 
-    class CastCallPetAction : public CastBuffSpellAction
-    {
-    public:
-        CastCallPetAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "call pet") {}
-    };
+	class CastAspectOfTheViperAction : public CastBuffSpellAction
+	{
+	public:
+		CastAspectOfTheViperAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "aspect of the viper") {}
+	};
 
-    class CastMendPetAction : public CastAuraSpellAction
-    {
-    public:
-        CastMendPetAction(PlayerbotAI* ai) : CastAuraSpellAction(ai, "mend pet") {}
-        virtual string GetTargetName()
-        {
-            return "pet target";
-        }
-    };
+	class CastCallPetAction : public CastBuffSpellAction
+	{
+	public:
+		CastCallPetAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "call pet") {}
+	};
 
-    class CastRevivePetAction : public CastBuffSpellAction
-    {
-    public:
-        CastRevivePetAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "revive pet") {}
-        virtual bool isPossible();
-        virtual bool Execute(Event event);
-    };
+	class CastMendPetAction : public CastAuraSpellAction
+	{
+	public:
+		CastMendPetAction(PlayerbotAI* ai) : CastAuraSpellAction(ai, "mend pet") {}
+		virtual string GetTargetName() { return "pet target"; }
+	};
+
+	class CastRevivePetAction : public CastBuffSpellAction
+	{
+	public:
+		CastRevivePetAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "revive pet") {}
+	};
 
     class CastTrueshotAuraAction : public CastBuffSpellAction
     {
@@ -106,26 +118,23 @@ namespace ai
         CastFeignDeathAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "feign death") {}
     };
 
-    class RemoveFeignDeathAction : public Action
-    {
-    public:
-        RemoveFeignDeathAction(PlayerbotAI* ai) : Action(ai, "remove feign death") {}
-        virtual bool Execute(Event event)
-        {
-            bot->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
-            return true;
-        }
-        virtual bool isUseful()
-        {
-            return bot->hasUnitState(UNIT_STAT_DIED);
-        }
-    };
+	class CastRapidFireAction : public CastBuffSpellAction
+	{
+	public:
+		CastRapidFireAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "rapid fire") {}
+	};
 
-    class CastRapidFireAction : public CastBuffSpellAction
-    {
-    public:
-        CastRapidFireAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "rapid fire") {}
-    };
+	class CastReadinessAction : public CastBuffSpellAction
+	{
+	public:
+		CastReadinessAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "readiness") {}
+	};
+
+	class CastBlackArrow : public CastDebuffSpellAction
+	{
+	public:
+		CastBlackArrow(PlayerbotAI* ai) : CastDebuffSpellAction(ai, "black arrow") {}
+	};
 
     class CastFreezingTrap : public CastDebuffSpellAction
     {
@@ -140,8 +149,11 @@ namespace ai
         CastWingClipAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "wing clip") {}
         virtual bool isUseful()
         {
-            Unit* target = GetTarget();
-            return target && target->IsAlive() && CastMeleeSpellAction::isUseful() && !ai->HasAura(spell, target) && target->getVictim() == bot;
+            return CastMeleeSpellAction::isUseful() && !ai->HasAura(spell, GetTarget());
+        }
+        virtual NextAction** getPrerequisites()
+        {
+            return NULL;
         }
     };
 
@@ -151,90 +163,31 @@ namespace ai
         CastSerpentStingOnAttackerAction(PlayerbotAI* ai) : CastDebuffSpellOnAttackerAction(ai, "serpent sting") {}
     };
 
-    BEGIN_MELEE_SPELL_ACTION(CastDisengageAction, "disengage")
-    END_SPELL_ACTION()
-
-    BEGIN_MELEE_SPELL_ACTION(CastImmolationTrapAction, "immolation trap")
-    END_SPELL_ACTION()
-
-    BEGIN_MELEE_SPELL_ACTION(CastFrostTrapAction, "frost trap")
-    END_SPELL_ACTION()
-
-    BEGIN_MELEE_SPELL_ACTION(CastExplosiveTrapAction, "explosive trap")
-    END_SPELL_ACTION()
-
-    BEGIN_RANGED_SPELL_ACTION(CastScatterShotAction, "scatter shot")
-    END_SPELL_ACTION()
-
-    class CastBestialWrathAction : public CastAuraSpellAction
+    class FeedPetAction : public Action
     {
     public:
-        CastBestialWrathAction(PlayerbotAI* ai) : CastAuraSpellAction(ai, "bestial wrath") {}
-        virtual string GetTargetName()
-        {
-            return "pet target";
-        }
-
-        virtual bool isUseful()
-        {
-            return CastAuraSpellAction::isUseful() && AI_VALUE(Unit*, "pet target") != NULL;
-        }
-    };
-
-    class CastMongooseBiteAction : public CastMeleeSpellAction
-    {
-    public:
-        CastMongooseBiteAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "mongoose bite") {}
-        virtual bool isPossible()
-        {
-            return bot->HasAuraState(AURA_STATE_DEFENSE) && CastMeleeSpellAction::isPossible();
-        }
-    };
-
-    class CastIntimidationAction : public CastSpellAction
-    {
-    public:
-        CastIntimidationAction(PlayerbotAI* ai) : CastSpellAction(ai, "intimidation") {}
-        virtual bool isUseful();
-    };
-
-    class FeedPetAction : public CastSpellAction
-    {
-    public:
-        FeedPetAction(PlayerbotAI* ai) : CastSpellAction(ai, "feed pet") {}
-        virtual string GetTargetName() { return "pet target"; }
-        virtual bool isUseful();
-    };
-
-    class HunterMeleeAction : public Action
-    {
-    public:
-        HunterMeleeAction(PlayerbotAI* ai) : Action(ai, "hunter melee") {}
+        FeedPetAction(PlayerbotAI* ai) : Action(ai, "feed pet") {}
         virtual bool Execute(Event event);
-        virtual bool isUseful();
     };
 
-    class HunterEnsureRangedPositionAction : public MovementAction
+    class CastBestialWrathAction : public CastBuffSpellAction
     {
-    private:
-        const float minShootDistance = 10.0;
     public:
-        HunterEnsureRangedPositionAction(PlayerbotAI* ai) : MovementAction(ai, "hunter ensure ranged position") {}
-
-        virtual bool Execute(Event event)
-        {
-            Unit* target = AI_VALUE(Unit*, "current target");
-            if(bot->GetDistance(target) > sPlayerbotAIConfig.spellDistance)
-                return MoveTo(target, sPlayerbotAIConfig.spellDistance - 1.0);
-            else
-                return MoveTo(target, minShootDistance + 1.0);
-        }
-        virtual bool isUseful()
-        {
-            Unit* target = AI_VALUE(Unit*, "current target");
-            if (!target || !target->IsAlive() || (target->getVictim() == bot)) return false;
-            float distance = bot->GetDistance(target);
-            return distance < minShootDistance || distance > sPlayerbotAIConfig.spellDistance;
-        }
+        CastBestialWrathAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "bestial wrath") {}
     };
+
+    class CastScareBeastAction : public CastSpellAction
+    {
+    public:
+        CastScareBeastAction(PlayerbotAI* ai) : CastSpellAction(ai, "scare beast") {}
+    };
+
+    class CastScareBeastCcAction : public CastSpellAction
+    {
+    public:
+        CastScareBeastCcAction(PlayerbotAI* ai) : CastSpellAction(ai, "scare beast on cc") {}
+        virtual Value<Unit*>* GetTargetValue();
+        virtual bool Execute(Event event);
+    };
+
 }

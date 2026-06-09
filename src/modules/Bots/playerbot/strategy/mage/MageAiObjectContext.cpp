@@ -13,6 +13,7 @@
 
 using namespace ai;
 
+
 namespace ai
 {
     namespace mage
@@ -28,6 +29,10 @@ namespace ai
                 creators["pull"] = &mage::StrategyFactoryInternal::pull;
                 creators["fire aoe"] = &mage::StrategyFactoryInternal::fire_aoe;
                 creators["frost aoe"] = &mage::StrategyFactoryInternal::frost_aoe;
+                creators["cure"] = &mage::StrategyFactoryInternal::cure;
+                creators["buff"] = &mage::StrategyFactoryInternal::buff;
+                creators["boost"] = &mage::StrategyFactoryInternal::boost;
+                creators["cc"] = &mage::StrategyFactoryInternal::cc;
             }
 
         private:
@@ -35,6 +40,10 @@ namespace ai
             static Strategy* pull(PlayerbotAI* ai) { return new PullStrategy(ai, "shoot"); }
             static Strategy* fire_aoe(PlayerbotAI* ai) { return new FireMageAoeStrategy(ai); }
             static Strategy* frost_aoe(PlayerbotAI* ai) { return new FrostMageAoeStrategy(ai); }
+            static Strategy* cure(PlayerbotAI* ai) { return new MageCureStrategy(ai); }
+            static Strategy* buff(PlayerbotAI* ai) { return new MageBuffStrategy(ai); }
+            static Strategy* boost(PlayerbotAI* ai) { return new MageBoostStrategy(ai); }
+            static Strategy* cc(PlayerbotAI* ai) { return new MageCcStrategy(ai); }
         };
 
         class MageStrategyFactoryInternal : public NamedObjectContext<Strategy>
@@ -69,6 +78,7 @@ namespace ai
     };
 };
 
+
 namespace ai
 {
     namespace mage
@@ -97,13 +107,14 @@ namespace ai
                 creators["missile barrage"] = &TriggerFactoryInternal::missile_barrage;
                 creators["arcane blast"] = &TriggerFactoryInternal::arcane_blast;
                 creators["counterspell on enemy healer"] = &TriggerFactoryInternal::counterspell_enemy_healer;
-                creators["no mana gem"] = &TriggerFactoryInternal::no_mana_gem;
-                creators["party member needs food"] = &TriggerFactoryInternal::party_member_needs_food;
-                creators["party member needs water"] = &TriggerFactoryInternal::party_member_needs_water;
+                creators["arcane power"] = &TriggerFactoryInternal::arcane_power;
+                creators["presence of mind"] = &TriggerFactoryInternal::presence_of_mind;
 
             }
 
         private:
+            static Trigger* presence_of_mind(PlayerbotAI* ai) { return new PresenceOfMindTrigger(ai); }
+            static Trigger* arcane_power(PlayerbotAI* ai) { return new ArcanePowerTrigger(ai); }
             static Trigger* hot_streak(PlayerbotAI* ai) { return new HotStreakTrigger(ai); }
             static Trigger* fireball(PlayerbotAI* ai) { return new FireballTrigger(ai); }
             static Trigger* pyroblast(PlayerbotAI* ai) { return new PyroblastTrigger(ai); }
@@ -121,12 +132,10 @@ namespace ai
             static Trigger* missile_barrage(PlayerbotAI* ai) { return new MissileBarrageTrigger(ai); }
             static Trigger* arcane_blast(PlayerbotAI* ai) { return new ArcaneBlastTrigger(ai); }
             static Trigger* counterspell_enemy_healer(PlayerbotAI* ai) { return new CounterspellEnemyHealerTrigger(ai); }
-            static Trigger* no_mana_gem(PlayerbotAI* ai) { return new NoManaGemTrigger(ai); }
-            static Trigger* party_member_needs_food(PlayerbotAI* ai) { return new PartyMemberNeedsFoodTrigger(ai); }
-            static Trigger* party_member_needs_water(PlayerbotAI* ai) { return new PartyMemberNeedsWaterTrigger(ai); }
         };
     };
 };
+
 
 namespace ai
 {
@@ -139,6 +148,8 @@ namespace ai
         public:
             AiObjectContextInternal()
             {
+                creators["arcane power"] = &AiObjectContextInternal::arcane_power;
+                creators["presence of mind"] = &AiObjectContextInternal::presence_of_mind;
                 creators["frostbolt"] = &AiObjectContextInternal::frostbolt;
                 creators["blizzard"] = &AiObjectContextInternal::blizzard;
                 creators["frost nova"] = &AiObjectContextInternal::frost_nova;
@@ -146,9 +157,7 @@ namespace ai
                 creators["arcane intellect on party"] = &AiObjectContextInternal::arcane_intellect_on_party;
                 creators["conjure water"] = &AiObjectContextInternal::conjure_water;
                 creators["conjure food"] = &AiObjectContextInternal::conjure_food;
-                creators["conjure mana gem"] = &AiObjectContextInternal::conjure_mana_gem;
-                creators["give conjured food"] = &AiObjectContextInternal::give_conjured_food;
-                creators["give conjured water"] = &AiObjectContextInternal::give_conjured_water;
+                creators["molten armor"] = &AiObjectContextInternal::molten_armor;
                 creators["mage armor"] = &AiObjectContextInternal::mage_armor;
                 creators["ice armor"] = &AiObjectContextInternal::ice_armor;
                 creators["frost armor"] = &AiObjectContextInternal::frost_armor;
@@ -160,26 +169,30 @@ namespace ai
                 creators["counterspell"] = &AiObjectContextInternal::counterspell;
                 creators["remove curse"] = &AiObjectContextInternal::remove_curse;
                 creators["remove curse on party"] = &AiObjectContextInternal::remove_curse_on_party;
+                creators["remove lesser curse"] = &AiObjectContextInternal::remove_lesser_curse;
+                creators["remove lesser curse on party"] = &AiObjectContextInternal::remove_lesser_curse_on_party;
+                creators["icy veins"] = &AiObjectContextInternal::icy_veins;
                 creators["combustion"] = &AiObjectContextInternal::combustion;
                 creators["ice block"] = &AiObjectContextInternal::ice_block;
                 creators["polymorph"] = &AiObjectContextInternal::polymorph;
-                creators["blast wave"] = &AiObjectContextInternal::blast_wave;
-                creators["evocation"] = &AiObjectContextInternal::evocation;
-                creators["arcane missiles"] = &AiObjectContextInternal::arcane_missiles;
-                creators["counterspell on enemy healer"] = &AiObjectContextInternal::counterspell_on_enemy_healer;
-                creators["living bomb"] = &AiObjectContextInternal::living_bomb;
-                creators["icy veins"] = &AiObjectContextInternal::icy_veins;
                 creators["spellsteal"] = &AiObjectContextInternal::spellsteal;
+                creators["living bomb"] = &AiObjectContextInternal::living_bomb;
                 creators["dragon's breath"] = &AiObjectContextInternal::dragons_breath;
+                creators["blast wave"] = &AiObjectContextInternal::blast_wave;
+                creators["invisibility"] = &AiObjectContextInternal::invisibility;
+                creators["evocation"] = &AiObjectContextInternal::evocation;
                 creators["arcane blast"] = &AiObjectContextInternal::arcane_blast;
                 creators["arcane barrage"] = &AiObjectContextInternal::arcane_barrage;
-                creators["cone of cold"] = &AiObjectContextInternal::cone_of_cold;
-                creators["cold snap"] = &AiObjectContextInternal::cold_snap;
-                creators["arcane brilliance"] = &AiObjectContextInternal::arcane_brilliance;
+                creators["arcane missiles"] = &AiObjectContextInternal::arcane_missiles;
+                creators["counterspell on enemy healer"] = &AiObjectContextInternal::counterspell_on_enemy_healer;
             }
 
         private:
+            static Action* presence_of_mind(PlayerbotAI* ai) { return new CastPresenceOfMindAction(ai); }
+            static Action* arcane_power(PlayerbotAI* ai) { return new CastArcanePowerAction(ai); }
             static Action* arcane_missiles(PlayerbotAI* ai) { return new CastArcaneMissilesAction(ai); }
+            static Action* arcane_barrage(PlayerbotAI* ai) { return new CastArcaneBarrageAction(ai); }
+            static Action* arcane_blast(PlayerbotAI* ai) { return new CastArcaneBlastAction(ai); }
             static Action* frostbolt(PlayerbotAI* ai) { return new CastFrostboltAction(ai); }
             static Action* blizzard(PlayerbotAI* ai) { return new CastBlizzardAction(ai); }
             static Action* frost_nova(PlayerbotAI* ai) { return new CastFrostNovaAction(ai); }
@@ -187,9 +200,7 @@ namespace ai
             static Action* arcane_intellect_on_party(PlayerbotAI* ai) { return new CastArcaneIntellectOnPartyAction(ai); }
             static Action* conjure_water(PlayerbotAI* ai) { return new CastConjureWaterAction(ai); }
             static Action* conjure_food(PlayerbotAI* ai) { return new CastConjureFoodAction(ai); }
-            static Action* conjure_mana_gem(PlayerbotAI* ai) { return new CastConjureManaGemAction(ai); }
-            static Action* give_conjured_food(PlayerbotAI* ai) { return new GiveConjuredFoodAction(ai); }
-            static Action* give_conjured_water(PlayerbotAI* ai) { return new GiveConjuredWaterAction(ai); }
+            static Action* molten_armor(PlayerbotAI* ai) { return new CastMoltenArmorAction(ai); }
             static Action* mage_armor(PlayerbotAI* ai) { return new CastMageArmorAction(ai); }
             static Action* ice_armor(PlayerbotAI* ai) { return new CastIceArmorAction(ai); }
             static Action* frost_armor(PlayerbotAI* ai) { return new CastFrostArmorAction(ai); }
@@ -201,24 +212,24 @@ namespace ai
             static Action* counterspell(PlayerbotAI* ai) { return new CastCounterspellAction(ai); }
             static Action* remove_curse(PlayerbotAI* ai) { return new CastRemoveCurseAction(ai); }
             static Action* remove_curse_on_party(PlayerbotAI* ai) { return new CastRemoveCurseOnPartyAction(ai); }
+            static Action* remove_lesser_curse(PlayerbotAI* ai) { return new CastRemoveLesserCurseAction(ai); }
+            static Action* remove_lesser_curse_on_party(PlayerbotAI* ai) { return new CastRemoveLesserCurseOnPartyAction(ai); }
+            static Action* icy_veins(PlayerbotAI* ai) { return new CastIcyVeinsAction(ai); }
             static Action* combustion(PlayerbotAI* ai) { return new CastCombustionAction(ai); }
             static Action* ice_block(PlayerbotAI* ai) { return new CastIceBlockAction(ai); }
             static Action* polymorph(PlayerbotAI* ai) { return new CastPolymorphAction(ai); }
+            static Action* spellsteal(PlayerbotAI* ai) { return new CastSpellstealAction(ai); }
+            static Action* living_bomb(PlayerbotAI* ai) { return new CastLivingBombAction(ai); }
+            static Action* dragons_breath(PlayerbotAI* ai) { return new CastDragonsBreathAction(ai); }
             static Action* blast_wave(PlayerbotAI* ai) { return new CastBlastWaveAction(ai); }
+            static Action* invisibility(PlayerbotAI* ai) { return new CastInvisibilityAction(ai); }
             static Action* evocation(PlayerbotAI* ai) { return new CastEvocationAction(ai); }
             static Action* counterspell_on_enemy_healer(PlayerbotAI* ai) { return new CastCounterspellOnEnemyHealerAction(ai); }
-            static Action* living_bomb(PlayerbotAI* ai) { return new CastLivingBombAction(ai); }
-            static Action* icy_veins(PlayerbotAI* ai) { return new CastIcyVeinsAction(ai); }
-            static Action* spellsteal(PlayerbotAI* ai) { return new CastSpellstealAction(ai); }
-            static Action* dragons_breath(PlayerbotAI* ai) { return new CastDragonsBreathAction(ai); }
-            static Action* arcane_blast(PlayerbotAI* ai) { return new CastArcaneBlastAction(ai); }
-            static Action* arcane_barrage(PlayerbotAI* ai) { return new CastArcaneBarrageAction(ai); }
-            static Action* cone_of_cold(PlayerbotAI* ai) { return new CastConeOfColdAction(ai); }
-            static Action* cold_snap(PlayerbotAI* ai) { return new CastColdSnapAction(ai); }
-            static Action* arcane_brilliance(PlayerbotAI* ai) { return new CastArcaneBrillianceAction(ai); }
         };
     };
 };
+
+
 
 MageAiObjectContext::MageAiObjectContext(PlayerbotAI* ai) : AiObjectContext(ai)
 {

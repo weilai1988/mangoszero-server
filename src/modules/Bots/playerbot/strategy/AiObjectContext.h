@@ -36,7 +36,7 @@ namespace ai
         template<class T>
         Value<T>* GetValue(string name, uint32 param)
         {
-            ostringstream out; out << param;
+        	ostringstream out; out << param;
             return GetValue<T>(name, out.str());
         }
 
@@ -49,21 +49,17 @@ namespace ai
         {
             ostringstream out;
             set<string> names = valueContexts.GetCreated();
-            for (set<string>::iterator i = names.begin(); i != names.end(); ++i)
+            for (set<string>::iterator i = names.begin(); i != names.end(); ++i, out << "|")
             {
                 UntypedValue* value = GetUntypedValue(*i);
                 if (!value)
-                {
                     continue;
-                }
 
                 string text = value->Format();
                 if (text == "?")
-                {
                     continue;
-                }
 
-                out << "{" << *i << "=" << text << "} ";
+                out << "{" << *i << "=" << text << "}";
             }
             return out.str();
         }
@@ -75,6 +71,8 @@ namespace ai
         {
             valueContexts.Add(sharedValues);
         }
+        list<string> Save();
+        void Load(list<string> data);
 
     protected:
         NamedObjectContextList<Strategy> strategyContexts;

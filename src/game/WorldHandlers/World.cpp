@@ -101,6 +101,7 @@
 
 #ifdef ENABLE_PLAYERBOTS
 
+#include "AhBot.h"
 #include "PlayerbotAIConfig.h"
 #include "RandomPlayerbotMgr.h"
 #endif
@@ -1798,6 +1799,9 @@ void World::Update(uint32 diff)
     if (m_timers[WUPDATE_AHBOT].Passed())
     {
         sAuctionBot.Update();
+#ifdef ENABLE_PLAYERBOTS
+        auctionbot.Update();
+#endif
         m_timers[WUPDATE_AHBOT].Reset();
     }
 

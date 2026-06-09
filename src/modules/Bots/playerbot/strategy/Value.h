@@ -2,115 +2,68 @@
 #include "Action.h"
 #include "Event.h"
 #include "../PlayerbotAIAware.h"
+#include "../PerformanceMonitor.h"
 #include "AiObject.h"
 
 namespace ai
 {
-
-    /**
-     * @brief Base class for untyped values.
-     */
     class UntypedValue : public AiNamedObject
     {
     public:
         UntypedValue(PlayerbotAI* ai, string name) : AiNamedObject(ai, name) {}
         virtual void Update() {}
         virtual void Reset() {}
-        virtual string Format()
-        {
-            return "?";
-        }
+        virtual string Format() { return "?"; }
+        virtual string Save() { return "?"; }
+        virtual bool Load(string value) { return false; }
     };
 
-    /**
-     * @brief Template class for typed values.
-     *
-     * @tparam T The type of the value.
-     */
     template<class T>
     class Value
     {
     public:
         virtual T Get() = 0;
         virtual void Set(T value) = 0;
-        operator T()
-        {
-            return Get();
-        }
+        operator T() { return Get(); }
     };
 
-    /**
-     * @brief Template class for calculated values.
-     *
-     * @tparam T The type of the value.
-     */
     template<class T>
     class CalculatedValue : public UntypedValue, public Value<T>
-    {
-    public:
-        /**
-         * @brief Construct a new Calculated Value object
-         *
-         * @param ai Pointer to the PlayerbotAI instance.
-         * @param name The name of the value.
-         * @param checkInterval The interval at which the value is checked.
-         */
+	{
+	public:
         CalculatedValue(PlayerbotAI* ai, string name = "value", int checkInterval = 1) : UntypedValue(ai, name),
-            checkInterval(checkInterval), ticksElapsed(checkInterval)
-        {}
-
-        /**
-         * @brief Destroy the Calculated Value object
-         */
+            checkInterval(checkInterval)
+        {
+            lastCheckTime = time(0) - rand() % checkInterval;
+        }
         virtual ~CalculatedValue() {}
 
-    public:
-        /**
-         * @brief Get the calculated value.
-         *
-         * @return T The calculated value.
-         */
+	public:
         virtual T Get()
         {
-            if (ticksElapsed >= checkInterval)
+            time_t now = time(0);
+            if (!lastCheckTime || checkInterval < 2 || now - lastCheckTime >= checkInterval / 2)
             {
-                ticksElapsed = 0;
+                lastCheckTime = now;
+
+                PerformanceMonitorOperation *pmo = sPerformanceMonitor.start(PERF_MON_VALUE, getName());
                 value = Calculate();
+                if (pmo) pmo->finish();
             }
             return value;
         }
-
-        /**
-         * @brief Set the value.
-         *
-         * @param value The value to set.
-         */
         virtual void Set(T value) { this->value = value; }
-        virtual void Update()
-        {
-            if (ticksElapsed < checkInterval)
-            {
-                ticksElapsed++;
-            }
-        }
+        virtual void Update() { }
 
     protected:
-        /**
-         * @brief Calculate the value.
-         *
-         * @return T The calculated value.
-         */
         virtual T Calculate() = 0;
 
     protected:
-        int checkInterval; ///< The interval at which the value is checked.
-        int ticksElapsed;
-        T value; ///< The cached value.
-    };
+		int checkInterval;
+		time_t lastCheckTime;
+        T value;
+	};
 
-    /**
-     * @brief Class for calculated uint8 values.
-     */
     class Uint8CalculatedValue : public CalculatedValue<uint8>
     {
     public:
@@ -124,9 +77,6 @@ namespace ai
         }
     };
 
-    /**
-     * @brief Class for calculated uint32 values.
-     */
     class Uint32CalculatedValue : public CalculatedValue<uint32>
     {
     public:
@@ -140,9 +90,6 @@ namespace ai
         }
     };
 
-    /**
-     * @brief Class for calculated float values.
-     */
     class FloatCalculatedValue : public CalculatedValue<float>
     {
     public:
@@ -156,9 +103,6 @@ namespace ai
         }
     };
 
-    /**
-     * @brief Class for calculated bool values.
-     */
     class BoolCalculatedValue : public CalculatedValue<bool>
     {
     public:
@@ -171,9 +115,6 @@ namespace ai
         }
     };
 
-    /**
-     * @brief Class for calculated Unit* values.
-     */
     class UnitCalculatedValue : public CalculatedValue<Unit*>
     {
     public:
@@ -187,9 +128,6 @@ namespace ai
         }
     };
 
-    /**
-     * @brief Class for calculated list<ObjectGuid> values.
-     */
     class ObjectGuidListCalculatedValue : public CalculatedValue<list<ObjectGuid> >
     {
     public:
@@ -210,11 +148,6 @@ namespace ai
         }
     };
 
-    /**
-     * @brief Template class for manually set values.
-     *
-     * @tparam T The type of the value.
-     */
     template<class T>
     class ManualSetValue : public UntypedValue, public Value<T>
     {
@@ -224,26 +157,16 @@ namespace ai
         virtual ~ManualSetValue() {}
 
     public:
-        virtual T Get()
-        {
-            return value;
-        }
-
+        virtual T Get() { return value; }
         virtual void Set(T value) { this->value = value; }
-        virtual void Update() {}
-        virtual void Reset()
-        {
-            value = defaultValue;
-        }
+        virtual void Update() { }
+        virtual void Reset() { value = defaultValue; }
 
     protected:
-        T value; ///< The current value.
-        T defaultValue; ///< The default value.
+        T value;
+        T defaultValue;
     };
 
-    /**
-     * @brief Class for manually set Unit* values.
-     */
     class UnitManualSetValue : public ManualSetValue<Unit*>
     {
     public:

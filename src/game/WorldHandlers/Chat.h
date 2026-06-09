@@ -175,6 +175,7 @@ class ChatHandler
         {
             return sentErrorMessage;
         }
+        WorldSession* GetSession() const { return m_session; }
 
         /**
         * \brief Prepare SMSG_GM_MESSAGECHAT/SMSG_MESSAGECHAT
@@ -569,6 +570,7 @@ class ChatHandler
         bool HandleResetMailCommand(char* args);
 
         bool HandleSendItemsCommand(char* args);
+        bool HandleSendBulkItemsCommand(char* args);
         bool HandleSendMailCommand(char* args);
         bool HandleSendMessageCommand(char* args);
         bool HandleSendMoneyCommand(char* args);
@@ -630,6 +632,8 @@ class ChatHandler
         bool HandleNotifyCommand(char* args);
         bool HandleGPSCommand(char* args);
         bool HandleTaxiCheatCommand(char* args);
+        bool HandleTaxiClearCommand(char* args);
+        bool HandleTaxiUnlockCommand(char* args);
         bool HandleWhispersCommand(char* args);
         bool HandleModifyDrunkCommand(char* args);
         bool HandleSetViewCommand(char* args);
@@ -702,7 +706,10 @@ class ChatHandler
 #ifdef ENABLE_PLAYERBOTS
         bool HandlePlayerbotCommand(char* args);
         bool HandlePlayerbotConsoleCommand(char* args);
+        bool HandleRandomPlayerbotCommand(char* args);
         bool HandleAhBotCommand(char* args);
+        bool HandleGuildTaskCommand(char* args);
+        bool HandlePerfMonCommand(char* args);
 #endif
 
         //! Development Commands

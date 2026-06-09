@@ -11,6 +11,7 @@
 
 using namespace ai;
 
+
 namespace ai
 {
     namespace warrior
@@ -72,10 +73,16 @@ namespace ai
                 creators["concussion blow"] = &TriggerFactoryInternal::concussion_blow;
                 creators["sword and board"] = &TriggerFactoryInternal::SwordAndBoard;
                 creators["shield bash on enemy healer"] = &TriggerFactoryInternal::shield_bash_on_enemy_healer;
+                creators["battle stance"] = &TriggerFactoryInternal::battle_stance;
+                creators["defensive stance"] = &TriggerFactoryInternal::defensive_stance;
+                creators["shield block"] = &TriggerFactoryInternal::shield_block;
 
             }
 
         private:
+            static Trigger* shield_block(PlayerbotAI* ai) { return new ShieldBlockTrigger(ai); }
+            static Trigger* defensive_stance(PlayerbotAI* ai) { return new DefensiveStanceTrigger(ai); }
+            static Trigger* battle_stance(PlayerbotAI* ai) { return new BattleStanceTrigger(ai); }
             static Trigger* hamstring(PlayerbotAI* ai) { return new HamstringTrigger(ai); }
             static Trigger* victory_rush(PlayerbotAI* ai) { return new VictoryRushTrigger(ai); }
             static Trigger* death_wish(PlayerbotAI* ai) { return new DeathWishTrigger(ai); }
@@ -92,6 +99,7 @@ namespace ai
     };
 };
 
+
 namespace ai
 {
     namespace warrior
@@ -103,10 +111,7 @@ namespace ai
         public:
             AiObjectContextInternal()
             {
-                creators["berserker stance"] = &AiObjectContextInternal::berserker_stance;
-                creators["victory rush"] = &AiObjectContextInternal::victory_rush;
-                creators["mortal strike"] = &AiObjectContextInternal::mortal_strike;
-                creators["whirlwind"] = &AiObjectContextInternal::whirlwind;
+                creators["devastate"] = &AiObjectContextInternal::devastate;
                 creators["overpower"] = &AiObjectContextInternal::overpower;
                 creators["charge"] = &AiObjectContextInternal::charge;
                 creators["bloodthirst"] = &AiObjectContextInternal::bloodthirst;
@@ -115,6 +120,7 @@ namespace ai
                 creators["mocking blow"] = &AiObjectContextInternal::mocking_blow;
                 creators["death wish"] = &AiObjectContextInternal::death_wish;
                 creators["berserker rage"] = &AiObjectContextInternal::berserker_rage;
+                creators["victory rush"] = &AiObjectContextInternal::victory_rush;
                 creators["execute"] = &AiObjectContextInternal::execute;
                 creators["defensive stance"] = &AiObjectContextInternal::defensive_stance;
                 creators["hamstring"] = &AiObjectContextInternal::hamstring;
@@ -128,6 +134,7 @@ namespace ai
                 creators["challenging shout"] = &AiObjectContextInternal::challenging_shout;
                 creators["shield wall"] = &AiObjectContextInternal::shield_wall;
                 creators["battle shout"] = &AiObjectContextInternal::battle_shout;
+                creators["battle shout taunt"] = &AiObjectContextInternal::battle_shout_taunt;
                 creators["thunder clap"] = &AiObjectContextInternal::thunder_clap;
                 creators["taunt"] = &AiObjectContextInternal::taunt;
                 creators["revenge"] = &AiObjectContextInternal::revenge;
@@ -136,17 +143,16 @@ namespace ai
                 creators["disarm"] = &AiObjectContextInternal::disarm;
                 creators["sunder armor"] = &AiObjectContextInternal::sunder_armor;
                 creators["last stand"] = &AiObjectContextInternal::last_stand;
+                creators["shockwave"] = &AiObjectContextInternal::shockwave;
                 creators["cleave"] = &AiObjectContextInternal::cleave;
                 creators["concussion blow"] = &AiObjectContextInternal::concussion_blow;
                 creators["shield bash on enemy healer"] = &AiObjectContextInternal::shield_bash_on_enemy_healer;
             }
 
         private:
-            static Action* berserker_stance(PlayerbotAI* ai) { return new CastBerserkerStanceAction(ai); }
-            static Action* victory_rush(PlayerbotAI* ai) { return new CastVictoryRushAction(ai); }
-            static Action* mortal_strike(PlayerbotAI* ai) { return new CastMortalStrikeAction(ai); }
-            static Action* whirlwind(PlayerbotAI* ai) { return new CastWhirlwindAction(ai); }
+            static Action* devastate(PlayerbotAI* ai) { return new CastDevastateAction(ai); }
             static Action* last_stand(PlayerbotAI* ai) { return new CastLastStandAction(ai); }
+            static Action* shockwave(PlayerbotAI* ai) { return new CastShockwaveAction(ai); }
             static Action* cleave(PlayerbotAI* ai) { return new CastCleaveAction(ai); }
             static Action* concussion_blow(PlayerbotAI* ai) { return new CastConcussionBlowAction(ai); }
             static Action* taunt(PlayerbotAI* ai) { return new CastTauntAction(ai); }
@@ -163,6 +169,7 @@ namespace ai
             static Action* mocking_blow(PlayerbotAI* ai) { return new CastMockingBlowAction(ai); }
             static Action* death_wish(PlayerbotAI* ai) { return new CastDeathWishAction(ai); }
             static Action* berserker_rage(PlayerbotAI* ai) { return new CastBerserkerRageAction(ai); }
+            static Action* victory_rush(PlayerbotAI* ai) { return new CastVictoryRushAction(ai); }
             static Action* execute(PlayerbotAI* ai) { return new CastExecuteAction(ai); }
             static Action* defensive_stance(PlayerbotAI* ai) { return new CastDefensiveStanceAction(ai); }
             static Action* hamstring(PlayerbotAI* ai) { return new CastHamstringAction(ai); }
@@ -176,6 +183,7 @@ namespace ai
             static Action* challenging_shout(PlayerbotAI* ai) { return new CastChallengingShoutAction(ai); }
             static Action* shield_wall(PlayerbotAI* ai) { return new CastShieldWallAction(ai); }
             static Action* battle_shout(PlayerbotAI* ai) { return new CastBattleShoutAction(ai); }
+            static Action* battle_shout_taunt(PlayerbotAI* ai) { return new CastBattleShoutTauntAction(ai); }
             static Action* thunder_clap(PlayerbotAI* ai) { return new CastThunderClapAction(ai); }
             static Action* shield_bash_on_enemy_healer(PlayerbotAI* ai) { return new CastShieldBashOnEnemyHealerAction(ai); }
 

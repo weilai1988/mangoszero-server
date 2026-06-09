@@ -11,27 +11,24 @@ namespace ai
 
         virtual bool Execute(Event event)
         {
-            if (bot->GetGroup())
-            {
-                ai->TellMaster("Goodbye!", PLAYERBOT_SECURITY_TALK);
-            }
+            if (!bot->GetGroup())
+                return false;
+
+            ai->TellMaster("Goodbye!", PLAYERBOT_SECURITY_TALK);
 
             WorldPacket p;
             string member = bot->GetName();
             p << uint32(PARTY_OP_LEAVE) << member << uint32(0);
             bot->GetSession()->HandleGroupDisbandOpcode(p);
 
-            if (sRandomPlayerbotMgr.IsRandomBot(bot))
+            bool randomBot = sRandomPlayerbotMgr.IsRandomBot(bot);
+            if (randomBot)
             {
                 bot->GetPlayerbotAI()->SetMaster(NULL);
-                sRandomPlayerbotMgr.ScheduleTeleport(bot->GetGUIDLow());
-                sRandomPlayerbotMgr.SetLootAmount(bot, 0);
+                sRandomPlayerbotMgr.ScheduleTeleport(bot->GetObjectGuid());
             }
 
-            ai->ResetStrategies();
-            ai->ChangeStrategy("-follow master", BOT_STATE_NON_COMBAT);
-            ai->ChangeStrategy("-follow master", BOT_STATE_DEAD);
-            ai->ChangeStrategy("-follow master", BOT_STATE_COMBAT);
+            ai->ResetStrategies(!randomBot);
             return true;
         }
     };
@@ -50,15 +47,11 @@ namespace ai
             p >> operation >> member;
 
             if (operation != PARTY_OP_LEAVE)
-            {
                 return false;
-            }
 
             Player* master = GetMaster();
             if (master && member == master->GetName())
-            {
                 return LeaveGroupAction::Execute(event);
-            }
 
             return false;
         }
@@ -77,9 +70,7 @@ namespace ai
             p >> guid;
 
             if (bot->GetObjectGuid() == guid)
-            {
                 return LeaveGroupAction::Execute(event);
-            }
 
             return false;
         }

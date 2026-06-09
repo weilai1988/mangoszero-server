@@ -1,34 +1,29 @@
 #pragma once
 #include "../Value.h"
+#include "MotionGenerators/TargetedMovementGenerator.h"
 
 namespace ai
 {
     class IsMovingValue : public BoolCalculatedValue, public Qualified
-    {
-    public:
+	{
+	public:
         IsMovingValue(PlayerbotAI* ai) : BoolCalculatedValue(ai) {}
 
         virtual bool Calculate()
         {
             Unit* target = AI_VALUE(Unit*, qualifier);
+            Unit* chaseTarget;
 
             if (!target)
-            {
                 return false;
-            }
 
-            switch (target->GetMotionMaster()->GetCurrentMovementGeneratorType())
-            {
-            case IDLE_MOTION_TYPE:
-                return false;
-            }
-            return true;
+            return sServerFacade.isMoving(target);
         }
     };
 
     class IsSwimmingValue : public BoolCalculatedValue, public Qualified
-    {
-    public:
+	{
+	public:
         IsSwimmingValue(PlayerbotAI* ai) : BoolCalculatedValue(ai) {}
 
         virtual bool Calculate()
@@ -36,11 +31,9 @@ namespace ai
             Unit* target = AI_VALUE(Unit*, qualifier);
 
             if (!target)
-            {
                 return false;
-            }
 
-            return target->IsUnderWater() || target->IsInWater();
+            return sServerFacade.IsUnderwater(target) || sServerFacade.IsInWater(target);
         }
     };
 }

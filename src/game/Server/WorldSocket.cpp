@@ -54,6 +54,8 @@
 #include <ace/Reactor.h>
 #include <ace/Auto_Ptr.h>
 
+#include <sstream>
+
 #include "WorldSocket.h"
 #include "Common.h"
 
@@ -130,6 +132,14 @@ WorldSocket::WorldSocket(void) :
     m_OutBufferLock(),
     m_OutBuffer(0),
     m_OutBufferSize(65536),
+    m_RecentOpcodes{0},
+    m_RecentOpcodeSizes{0},
+    m_RecentOpcodePos(0),
+    m_RecentOpcodeCount(0),
+    m_RecentServerOpcodes{0},
+    m_RecentServerOpcodeSizes{0},
+    m_RecentServerOpcodePos(0),
+    m_RecentServerOpcodeCount(0),
     m_Seed(rand32())
 {
     reference_counting_policy().value(ACE_Event_Handler::Reference_Counting_Policy::ENABLED);
@@ -183,6 +193,32 @@ void WorldSocket::CloseSocket(void)
     }
 
     closing_ = true;
+
+    std::ostringstream serverHistory;
+    if (m_RecentServerOpcodeCount)
+    {
+        size_t start = (m_RecentServerOpcodePos + RECENT_OPCODE_HISTORY_SIZE - m_RecentServerOpcodeCount) % RECENT_OPCODE_HISTORY_SIZE;
+        for (size_t i = 0; i < m_RecentServerOpcodeCount; ++i)
+        {
+            size_t pos = (start + i) % RECENT_OPCODE_HISTORY_SIZE;
+            if (i)
+            {
+                serverHistory << ", ";
+            }
+            serverHistory << m_RecentServerOpcodes[pos] << ":" << m_RecentServerOpcodeSizes[pos];
+        }
+    }
+    else
+    {
+        serverHistory << "none";
+    }
+
+    sLog.outError("WorldSocket::CloseSocket: remote = %s, account = %u, player = %s, recent server opcodes(size) = [%s]",
+                  GetRemoteAddress().c_str(),
+                  m_Session ? m_Session->GetAccountId() : 0,
+                  (m_Session && m_Session->GetPlayerName()) ? m_Session->GetPlayerName() : "none",
+                  serverHistory.str().c_str());
+
     peer().close_writer();
 
     m_Session = NULL;
@@ -196,6 +232,28 @@ void WorldSocket::CloseSocket(void)
 const std::string& WorldSocket::GetRemoteAddress(void) const
 {
     return m_Address;
+}
+
+void WorldSocket::RecordRecentOpcode(uint32 opcode, size_t size)
+{
+    m_RecentOpcodes[m_RecentOpcodePos] = opcode;
+    m_RecentOpcodeSizes[m_RecentOpcodePos] = uint32(size);
+    m_RecentOpcodePos = (m_RecentOpcodePos + 1) % RECENT_OPCODE_HISTORY_SIZE;
+    if (m_RecentOpcodeCount < RECENT_OPCODE_HISTORY_SIZE)
+    {
+        ++m_RecentOpcodeCount;
+    }
+}
+
+void WorldSocket::RecordRecentServerOpcode(uint32 opcode, size_t size)
+{
+    m_RecentServerOpcodes[m_RecentServerOpcodePos] = opcode;
+    m_RecentServerOpcodeSizes[m_RecentServerOpcodePos] = uint32(size);
+    m_RecentServerOpcodePos = (m_RecentServerOpcodePos + 1) % RECENT_OPCODE_HISTORY_SIZE;
+    if (m_RecentServerOpcodeCount < RECENT_OPCODE_HISTORY_SIZE)
+    {
+        ++m_RecentServerOpcodeCount;
+    }
 }
 
 /**
@@ -214,6 +272,7 @@ int WorldSocket::SendPacket(const WorldPacket& pkt)
     }
 
     WorldPacket pct = pkt;
+    RecordRecentServerOpcode(pct.GetOpcode(), pct.size());
 
     if (iSendPacket(pct) == -1)
     {
@@ -472,8 +531,31 @@ int WorldSocket::handle_input_header(void)
 
     if ((header.size < 4) || (header.size > 10240) || (header.cmd  > 10240))
     {
-        sLog.outError("WorldSocket::handle_input_header: client sent malformed packet size = %d , cmd = %d",
-                      header.size, header.cmd);
+        std::ostringstream history;
+        if (m_RecentOpcodeCount)
+        {
+            size_t start = (m_RecentOpcodePos + RECENT_OPCODE_HISTORY_SIZE - m_RecentOpcodeCount) % RECENT_OPCODE_HISTORY_SIZE;
+            for (size_t i = 0; i < m_RecentOpcodeCount; ++i)
+            {
+                size_t pos = (start + i) % RECENT_OPCODE_HISTORY_SIZE;
+                if (i)
+                {
+                    history << ", ";
+                }
+                history << m_RecentOpcodes[pos] << ":" << m_RecentOpcodeSizes[pos];
+            }
+        }
+        else
+        {
+            history << "none";
+        }
+
+        sLog.outError("WorldSocket::handle_input_header: client sent malformed packet size = %u, cmd = %u, remote = %s, account = %u, player = %s, recent client opcodes(size) = [%s]",
+                      uint32(header.size), uint32(header.cmd),
+                      GetRemoteAddress().c_str(),
+                      m_Session ? m_Session->GetAccountId() : 0,
+                      (m_Session && m_Session->GetPlayerName()) ? m_Session->GetPlayerName() : "none",
+                      history.str().c_str());
 
         errno = EINVAL;
         return -1;
@@ -636,6 +718,7 @@ int WorldSocket::ProcessIncoming(WorldPacket* new_pct)
     ACE_Auto_Ptr<WorldPacket> aptr(new_pct);
 
     const ACE_UINT16 opcode = new_pct->GetOpcode();
+    RecordRecentOpcode(opcode, new_pct->size());
 
     if (opcode >= NUM_MSG_TYPES)
     {

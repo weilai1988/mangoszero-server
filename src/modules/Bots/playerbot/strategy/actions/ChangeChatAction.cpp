@@ -2,11 +2,10 @@
 #include "../../playerbot.h"
 #include "ChangeChatAction.h"
 
+
 using namespace ai;
 
-/**
- * Changes the bot chat channel or reports the current chat channel.
- */
+
 bool ChangeChatAction::Execute(Event event)
 {
     string text = event.getParam();
@@ -22,6 +21,6 @@ bool ChangeChatAction::Execute(Event event)
         ostringstream out; out << "Chat set to " << chat->formatChat(parsed);
         ai->TellMaster(out);
     }
-
+    
     return true;
 }

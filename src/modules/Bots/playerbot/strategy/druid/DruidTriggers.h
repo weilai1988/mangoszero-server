@@ -5,19 +5,29 @@ namespace ai {
     class MarkOfTheWildOnPartyTrigger : public BuffOnPartyTrigger
     {
     public:
-        MarkOfTheWildOnPartyTrigger(PlayerbotAI* ai) : BuffOnPartyTrigger(ai, "mark of the wild") {}
+        MarkOfTheWildOnPartyTrigger(PlayerbotAI* ai) : BuffOnPartyTrigger(ai, "mark of the wild", 2) {}
+
+        virtual bool IsActive() { return BuffOnPartyTrigger::IsActive() && !ai->HasAura("gift of the wild", GetTarget()); }
     };
 
     class MarkOfTheWildTrigger : public BuffTrigger
     {
     public:
-        MarkOfTheWildTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "mark of the wild") {}
+        MarkOfTheWildTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "mark of the wild", 2) {}
+
+        virtual bool IsActive() { return BuffTrigger::IsActive() && !ai->HasAura("gift of the wild", GetTarget()); }
     };
 
     class ThornsTrigger : public BuffTrigger
     {
     public:
         ThornsTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "thorns") {}
+    };
+
+    class OmenOfClarityTrigger : public BuffTrigger
+    {
+    public:
+        OmenOfClarityTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "omen of clarity") {}
     };
 
     class RakeTrigger : public DebuffTrigger
@@ -74,6 +84,12 @@ namespace ai {
         EntanglingRootsTrigger(PlayerbotAI* ai) : HasCcTargetTrigger(ai, "entangling roots") {}
     };
 
+    class HibernateTrigger : public HasCcTargetTrigger
+    {
+    public:
+        HibernateTrigger(PlayerbotAI* ai) : HasCcTargetTrigger(ai, "hibernate") {}
+    };
+
     class CurePoisonTrigger : public NeedCureTrigger
     {
     public:
@@ -90,30 +106,21 @@ namespace ai {
     {
     public:
         BearFormTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "bear form") {}
-        virtual bool IsActive()
-        {
-            return !ai->HasAnyAuraOf(bot, "bear form", "dire bear form", NULL);
-        }
+        virtual bool IsActive() { return !ai->HasAnyAuraOf(bot, "bear form", "dire bear form", NULL); }
     };
 
     class TreeFormTrigger : public BuffTrigger
     {
     public:
         TreeFormTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "tree of life") {}
-        virtual bool IsActive()
-        {
-            return !ai->HasAura("tree of life", bot);
-        }
+        virtual bool IsActive() { return !ai->HasAura("tree of life", bot); }
     };
 
     class CatFormTrigger : public BuffTrigger
     {
     public:
         CatFormTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "cat form") {}
-        virtual bool IsActive()
-        {
-            return !ai->HasAura("cat form", bot);
-        }
+        virtual bool IsActive() { return !ai->HasAura("cat form", bot); }
     };
 
     class EclipseSolarTrigger : public HasAuraTrigger
@@ -134,15 +141,9 @@ namespace ai {
         BashInterruptEnemyHealerSpellTrigger(PlayerbotAI* ai) : InterruptEnemyHealerTrigger(ai, "bash") {}
     };
 
-    class RemoveCurseTrigger : public NeedCureTrigger
+    class NaturesSwiftnessTrigger : public BuffTrigger
     {
     public:
-        RemoveCurseTrigger(PlayerbotAI* ai) : NeedCureTrigger(ai, "remove curse", DISPEL_CURSE) {}
-    };
-
-    class PartyMemberRemoveCurseTrigger : public PartyMemberNeedCureTrigger
-    {
-    public:
-        PartyMemberRemoveCurseTrigger(PlayerbotAI* ai) : PartyMemberNeedCureTrigger(ai, "remove curse", DISPEL_CURSE) {}
+        NaturesSwiftnessTrigger(PlayerbotAI* ai) : BuffTrigger(ai, "nature's swiftness") {}
     };
 }

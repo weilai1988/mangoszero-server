@@ -5,6 +5,8 @@
 #include "LootTriggers.h"
 #include "../triggers/GenericTriggers.h"
 #include "LfgTriggers.h"
+#include "RpgTriggers.h"
+#include "RtiTriggers.h"
 
 namespace ai
 {
@@ -14,6 +16,10 @@ namespace ai
     public:
         TriggerContext()
         {
+            creators["return"] = &TriggerContext::_return;
+            creators["sit"] = &TriggerContext::sit;
+            creators["collision"] = &TriggerContext::collision;
+
             creators["timer"] = &TriggerContext::Timer;
             creators["random"] = &TriggerContext::Random;
             creators["seldom"] = &TriggerContext::seldom;
@@ -25,16 +31,17 @@ namespace ai
             creators["low health"] = &TriggerContext::LowHealth;
             creators["medium health"] = &TriggerContext::MediumHealth;
             creators["almost full health"] = &TriggerContext::AlmostFullHealth;
-            creators["hungry"] = &TriggerContext::Hungry;
 
             creators["low mana"] = &TriggerContext::LowMana;
             creators["medium mana"] = &TriggerContext::MediumMana;
-            creators["thirsty"] = &TriggerContext::Thirsty;
 
             creators["party member critical health"] = &TriggerContext::PartyMemberCriticalHealth;
             creators["party member low health"] = &TriggerContext::PartyMemberLowHealth;
             creators["party member medium health"] = &TriggerContext::PartyMemberMediumHealth;
             creators["party member almost full health"] = &TriggerContext::PartyMemberAlmostFullHealth;
+            creators["brain party member emergency heal"] = &TriggerContext::BrainPartyMemberEmergencyHeal;
+            creators["brain party member critical heal"] = &TriggerContext::BrainPartyMemberCriticalHeal;
+            creators["brain party member steady heal"] = &TriggerContext::BrainPartyMemberSteadyHeal;
 
             creators["light rage available"] = &TriggerContext::LightRageAvailable;
             creators["medium rage available"] = &TriggerContext::MediumRageAvailable;
@@ -48,8 +55,9 @@ namespace ai
             creators["no attackers"] = &TriggerContext::NoAttackers;
             creators["no target"] = &TriggerContext::NoTarget;
             creators["target in sight"] = &TriggerContext::TargetInSight;
-            creators["not least hp target active"] = &TriggerContext::not_least_hp_target_active;
-            creators["no tanks target active"] = &TriggerContext::no_tanks_target_active;
+            creators["not dps target active"] = &TriggerContext::not_dps_target_active;
+            creators["not defense target active"] = &TriggerContext::not_defense_target_active;
+            creators["not dps aoe target active"] = &TriggerContext::not_dps_aoe_target_active;
             creators["has nearest adds"] = &TriggerContext::has_nearest_adds;
             creators["enemy player is attacking"] = &TriggerContext::enemy_player_is_attacking;
 
@@ -64,25 +72,28 @@ namespace ai
             creators["enemy out of melee"] = &TriggerContext::EnemyOutOfMelee;
             creators["enemy out of spell"] = &TriggerContext::EnemyOutOfSpell;
             creators["enemy too close for spell"] = &TriggerContext::enemy_too_close_for_spell;
+            creators["enemy too close for shoot"] = &TriggerContext::enemy_too_close_for_shoot;
             creators["enemy too close for melee"] = &TriggerContext::enemy_too_close_for_melee;
+            creators["enemy is close"] = &TriggerContext::enemy_is_close;
+            creators["party member to heal out of spell range"] = &TriggerContext::party_member_to_heal_out_of_spell_range;
 
             creators["combo points available"] = &TriggerContext::ComboPointsAvailable;
 
             creators["medium threat"] = &TriggerContext::MediumThreat;
 
-            creators["bot dead"] = &TriggerContext::Dead;
+            creators["dead"] = &TriggerContext::Dead;
             creators["party member dead"] = &TriggerContext::PartyMemberDead;
             creators["no pet"] = &TriggerContext::no_pet;
             creators["has attackers"] = &TriggerContext::has_attackers;
             creators["no possible targets"] = &TriggerContext::no_possible_targets;
+            creators["possible ads"] = &TriggerContext::possible_ads;
 
             creators["no drink"] = &TriggerContext::no_drink;
-            creators["no conjured drink"] = &TriggerContext::no_conjured_drink;
             creators["no food"] = &TriggerContext::no_food;
-            creators["no conjured food"] = &TriggerContext::no_conjured_food;
 
             creators["panic"] = &TriggerContext::panic;
             creators["behind target"] = &TriggerContext::behind_target;
+            creators["not behind target"] = &TriggerContext::not_behind_target;
             creators["not facing target"] = &TriggerContext::not_facing_target;
             creators["far from master"] = &TriggerContext::far_from_master;
             creators["far from loot target"] = &TriggerContext::far_from_loot_target;
@@ -95,9 +106,27 @@ namespace ai
             creators["medium aoe heal"] = &TriggerContext::medium_aoe_heal;
             creators["invalid target"] = &TriggerContext::invalid_target;
             creators["lfg proposal active"] = &TriggerContext::lfg_proposal_active;
+
+            creators["random bot update"] = &TriggerContext::random_bot_update_trigger;
+            creators["no non bot players around"] = &TriggerContext::no_non_bot_players_around;
+            creators["new player nearby"] = &TriggerContext::new_player_nearby;
+            creators["no rpg target"] = &TriggerContext::no_rpg_target;
+            creators["far from rpg target"] = &TriggerContext::far_from_rpg_target;
+            creators["no rti target"] = &TriggerContext::no_rti;
+
+            creators["give food"] = &TriggerContext::give_food;
+            creators["give water"] = &TriggerContext::give_water;
         }
 
     private:
+        static Trigger* give_food(PlayerbotAI* ai) { return new GiveFoodTrigger(ai); }
+        static Trigger* give_water(PlayerbotAI* ai) { return new GiveWaterTrigger(ai); }
+        static Trigger* no_rti(PlayerbotAI* ai) { return new NoRtiTrigger(ai); }
+        static Trigger* _return(PlayerbotAI* ai) { return new ReturnTrigger(ai); }
+        static Trigger* sit(PlayerbotAI* ai) { return new SitTrigger(ai); }
+        static Trigger* far_from_rpg_target(PlayerbotAI* ai) { return new FarFromRpgTargetTrigger(ai); }
+        static Trigger* no_rpg_target(PlayerbotAI* ai) { return new NoRpgTargetTrigger(ai); }
+        static Trigger* collision(PlayerbotAI* ai) { return new CollisionTrigger(ai); }
         static Trigger* lfg_proposal_active(PlayerbotAI* ai) { return new LfgProposalActiveTrigger(ai); }
         static Trigger* invalid_target(PlayerbotAI* ai) { return new InvalidTargetTrigger(ai); }
         static Trigger* critical_aoe_heal(PlayerbotAI* ai) { return new AoeHealTrigger(ai, "critical aoe heal", "critical", 2); }
@@ -106,16 +135,16 @@ namespace ai
         static Trigger* target_changed(PlayerbotAI* ai) { return new TargetChangedTrigger(ai); }
         static Trigger* swimming(PlayerbotAI* ai) { return new IsSwimmingTrigger(ai); }
         static Trigger* no_possible_targets(PlayerbotAI* ai) { return new NoPossibleTargetsTrigger(ai); }
+        static Trigger* possible_ads(PlayerbotAI* ai) { return new PossibleAdsTrigger(ai); }
         static Trigger* can_loot(PlayerbotAI* ai) { return new CanLootTrigger(ai); }
         static Trigger* far_from_loot_target(PlayerbotAI* ai) { return new FarFromCurrentLootTrigger(ai); }
         static Trigger* far_from_master(PlayerbotAI* ai) { return new FarFromMasterTrigger(ai); }
         static Trigger* behind_target(PlayerbotAI* ai) { return new IsBehindTargetTrigger(ai); }
+        static Trigger* not_behind_target(PlayerbotAI* ai) { return new IsNotBehindTargetTrigger(ai); }
         static Trigger* not_facing_target(PlayerbotAI* ai) { return new IsNotFacingTargetTrigger(ai); }
         static Trigger* panic(PlayerbotAI* ai) { return new PanicTrigger(ai); }
         static Trigger* no_drink(PlayerbotAI* ai) { return new NoDrinkTrigger(ai); }
-        static Trigger* no_conjured_drink(PlayerbotAI* ai) { return new NoConjuredDrinkTrigger(ai); }
         static Trigger* no_food(PlayerbotAI* ai) { return new NoFoodTrigger(ai); }
-        static Trigger* no_conjured_food(PlayerbotAI* ai) { return new NoConjuredFoodTrigger(ai); }
         static Trigger* LightAoe(PlayerbotAI* ai) { return new LightAoeTrigger(ai); }
         static Trigger* MediumAoe(PlayerbotAI* ai) { return new MediumAoeTrigger(ai); }
         static Trigger* HighAoe(PlayerbotAI* ai) { return new HighAoeTrigger(ai); }
@@ -125,11 +154,9 @@ namespace ai
         static Trigger* MediumHealth(PlayerbotAI* ai) { return new MediumHealthTrigger(ai); }
         static Trigger* AlmostFullHealth(PlayerbotAI* ai) { return new AlmostFullHealthTrigger(ai); }
         static Trigger* CriticalHealth(PlayerbotAI* ai) { return new CriticalHealthTrigger(ai); }
-        static Trigger* Hungry(PlayerbotAI* ai) { return new HungryTrigger(ai); }
         static Trigger* TargetCriticalHealth(PlayerbotAI* ai) { return new TargetCriticalHealthTrigger(ai); }
         static Trigger* LowMana(PlayerbotAI* ai) { return new LowManaTrigger(ai); }
         static Trigger* MediumMana(PlayerbotAI* ai) { return new MediumManaTrigger(ai); }
-        static Trigger* Thirsty(PlayerbotAI* ai) { return new ThirstyTrigger(ai); }
         static Trigger* LightRageAvailable(PlayerbotAI* ai) { return new LightRageAvailableTrigger(ai); }
         static Trigger* MediumRageAvailable(PlayerbotAI* ai) { return new MediumRageAvailableTrigger(ai); }
         static Trigger* HighRageAvailable(PlayerbotAI* ai) { return new HighRageAvailableTrigger(ai); }
@@ -142,17 +169,21 @@ namespace ai
         static Trigger* Timer(PlayerbotAI* ai) { return new TimerTrigger(ai); }
         static Trigger* NoTarget(PlayerbotAI* ai) { return new NoTargetTrigger(ai); }
         static Trigger* TargetInSight(PlayerbotAI* ai) { return new TargetInSightTrigger(ai); }
-        static Trigger* not_least_hp_target_active(PlayerbotAI* ai) { return new NotLeastHpTargetActiveTrigger(ai); }
-        static Trigger* no_tanks_target_active(PlayerbotAI* ai) { return new NoTanksTargetActiveTrigger(ai); }
+        static Trigger* not_dps_target_active(PlayerbotAI* ai) { return new NotDpsTargetActiveTrigger(ai); }
+        static Trigger* not_defense_target_active(PlayerbotAI* ai) { return new NotDefenseTargetActiveTrigger(ai); }
+        static Trigger* not_dps_aoe_target_active(PlayerbotAI* ai) { return new NotDpsAoeTargetActiveTrigger(ai); }
         static Trigger* has_nearest_adds(PlayerbotAI* ai) { return new HasNearestAddsTrigger(ai); }
         static Trigger* enemy_player_is_attacking(PlayerbotAI* ai) { return new EnemyPlayerIsAttacking(ai); }
-        static Trigger* Random(PlayerbotAI* ai) { return new RandomTrigger(ai); }
-        static Trigger* seldom(PlayerbotAI* ai) { return new SeldomTrigger(ai); }
-        static Trigger* often(PlayerbotAI* ai) { return new OftenTrigger(ai); }
+        static Trigger* Random(PlayerbotAI* ai) { return new RandomTrigger(ai, "random", 20); }
+        static Trigger* seldom(PlayerbotAI* ai) { return new RandomTrigger(ai, "seldom", 300); }
+        static Trigger* often(PlayerbotAI* ai) { return new RandomTrigger(ai, "often", 5); }
         static Trigger* EnemyOutOfMelee(PlayerbotAI* ai) { return new EnemyOutOfMeleeTrigger(ai); }
         static Trigger* EnemyOutOfSpell(PlayerbotAI* ai) { return new EnemyOutOfSpellRangeTrigger(ai); }
         static Trigger* enemy_too_close_for_spell(PlayerbotAI* ai) { return new EnemyTooCloseForSpellTrigger(ai); }
+        static Trigger* enemy_too_close_for_shoot(PlayerbotAI* ai) { return new EnemyTooCloseForShootTrigger(ai); }
         static Trigger* enemy_too_close_for_melee(PlayerbotAI* ai) { return new EnemyTooCloseForMeleeTrigger(ai); }
+        static Trigger* enemy_is_close(PlayerbotAI* ai) { return new EnemyIsCloseTrigger(ai); }
+        static Trigger* party_member_to_heal_out_of_spell_range(PlayerbotAI* ai) { return new PartyMemberToHealOutOfSpellRangeTrigger(ai); }
         static Trigger* ComboPointsAvailable(PlayerbotAI* ai) { return new ComboPointsAvailableTrigger(ai); }
         static Trigger* MediumThreat(PlayerbotAI* ai) { return new MediumThreatTrigger(ai); }
         static Trigger* Dead(PlayerbotAI* ai) { return new DeadTrigger(ai); }
@@ -161,8 +192,14 @@ namespace ai
         static Trigger* PartyMemberMediumHealth(PlayerbotAI* ai) { return new PartyMemberMediumHealthTrigger(ai); }
         static Trigger* PartyMemberAlmostFullHealth(PlayerbotAI* ai) { return new PartyMemberAlmostFullHealthTrigger(ai); }
         static Trigger* PartyMemberCriticalHealth(PlayerbotAI* ai) { return new PartyMemberCriticalHealthTrigger(ai); }
+        static Trigger* BrainPartyMemberEmergencyHeal(PlayerbotAI* ai) { return new BrainPartyMemberEmergencyHealTrigger(ai); }
+        static Trigger* BrainPartyMemberCriticalHeal(PlayerbotAI* ai) { return new BrainPartyMemberCriticalHealTrigger(ai); }
+        static Trigger* BrainPartyMemberSteadyHeal(PlayerbotAI* ai) { return new BrainPartyMemberSteadyHealTrigger(ai); }
         static Trigger* no_pet(PlayerbotAI* ai) { return new NoPetTrigger(ai); }
         static Trigger* has_attackers(PlayerbotAI* ai) { return new HasAttackersTrigger(ai); }
+        static Trigger* random_bot_update_trigger(PlayerbotAI* ai) { return new RandomBotUpdateTrigger(ai); }
+        static Trigger* no_non_bot_players_around(PlayerbotAI* ai) { return new NoNonBotPlayersAroundTrigger(ai); }
+        static Trigger* new_player_nearby(PlayerbotAI* ai) { return new NewPlayerNearbyTrigger(ai); }
 
     };
 };

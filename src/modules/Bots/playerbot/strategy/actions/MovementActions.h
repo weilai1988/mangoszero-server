@@ -10,30 +10,23 @@ namespace ai
         MovementAction(PlayerbotAI* ai, string name) : Action(ai, name)
         {
             bot = ai->GetBot();
-            transportBoardingDelayTime = 0;
         }
 
     protected:
-        bool MoveNear(uint32 mapId, float x, float y, float z, float distance = sPlayerbotAIConfig.followDistance);
-        bool MoveTo(uint32 mapId, float x, float y, float z, bool unsafe = false);
+        bool MoveNear(uint32 mapId, float x, float y, float z, float distance = sPlayerbotAIConfig.contactDistance);
+        bool MoveTo(uint32 mapId, float x, float y, float z, bool idle = false);
         bool MoveTo(Unit* target, float distance = 0.0f);
-        bool MoveNear(WorldObject* target, float distance = sPlayerbotAIConfig.followDistance);
+        bool MoveNear(WorldObject* target, float distance = sPlayerbotAIConfig.contactDistance);
         float GetFollowAngle();
         bool Follow(Unit* target, float distance = sPlayerbotAIConfig.followDistance);
         bool Follow(Unit* target, float distance, float angle);
-        bool FollowOnTransport(Unit* target, Player* master);
-        bool FollowOffTransport(Unit* target, Player* master);
         void WaitForReach(float distance);
         bool IsMovingAllowed(Unit* target);
         bool IsMovingAllowed(uint32 mapId, float x, float y, float z);
         bool IsMovingAllowed();
-        bool Flee(Unit *target);
-        float CalculateAggroFreeDistance(float bx, float by, float angle, float maxDist);
-        bool IsAggroPosition(float x, float y);
-
-    protected:
-        Player* bot;
-        uint32 transportBoardingDelayTime;
+        bool Flee(Unit *target, float distance = sPlayerbotAIConfig.spellDistance);
+        void ClearIdleState();
+        void UpdateMovementState();
     };
 
     class FleeAction : public MovementAction
@@ -41,14 +34,27 @@ namespace ai
     public:
         FleeAction(PlayerbotAI* ai, float distance = sPlayerbotAIConfig.spellDistance) : MovementAction(ai, "flee")
         {
-            this->distance = distance;
-        }
+			this->distance = distance;
+		}
 
         virtual bool Execute(Event event);
-        virtual bool isUseful();
 
-    private:
-        float distance;
+	private:
+		float distance;
+    };
+
+    class FleeWithPetAction : public MovementAction
+    {
+    public:
+        FleeWithPetAction(PlayerbotAI* ai) : MovementAction(ai, "flee with pet") {}
+
+        virtual bool Execute(Event event);
+    };
+
+    class FleeForShootAction : public FleeAction
+    {
+    public:
+        FleeForShootAction(PlayerbotAI* ai) : FleeAction(ai, sPlayerbotAIConfig.shootDistance) {}
     };
 
     class RunAwayAction : public MovementAction
@@ -56,23 +62,6 @@ namespace ai
     public:
         RunAwayAction(PlayerbotAI* ai) : MovementAction(ai, "runaway") {}
         virtual bool Execute(Event event);
-    };
-
-    class MoveRandomAction : public MovementAction
-    {
-    public:
-        MoveRandomAction(PlayerbotAI* ai) : MovementAction(ai, "move random"), m_hasFaceTarget(false), m_faceX(0.0f), m_faceY(0.0f) {}
-        virtual bool Execute(Event event);
-        virtual bool isPossible()
-        {
-            return !bot->GetGroup() &&
-                    MovementAction::isPossible() &&
-                    AI_VALUE2(uint8, "health", "self target") > sPlayerbotAIConfig.mediumHealth &&
-                    (!AI_VALUE2(uint8, "mana", "self target") || AI_VALUE2(uint8, "mana", "self target") > sPlayerbotAIConfig.mediumMana);
-        }
-    private:
-        bool m_hasFaceTarget;
-        float m_faceX, m_faceY;
     };
 
     class MoveToLootAction : public MovementAction
@@ -98,11 +87,20 @@ namespace ai
         virtual bool isUseful();
     };
 
-    class JumpAction : public MovementAction
+    class SetBehindTargetAction : public MovementAction
     {
     public:
-        JumpAction(PlayerbotAI* ai) : MovementAction(ai, "jump") {}
+        SetBehindTargetAction(PlayerbotAI* ai) : MovementAction(ai, "set behind") {}
         virtual bool Execute(Event event);
+        virtual bool isUseful();
+    };
+
+    class MoveOutOfCollisionAction : public MovementAction
+    {
+    public:
+        MoveOutOfCollisionAction(PlayerbotAI* ai) : MovementAction(ai, "move out of collision") {}
+        virtual bool Execute(Event event);
+        virtual bool isUseful();
     };
 
 }

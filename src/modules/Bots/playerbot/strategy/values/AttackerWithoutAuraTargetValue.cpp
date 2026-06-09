@@ -13,19 +13,13 @@ Unit* AttackerWithoutAuraTargetValue::Calculate()
     {
         Unit* unit = ai->GetUnit(*i);
         if (!unit || unit == target)
-        {
             continue;
-        }
 
-        if (bot->GetDistance(unit) > sPlayerbotAIConfig.spellDistance)
-        {
+        if (bot->GetDistance(unit) > ai->GetRange("spell"))
             continue;
-        }
 
         if (!ai->HasAura(qualifier, unit))
-        {
             return unit;
-        }
     }
 
     return NULL;

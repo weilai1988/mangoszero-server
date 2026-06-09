@@ -2,6 +2,8 @@
 #include "../../playerbot.h"
 #include "RepairAllAction.h"
 
+#include "../../ServerFacade.h"
+
 using namespace ai;
 
 bool RepairAllAction::Execute(Event event)
@@ -11,18 +13,26 @@ bool RepairAllAction::Execute(Event event)
     {
         Creature *unit = bot->GetNPCIfCanInteractWith(*i, UNIT_NPC_FLAG_REPAIR);
         if (!unit)
-        {
             continue;
-        }
 
-        if (bot->hasUnitState(UNIT_STAT_DIED))
-        {
+#ifdef MANGOS
+        if(bot->hasUnitState(UNIT_STAT_DIED))
+#endif
+#ifdef CMANGOS
+        if (bot->hasUnitState(UNIT_STAT_FEIGN_DEATH))
+#endif
             bot->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
-        }
 
-        bot->SetFacingToObject(unit);
+        sServerFacade.SetFacingTo(bot, unit);
         float discountMod = bot->GetReputationPriceDiscount(unit);
-        uint32 totalCost = bot->DurabilityRepairAll(true, discountMod);
+        uint32 totalCost = bot->DurabilityRepairAll(true, discountMod
+#ifdef MANGOSBOT_ONE
+            , false
+#endif
+#ifdef MANGOSBOT_TWO
+            , false
+#endif
+        );
 
         ostringstream out;
         out << "Repair: " << chat->formatMoney(totalCost) << " (" << unit->GetName() << ")";
@@ -31,6 +41,6 @@ bool RepairAllAction::Execute(Event event)
         return true;
     }
 
-    ai->TellMaster("Cannot find any npc to repair at");
+    ai->TellError("Cannot find any npc to repair at");
     return false;
 }

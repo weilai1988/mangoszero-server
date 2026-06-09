@@ -1,6 +1,7 @@
 #include "botpch.h"
 #include "../../playerbot.h"
 #include "TrainerAction.h"
+#include "../../ServerFacade.h"
 
 using namespace ai;
 
@@ -8,16 +9,41 @@ void TrainerAction::Learn(uint32 cost, TrainerSpell const* tSpell, ostringstream
 {
     if (bot->GetMoney() < cost)
     {
+        msg << " - too expensive";
         return;
     }
 
     bot->ModifyMoney(-int32(cost));
-    bot->CastSpell(bot, tSpell->spell, true);
+
+    SpellEntry const* proto = sServerFacade.LookupSpellInfo(tSpell->spell);
+    if (!proto)
+        return;
+
+#ifdef CMANGOS
+    Spell* spell = new Spell(bot, proto, false);
+    SpellCastTargets targets;
+    targets.setUnitTarget(bot);
+    spell->SpellStart(&targets);
+#endif
+
+#ifdef MANGOS
+    bool learned = false;
+    for (int j = 0; j < 3; ++j)
+    {
+        if (proto->Effect[j] == SPELL_EFFECT_LEARN_SPELL)
+        {
+            uint32 learnedSpell = proto->EffectTriggerSpell[j];
+            bot->learnSpell(learnedSpell, false);
+            learned = true;
+        }
+    }
+    if (!learned) bot->learnSpell(tSpell->spell, false);
+#endif
 
     msg << " - learned";
 }
 
-void TrainerAction::List(Creature* creature, TrainerSpellAction action, SpellIds& spells)
+void TrainerAction::Iterate(Creature* creature, TrainerSpellAction action, SpellIds& spells)
 {
     TellHeader(creature);
 
@@ -28,34 +54,29 @@ void TrainerAction::List(Creature* creature, TrainerSpellAction action, SpellIds
 
     TrainerSpellData const* trainer_spells = cSpells;
     if (!trainer_spells)
-    {
         trainer_spells = tSpells;
-    }
 
     for (TrainerSpellMap::const_iterator itr =  trainer_spells->spellList.begin(); itr !=  trainer_spells->spellList.end(); ++itr)
     {
         TrainerSpell const* tSpell = &itr->second;
 
         if (!tSpell)
-        {
             continue;
-        }
 
         uint32 reqLevel = 0;
 
         reqLevel = tSpell->isProvidedReqLevel ? tSpell->reqLevel : std::max(reqLevel, tSpell->reqLevel);
         TrainerSpellState state = bot->GetTrainerSpellState(tSpell, reqLevel);
         if (state != TRAINER_SPELL_GREEN)
-        {
             continue;
-        }
 
         uint32 spellId = tSpell->spell;
-        const SpellEntry *const pSpellInfo =  sSpellStore.LookupEntry(spellId);
+        const SpellEntry *const pSpellInfo =  sServerFacade.LookupSpellInfo(spellId);
         if (!pSpellInfo)
-        {
             continue;
-        }
+
+        if (!spells.empty() && spells.find(tSpell->spell) == spells.end())
+            continue;
 
         uint32 cost = uint32(floor(tSpell->spellCost *  fDiscountMod));
         totalCost += cost;
@@ -63,10 +84,8 @@ void TrainerAction::List(Creature* creature, TrainerSpellAction action, SpellIds
         ostringstream out;
         out << chat->formatSpell(pSpellInfo) << chat->formatMoney(cost);
 
-        if (action && (spells.empty() || spells.find(tSpell->spell) != spells.end()))
-        {
+        if (action)
             (this->*action)(cost, tSpell, out);
-        }
 
         ai->TellMaster(out);
     }
@@ -74,24 +93,22 @@ void TrainerAction::List(Creature* creature, TrainerSpellAction action, SpellIds
     TellFooter(totalCost);
 }
 
+
 bool TrainerAction::Execute(Event event)
 {
     string text = event.getParam();
 
     Player* master = GetMaster();
     if (!master)
-    {
         return false;
-    }
 
     Creature *creature = ai->GetCreature(master->GetSelectionGuid());
     if (!creature)
-    {
         return false;
-    }
 
     if (!creature->IsTrainerOf(bot, false))
     {
+        ai->TellError("This trainer cannot teach me");
         return false;
     }
 
@@ -100,32 +117,26 @@ bool TrainerAction::Execute(Event event)
     TrainerSpellData const* tSpells = creature->GetTrainerTemplateSpells();
     if (!cSpells && !tSpells)
     {
-        ai->TellMaster("No spells can be learned from this trainer");
+        ai->TellError("No spells can be learned from this trainer");
         return false;
     }
 
     uint32 spell = chat->parseSpell(text);
     SpellIds spells;
     if (spell)
-    {
         spells.insert(spell);
-    }
 
-    if (text == "learn")
-    {
-        List(creature, &TrainerAction::Learn, spells);
-    }
+    if (text.find("learn") != string::npos)
+        Iterate(creature, &TrainerAction::Learn, spells);
     else
-    {
-        List(creature, NULL, spells);
-    }
+        Iterate(creature, NULL, spells);
 
     return true;
 }
 
 void TrainerAction::TellHeader(Creature* creature)
 {
-    ostringstream out; out << "--- can learn from " << creature->GetName() << " ---";
+    ostringstream out; out << "--- Can learn from " << creature->GetName() << " ---";
     ai->TellMaster(out);
 }
 

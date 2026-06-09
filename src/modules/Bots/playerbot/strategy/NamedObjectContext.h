@@ -1,8 +1,5 @@
 #pragma once
 
-#include <vector>
-#include <unordered_map>
-
 namespace ai
 {
     using namespace std;
@@ -13,7 +10,8 @@ namespace ai
         Qualified() {};
 
     public:
-        void Qualify(string qualifier) { this->qualifier = qualifier; }
+        virtual void Qualify(string qualifier) { this->qualifier = qualifier; }
+        string GetQualifier() { return qualifier; }
 
     protected:
         string qualifier;
@@ -23,7 +21,7 @@ namespace ai
     {
     protected:
         typedef T* (*ActionCreator) (PlayerbotAI* ai);
-        unordered_map<string, ActionCreator> creators;
+        map<string, ActionCreator> creators;
 
     public:
         T* create(string name, PlayerbotAI* ai)
@@ -37,22 +35,16 @@ namespace ai
             }
 
             if (creators.find(name) == creators.end())
-            {
                 return NULL;
-            }
 
             ActionCreator creator = creators[name];
             if (!creator)
-            {
                 return NULL;
-            }
 
             T *object = (*creator)(ai);
             Qualified *q = dynamic_cast<Qualified *>(object);
             if (q)
-            {
                 q->Qualify(qualifier);
-            }
 
             return object;
         }
@@ -60,13 +52,12 @@ namespace ai
         set<string> supports()
         {
             set<string> keys;
-            for (typename unordered_map<string, ActionCreator>::iterator it = creators.begin(); it != creators.end(); it++)
-            {
+            for (typename map<string, ActionCreator>::iterator it = creators.begin(); it != creators.end(); it++)
                 keys.insert(it->first);
-            }
             return keys;
         }
     };
+
 
     template <class T> class NamedObjectContext : public NamedObjectFactory<T>
     {
@@ -77,13 +68,7 @@ namespace ai
         T* create(string name, PlayerbotAI* ai)
         {
             if (created.find(name) == created.end())
-            {
-                T* obj = NamedObjectFactory<T>::create(name, ai);
-                created[name] = obj;
-                if (obj)
-                    createdList.push_back(obj);
-                return obj;
-            }
+                return created[name] = NamedObjectFactory<T>::create(name, ai);
 
             return created[name];
         }
@@ -95,54 +80,46 @@ namespace ai
 
         void Clear()
         {
-            for (typename vector<T*>::iterator i = createdList.begin(); i != createdList.end(); i++)
+            for (typename map<string, T*>::iterator i = created.begin(); i != created.end(); i++)
             {
-                delete *i;
+                if (i->second)
+                    delete i->second;
             }
 
-            createdList.clear();
             created.clear();
         }
 
         void Update()
         {
-            for (typename vector<T*>::iterator i = createdList.begin(); i != createdList.end(); i++)
+            for (typename map<string, T*>::iterator i = created.begin(); i != created.end(); i++)
             {
-                (*i)->Update();
+                if (i->second)
+                    i->second->Update();
             }
         }
 
         void Reset()
         {
-            for (typename vector<T*>::iterator i = createdList.begin(); i != createdList.end(); i++)
+            for (typename map<string, T*>::iterator i = created.begin(); i != created.end(); i++)
             {
-                (*i)->Reset();
+                if (i->second)
+                    i->second->Reset();
             }
         }
 
-        bool IsShared()
-        {
-            return shared;
-        }
-
-        bool IsSupportsSiblings()
-        {
-            return supportsSiblings;
-        }
+        bool IsShared() { return shared; }
+        bool IsSupportsSiblings() { return supportsSiblings; }
 
         set<string> GetCreated()
         {
             set<string> keys;
-            for (typename unordered_map<string, T*>::iterator it = created.begin(); it != created.end(); it++)
-            {
+            for (typename map<string, T*>::iterator it = created.begin(); it != created.end(); it++)
                 keys.insert(it->first);
-            }
             return keys;
         }
 
     protected:
-        unordered_map<string, T*> created;
-        vector<T*> createdList;
+        map<string, T*> created;
         bool shared;
         bool supportsSiblings;
     };
@@ -156,9 +133,7 @@ namespace ai
             {
                 NamedObjectContext<T>* context = *i;
                 if (!context->IsShared())
-                {
                     delete context;
-                }
             }
         }
 
@@ -182,9 +157,7 @@ namespace ai
             for (typename list<NamedObjectContext<T>*>::iterator i = contexts.begin(); i != contexts.end(); i++)
             {
                 if (!(*i)->IsShared())
-                {
                     (*i)->Update();
-                }
             }
         }
 
@@ -201,16 +174,12 @@ namespace ai
             for (typename list<NamedObjectContext<T>*>::iterator i = contexts.begin(); i != contexts.end(); i++)
             {
                 if (!(*i)->IsSupportsSiblings())
-                {
                     continue;
-                }
 
                 set<string> supported = (*i)->supports();
                 set<string>::iterator found = supported.find(name);
                 if (found == supported.end())
-                {
                     continue;
-                }
 
                 supported.erase(found);
                 return supported;
@@ -228,9 +197,7 @@ namespace ai
                 set<string> supported = (*i)->supports();
 
                 for (set<string>::iterator j = supported.begin(); j != supported.end(); j++)
-                {
                     result.insert(*j);
-                }
             }
             return result;
         }
@@ -244,9 +211,7 @@ namespace ai
                 set<string> createdKeys = (*i)->GetCreated();
 
                 for (set<string>::iterator j = createdKeys.begin(); j != createdKeys.end(); j++)
-                {
                     result.insert(*j);
-                }
             }
             return result;
         }
@@ -261,9 +226,7 @@ namespace ai
         virtual ~NamedObjectFactoryList()
         {
             for (typename list<NamedObjectFactory<T>*>::iterator i = factories.begin(); i != factories.end(); i++)
-            {
                 delete *i;
-            }
         }
 
         void Add(NamedObjectFactory<T>* context)

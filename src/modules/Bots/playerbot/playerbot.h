@@ -1,14 +1,8 @@
 #pragma once
 
-/**
- * Splits a string using the specified delimiter.
- */
 std::vector<std::string> split(const std::string &s, char delim);
+void split(std::vector<std::string>& dest, const std::string& str, const char* delim);
 #ifndef WIN32
-
-/**
- * Performs a case-insensitive string comparison.
- */
 int strcmpi(std::string s1, std::string s2);
 #endif
 
@@ -33,3 +27,12 @@ int strcmpi(std::string s1, std::string s2);
 #include "RandomPlayerbotMgr.h"
 #include "ChatHelper.h"
 #include "PlayerbotAI.h"
+#include "PlayerbotDbStore.h"
+
+#if MAX_EXPANSION == 1
+    #define MANGOSBOT_ONE
+#elif MAX_EXPANSION == 2
+    #define MANGOSBOT_TWO
+#else
+    #define MANGOSBOT_ZERO
+#endif

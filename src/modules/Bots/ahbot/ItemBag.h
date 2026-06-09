@@ -12,10 +12,7 @@ namespace ahbot
         virtual ~CategoryList();
 
         Category* operator[](int index) { return categories[index]; }
-        int32 size()
-        {
-            return categories.size();
-        }
+        int32 size() { return categories.size(); }
         static CategoryList instance;
 
     private:
@@ -26,7 +23,7 @@ namespace ahbot
     };
 
     template<class T>
-    void Shuffle(vector<T>& items)
+    void Shuffle(vector<T>& items) 
     {
         uint32 count = items.size();
         for (uint32 i = 0; i < count * 5; i++)
@@ -40,7 +37,7 @@ namespace ahbot
         }
     }
 
-    class ItemBag
+    class ItemBag 
     {
     public:
         ItemBag();
@@ -67,10 +64,7 @@ namespace ahbot
 
     protected:
         virtual void Load();
-        virtual string GetName()
-        {
-            return "available";
-        }
+        virtual string GetName() { return "available"; }
     };
 
     class InAuctionItemsBag : public ItemBag

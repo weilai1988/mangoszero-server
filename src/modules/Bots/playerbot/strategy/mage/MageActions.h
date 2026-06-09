@@ -1,8 +1,7 @@
 #pragma once
 
+#include "../../ServerFacade.h"
 #include "../actions/GenericActions.h"
-#include "../actions/InventoryAction.h"
-#include "../actions/UseItemAction.h"
 
 namespace ai
 {
@@ -22,6 +21,19 @@ namespace ai
     {
     public:
         CastFireBlastAction(PlayerbotAI* ai) : CastSpellAction(ai, "fire blast") {}
+    };
+
+    class CastArcaneBlastAction : public CastBuffSpellAction
+    {
+    public:
+        CastArcaneBlastAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "arcane blast") {}
+        virtual string GetTargetName() { return "current target"; }
+    };
+
+    class CastArcaneBarrageAction : public CastSpellAction
+    {
+    public:
+        CastArcaneBarrageAction(PlayerbotAI* ai) : CastSpellAction(ai, "arcane barrage") {}
     };
 
     class CastArcaneMissilesAction : public CastSpellAction
@@ -48,45 +60,57 @@ namespace ai
         CastFrostNovaAction(PlayerbotAI* ai) : CastSpellAction(ai, "frost nova") {}
         virtual bool isUseful()
         {
-            return AI_VALUE2(float, "distance", GetTargetName()) <= sPlayerbotAIConfig.tooCloseDistance;
+            return sServerFacade.IsDistanceLessOrEqualThan(AI_VALUE2(float, "distance", GetTargetName()), sPlayerbotAIConfig.tooCloseDistance);
         }
     };
 
-    class CastFrostboltAction : public CastSpellAction
-    {
-    public:
-        CastFrostboltAction(PlayerbotAI* ai) : CastSpellAction(ai, "frostbolt") {}
-    };
+	class CastFrostboltAction : public CastSpellAction
+	{
+	public:
+		CastFrostboltAction(PlayerbotAI* ai) : CastSpellAction(ai, "frostbolt") {}
+	};
 
-    class CastBlizzardAction : public CastSpellAction
-    {
-    public:
-        CastBlizzardAction(PlayerbotAI* ai) : CastSpellAction(ai, "blizzard") {}
-    };
+	class CastBlizzardAction : public CastSpellAction
+	{
+	public:
+		CastBlizzardAction(PlayerbotAI* ai) : CastSpellAction(ai, "blizzard") {}
+	};
 
-    class CastArcaneIntellectAction : public CastBuffSpellAction
+	class CastArcaneIntellectAction : public CastBuffSpellAction
     {
-    public:
-        CastArcaneIntellectAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "arcane intellect") {}
-    };
+	public:
+		CastArcaneIntellectAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "arcane intellect") {}
+	};
 
-    class CastArcaneIntellectOnPartyAction : public BuffOnPartyAction
+	class CastArcaneIntellectOnPartyAction : public BuffOnPartyAction
     {
-    public:
-        CastArcaneIntellectOnPartyAction(PlayerbotAI* ai) : BuffOnPartyAction(ai, "arcane intellect") {}
-    };
+	public:
+		CastArcaneIntellectOnPartyAction(PlayerbotAI* ai) : BuffOnPartyAction(ai, "arcane intellect") {}
+	};
 
-    class CastRemoveCurseAction : public CastCureSpellAction
+	class CastRemoveCurseAction : public CastCureSpellAction
     {
-    public:
-        CastRemoveCurseAction(PlayerbotAI* ai) : CastCureSpellAction(ai, "remove curse") {}
-    };
+	public:
+		CastRemoveCurseAction(PlayerbotAI* ai) : CastCureSpellAction(ai, "remove curse") {}
+	};
 
-    class CastCombustionAction : public CastBuffSpellAction
+	class CastRemoveLesserCurseAction : public CastCureSpellAction
     {
-    public:
-        CastCombustionAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "combustion") {}
-    };
+	public:
+		CastRemoveLesserCurseAction(PlayerbotAI* ai) : CastCureSpellAction(ai, "remove lesser curse") {}
+	};
+
+	class CastIcyVeinsAction : public CastBuffSpellAction
+    {
+	public:
+		CastIcyVeinsAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "icy veins") {}
+	};
+
+	class CastCombustionAction : public CastBuffSpellAction
+    {
+	public:
+		CastCombustionAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "combustion") {}
+	};
 
     BEGIN_SPELL_ACTION(CastCounterspellAction, "counterspell")
     END_SPELL_ACTION()
@@ -97,61 +121,34 @@ namespace ai
         CastRemoveCurseOnPartyAction(PlayerbotAI* ai) : CurePartyMemberAction(ai, "remove curse", DISPEL_CURSE) {}
     };
 
-    class CastConjureFoodAction : public CastBuffSpellAction
+    class CastRemoveLesserCurseOnPartyAction : public CurePartyMemberAction
     {
     public:
-        CastConjureFoodAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "conjure food") {}
-        virtual string GetTargetName()
-        {
-            return "self target";
-        }
-
-        virtual bool isUseful()
-        {
-            return AI_VALUE2(list<Item*>, "inventory items", "conjured food").empty();
-        }
+        CastRemoveLesserCurseOnPartyAction(PlayerbotAI* ai) : CurePartyMemberAction(ai, "remove lesser curse", DISPEL_CURSE) {}
     };
 
-    class CastConjureWaterAction : public CastBuffSpellAction
+	class CastConjureFoodAction : public CastBuffSpellAction
+    {
+	public:
+		CastConjureFoodAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "conjure food") {}
+	};
+
+	class CastConjureWaterAction : public CastBuffSpellAction
+    {
+	public:
+		CastConjureWaterAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "conjure water") {}
+	};
+
+	class CastIceBlockAction : public CastBuffSpellAction
+    {
+	public:
+		CastIceBlockAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "ice block") {}
+	};
+
+    class CastMoltenArmorAction : public CastBuffSpellAction
     {
     public:
-        CastConjureWaterAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "conjure water") {}
-        virtual string GetTargetName()
-        {
-            return "self target";
-        }
-
-        virtual bool isUseful()
-        {
-            return AI_VALUE2(list<Item*>, "inventory items", "conjured drink").empty();
-        }
-    };
-
-    class CastConjureManaGemAction : public CastSpellAction
-    {
-    public:
-        CastConjureManaGemAction(PlayerbotAI* ai) : CastSpellAction(ai, "conjure mana gem"), m_bestSpellId(0) {}
-        virtual string GetTargetName()
-        {
-            return "self target";
-        }
-
-        virtual bool isUseful()
-        {
-            return AI_VALUE2(uint8, "item count", "mana gem") == 0;
-        }
-
-        virtual bool Execute(Event event);
-        virtual bool isPossible();
-    private:
-        uint32 FindBestConjureManaSpell();
-        uint32 m_bestSpellId;
-    };
-
-    class CastIceBlockAction : public CastBuffSpellAction
-    {
-    public:
-        CastIceBlockAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "ice block") {}
+        CastMoltenArmorAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "molten armor") {}
     };
 
     class CastMageArmorAction : public CastBuffSpellAction
@@ -179,99 +176,59 @@ namespace ai
         virtual Value<Unit*>* GetTargetValue();
     };
 
-    class CastBlastWaveAction : public CastSpellAction
-    {
-    public:
-        CastBlastWaveAction(PlayerbotAI* ai) : CastSpellAction(ai, "blast wave") {}
-    };
+	class CastSpellstealAction : public CastSpellAction
+	{
+	public:
+		CastSpellstealAction(PlayerbotAI* ai) : CastSpellAction(ai, "spellsteal") {}
+	};
 
-    class CastEvocationAction : public CastSpellAction
-    {
-    public:
-        CastEvocationAction(PlayerbotAI* ai) : CastSpellAction(ai, "evocation") {}
-        virtual string GetTargetName()
-        {
-            return "self target";
-        }
-    };
+	class CastLivingBombAction : public CastDebuffSpellAction
+	{
+	public:
+	    CastLivingBombAction(PlayerbotAI* ai) : CastDebuffSpellAction(ai, "living bomb") {}
+	};
+
+	class CastDragonsBreathAction : public CastSpellAction
+	{
+	public:
+	    CastDragonsBreathAction(PlayerbotAI* ai) : CastSpellAction(ai, "dragon's breath") {}
+	};
+
+	class CastBlastWaveAction : public CastSpellAction
+	{
+	public:
+	    CastBlastWaveAction(PlayerbotAI* ai) : CastSpellAction(ai, "blast wave") {}
+	};
+
+	class CastInvisibilityAction : public CastBuffSpellAction
+	{
+	public:
+	    CastInvisibilityAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "invisibility") {}
+	};
+
+	class CastEvocationAction : public CastSpellAction
+	{
+	public:
+	    CastEvocationAction(PlayerbotAI* ai) : CastSpellAction(ai, "evocation") {}
+	    virtual string GetTargetName() { return "self target"; }
+	};
 
     class CastCounterspellOnEnemyHealerAction : public CastSpellOnEnemyHealerAction
     {
     public:
-        CastCounterspellOnEnemyHealerAction(PlayerbotAI* ai) : CastSpellOnEnemyHealerAction(ai, "counterspell") {}
+	    CastCounterspellOnEnemyHealerAction(PlayerbotAI* ai) : CastSpellOnEnemyHealerAction(ai, "counterspell") {}
     };
 
-    class CastLivingBombAction : public CastSpellAction
+    class CastArcanePowerAction : public CastBuffSpellAction
     {
     public:
-        CastLivingBombAction(PlayerbotAI* ai) : CastSpellAction(ai, "living bomb") {}
+        CastArcanePowerAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "arcane power") {}
     };
 
-    class CastIcyVeinsAction : public CastBuffSpellAction
+    class CastPresenceOfMindAction : public CastBuffSpellAction
     {
     public:
-        CastIcyVeinsAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "icy veins") {}
+        CastPresenceOfMindAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "presence of mind") {}
     };
 
-    class CastSpellstealAction : public CastSpellAction
-    {
-    public:
-        CastSpellstealAction(PlayerbotAI* ai) : CastSpellAction(ai, "spellsteal") {}
-    };
-
-    class CastDragonsBreathAction : public CastSpellAction
-    {
-    public:
-        CastDragonsBreathAction(PlayerbotAI* ai) : CastSpellAction(ai, "dragon's breath") {}
-    };
-
-    class CastArcaneBlastAction : public CastSpellAction
-    {
-    public:
-        CastArcaneBlastAction(PlayerbotAI* ai) : CastSpellAction(ai, "arcane blast") {}
-    };
-
-    class CastArcaneBarrageAction : public CastSpellAction
-    {
-    public:
-        CastArcaneBarrageAction(PlayerbotAI* ai) : CastSpellAction(ai, "arcane barrage") {}
-    };
-
-    class CastConeOfColdAction : public CastSpellAction
-    {
-    public:
-        CastConeOfColdAction(PlayerbotAI* ai) : CastSpellAction(ai, "cone of cold") {}
-    };
-
-    class CastColdSnapAction : public CastSpellAction
-    {
-    public:
-        CastColdSnapAction(PlayerbotAI* ai) : CastSpellAction(ai, "cold snap") {}
-        virtual string GetTargetName()
-        {
-            return "self target";
-        }
-    };
-
-    class CastArcaneBrillianceAction : public CastBuffSpellAction
-    {
-    public:
-        CastArcaneBrillianceAction(PlayerbotAI* ai) : CastBuffSpellAction(ai, "arcane brilliance") {}
-    };
-
-    class GiveConjuredFoodAction : public InventoryAction
-    {
-    public:
-        GiveConjuredFoodAction(PlayerbotAI* ai) : InventoryAction(ai, "give conjured food") {}
-        virtual bool Execute(Event event);
-        virtual bool isUseful();
-    };
-
-    class GiveConjuredWaterAction : public InventoryAction
-    {
-    public:
-        GiveConjuredWaterAction(PlayerbotAI* ai) : InventoryAction(ai, "give conjured water") {}
-        virtual bool Execute(Event event);
-        virtual bool isUseful();
-    };
 }

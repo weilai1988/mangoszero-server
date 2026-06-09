@@ -4,21 +4,27 @@
 #include "Common.h"
 #include "PlayerbotAIBase.h"
 
+class ChatHandler;
+class QueryResult;
+class SqlQueryHolder;
 class WorldPacket;
 class Player;
 class Unit;
 class Object;
 class Item;
 
-typedef UNORDERED_MAP<uint64, Player*> PlayerBotMap;
+typedef map<uint64, Player*> PlayerBotMap;
+typedef map<string, set<string> > PlayerBotErrorMap;
 
-class MANGOS_DLL_SPEC PlayerbotHolder : public PlayerbotAIBase
+class PlayerbotHolder : public PlayerbotAIBase
 {
 public:
     PlayerbotHolder();
     virtual ~PlayerbotHolder();
 
     void AddPlayerBot(uint64 guid, uint32 masterAccountId);
+	void HandlePlayerBotLoginCallback(QueryResult * dummy, SqlQueryHolder * holder);
+
     void LogoutPlayerBot(uint64 guid);
     Player* GetPlayerBot (uint64 guid) const;
     PlayerBotMap::const_iterator GetPlayerBotsBegin() const { return playerBots.begin(); }
@@ -30,9 +36,10 @@ public:
     void LogoutAllBots();
     void OnBotLogin(Player * const bot);
 
-    list<string> HandlePlayerbotCommand(char* args, Player* master = NULL);
-    bool ProcessBotCommand(string cmd, ObjectGuid guid, bool admin, uint32 masterAccountId);
+    list<string> HandlePlayerbotCommand(char const* args, Player* master = NULL);
+    string ProcessBotCommand(string cmd, ObjectGuid guid, bool admin, uint32 masterAccountId, uint32 masterGuildId);
     uint32 GetAccountId(string name);
+    string ListBots(Player* master, string filter = "");
 
 protected:
     virtual void OnBotLoginInternal(Player * const bot) = 0;
@@ -47,11 +54,14 @@ public:
     PlayerbotMgr(Player* const master);
     virtual ~PlayerbotMgr();
 
+    static bool HandlePlayerbotMgrCommand(ChatHandler* handler, char const* args);
     void HandleMasterIncomingPacket(const WorldPacket& packet);
     void HandleMasterOutgoingPacket(const WorldPacket& packet);
     void HandleCommand(uint32 type, const string& text);
+    void OnPlayerLogin(Player* player);
 
     virtual void UpdateAIInternal(uint32 elapsed);
+    void TellError(string botName, string text);
 
     Player* GetMaster() const { return master; };
 
@@ -59,9 +69,12 @@ public:
 
 protected:
     virtual void OnBotLoginInternal(Player * const bot);
+    void CheckTellErrors(uint32 elapsed);
 
 private:
     Player* const master;
+    PlayerBotErrorMap errors;
+    time_t lastErrorTell;
 };
 
 #endif

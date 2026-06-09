@@ -2,163 +2,153 @@
 #include "playerbot.h"
 #include "FleeManager.h"
 #include "PlayerbotAIConfig.h"
+#include "Group.h"
+#include "ServerFacade.h"
 
 using namespace ai;
 using namespace std;
 
-void FleeManager::calculateDistanceToPlayers(FleePoint *point)
-{
-    Group* group = bot->GetGroup();
-    if (!group)
-    {
-        return;
-    }
-
-    for (GroupReference *gref = group->GetFirstMember(); gref; gref = gref->next())
-    {
-        Player* player = gref->getSource();
-        if (player == bot)
-        {
-            continue;
-        }
-
-        float d = player->GetDistance(point->x, point->y, point->z);
-        point->toAllPlayers.probe(d);
-        switch (player->getClass())
-        {
-            case CLASS_HUNTER:
-            case CLASS_MAGE:
-            case CLASS_PRIEST:
-            case CLASS_WARLOCK:
-                point->toRangedPlayers.probe(d);
-                break;
-            case CLASS_PALADIN:
-            case CLASS_ROGUE:
-            case CLASS_WARRIOR:
-                point->toMeleePlayers.probe(d);
-                break;
-        }
-    }
-}
-
 void FleeManager::calculateDistanceToCreatures(FleePoint *point)
 {
-    RangePair &distance = point->toCreatures;
+    point->minDistance = -1.0f;
+    point->sumDistance = 0.0f;
+	list<ObjectGuid> units = *bot->GetPlayerbotAI()->GetAiObjectContext()->GetValue<list<ObjectGuid> >("possible targets");
+	for (list<ObjectGuid>::iterator i = units.begin(); i != units.end(); ++i)
+    {
+		Unit* unit = bot->GetPlayerbotAI()->GetUnit(*i);
+		if (!unit)
+		    continue;
 
+		float d = sServerFacade.GetDistance2d(unit, point->x, point->y);
+		point->sumDistance += d;
+		if (point->minDistance < 0 || point->minDistance > d) point->minDistance = d;
+	}
+}
+
+bool intersectsOri(float angle, list<float>& angles, float angleIncrement)
+{
+    for (list<float>::iterator i = angles.begin(); i != angles.end(); ++i)
+    {
+        float ori = *i;
+        if (abs(angle - ori) < angleIncrement) return true;
+    }
+
+    return false;
+}
+
+void FleeManager::calculatePossibleDestinations(list<FleePoint*> &points)
+{
+    Unit *target = *bot->GetPlayerbotAI()->GetAiObjectContext()->GetValue<Unit*>("current target");
+
+	float botPosX = bot->GetPositionX();
+	float botPosY = bot->GetPositionY();
+	float botPosZ = bot->GetPositionZ();
+
+	FleePoint start(bot->GetPlayerbotAI(), botPosX, botPosY, botPosZ);
+	calculateDistanceToCreatures(&start);
+
+    list<float> enemyOri;
     list<ObjectGuid> units = *bot->GetPlayerbotAI()->GetAiObjectContext()->GetValue<list<ObjectGuid> >("possible targets");
     for (list<ObjectGuid>::iterator i = units.begin(); i != units.end(); ++i)
     {
         Unit* unit = bot->GetPlayerbotAI()->GetUnit(*i);
         if (!unit)
-        {
             continue;
-        }
 
-        float d = unit->GetDistance(point->x, point->y, point->z);
-        if (d <= sPlayerbotAIConfig.tooCloseDistance)
+        float ori = bot->GetAngle(unit);
+        enemyOri.push_back(ori);
+    }
+
+    Map* map = bot->GetMap();
+    const TerrainInfo* terrain = map->GetTerrain();
+    float distIncrement = max(sPlayerbotAIConfig.followDistance, (maxAllowedDistance - sPlayerbotAIConfig.tooCloseDistance) / 10.0f);
+    for (float dist = maxAllowedDistance; dist >= sPlayerbotAIConfig.tooCloseDistance ; dist -= distIncrement)
+    {
+        float angleIncrement = max(M_PI / 20, M_PI / 4 / (1.0 + dist - sPlayerbotAIConfig.tooCloseDistance));
+        for (float add = 0.0f; add < M_PI / 4 + angleIncrement; add += angleIncrement)
         {
-            continue;
-        }
+            for (float angle = add; angle < add + 2 * M_PI + angleIncrement; angle += M_PI / 4)
+            {
+                if (intersectsOri(angle, enemyOri, angleIncrement)) continue;
 
-        distance.probe(d);
+                float x = botPosX + cos(angle) * dist, y = botPosY + sin(angle) * dist, z = botPosZ + CONTACT_DISTANCE;
+                if (isTooCloseToEdge(x, y, z, angle)) continue;
+
+                if (forceMaxDistance && sServerFacade.IsDistanceLessThan(sServerFacade.GetDistance2d(bot, x, y), maxAllowedDistance - sPlayerbotAIConfig.tooCloseDistance))
+                    continue;
+
+                bot->UpdateAllowedPositionZ(x, y, z);
+
+                if (terrain && terrain->IsInWater(x, y, z))
+                    continue;
+
+                if (!bot->IsWithinLOS(x, y, z) || (target && !target->IsWithinLOS(x, y, z)))
+                    continue;
+
+                FleePoint *point = new FleePoint(bot->GetPlayerbotAI(), x, y, z);
+                calculateDistanceToCreatures(point);
+
+                if (sServerFacade.IsDistanceGreaterOrEqualThan(point->minDistance - start.minDistance, sPlayerbotAIConfig.followDistance))
+                    points.push_back(point);
+            }
+        }
     }
 }
 
-void FleeManager::calculatePossibleDestinations(list<FleePoint*> &points)
+bool FleeManager::isTooCloseToEdge(float x, float y, float z, float angle)
 {
-    float botPosX = bot->GetPositionX();
-    float botPosY = bot->GetPositionY();
-    float botPosZ = bot->GetPositionZ();
-
-    for (float distance = maxAllowedDistance; distance > sPlayerbotAIConfig.tooCloseDistance + 5.0f; distance -= 5.0f)
+    Map* map = bot->GetMap();
+    const TerrainInfo* terrain = map->GetTerrain();
+    for (float a = angle; a <= angle + 2*M_PI; a += M_PI / 4)
     {
-        for (float angle = -M_PI + followAngle; angle < M_PI + followAngle; angle += M_PI / 16)
-        {
-            float x = botPosX + cos(angle) * distance;
-            float y = botPosY + sin(angle) * distance;
+        float dist = sPlayerbotAIConfig.tooCloseDistance;
+        float tx = x + cos(a) * dist;
+        float ty = y + sin(a) * dist;
+        float tz = z;
+        bot->UpdateAllowedPositionZ(tx, ty, tz);
 
-            if (!bot->IsWithinLOS(x, y, botPosZ))
-            {
-                continue;
-            }
+        if (terrain && terrain->IsInWater(tx, ty, tz))
+            return true;
 
-            FleePoint *point = new FleePoint(x, y, botPosZ);
-            calculateDistanceToPlayers(point);
-            calculateDistanceToCreatures(point);
-            points.push_back(point);
-        }
+        if (!bot->IsWithinLOS(tx, ty, tz))
+            return true;
     }
+
+    return false;
 }
 
 void FleeManager::cleanup(list<FleePoint*> &points)
 {
-    for (list<FleePoint*>::iterator i = points.begin(); i != points.end(); i++)
+	for (list<FleePoint*>::iterator i = points.begin(); i != points.end(); i++)
     {
-        FleePoint* point = *i;
-        delete point;
-    }
-    points.clear();
+		FleePoint* point = *i;
+		delete point;
+	}
+	points.clear();
 }
 
-bool FleePoint::isReasonable()
+bool FleeManager::isBetterThan(FleePoint* point, FleePoint* other)
 {
-    return toAllPlayers.max <= sPlayerbotAIConfig.sightDistance && toCreatures.min >= sPlayerbotAIConfig.tooCloseDistance;
-}
-
-bool FleePoint::isBetterByCreatures(FleePoint* other)
-{
-    return toCreatures.min > 0 && other->toCreatures.min > 0 &&
-            (toCreatures.min - other->toCreatures.min) >= 0.0f;
-}
-
-bool FleePoint::isBetterByAll(FleePoint* other)
-{
-    bool isFartherFromCreatures = isBetterByCreatures(other);
-    bool isNearerToRangedPlayers = toRangedPlayers.max > 0 && other->toRangedPlayers.max > 0 &&
-            (toRangedPlayers.max - other->toRangedPlayers.max) <= 0.0f;
-    bool isFartherFromMeleePlayers = toMeleePlayers.min > 0 && other->toMeleePlayers.min > 0 &&
-            (toMeleePlayers.min - other->toMeleePlayers.min) >= 0.0f;
-
-    return isFartherFromCreatures && (isNearerToRangedPlayers || isFartherFromMeleePlayers);
+    return point->sumDistance - other->sumDistance > 0;
 }
 
 FleePoint* FleeManager::selectOptimalDestination(list<FleePoint*> &points)
 {
-    FleePoint* byCreatures = NULL;
-    for (list<FleePoint*>::iterator i = points.begin(); i != points.end(); i++)
+	FleePoint* best = NULL;
+	for (list<FleePoint*>::iterator i = points.begin(); i != points.end(); i++)
     {
-        FleePoint* point = *i;
-        if (point->isReasonable() && (!byCreatures || point->isBetterByCreatures(byCreatures)))
-        {
-            byCreatures = point;
-        }
-    }
+		FleePoint* point = *i;
+		if (!best || isBetterThan(point, best))
+            best = point;
+	}
 
-    FleePoint* byAll = NULL;
-    for (list<FleePoint*>::iterator i = points.begin(); i != points.end(); i++)
-    {
-        FleePoint* point = *i;
-        if (point->isReasonable() && (!byAll || point->isBetterByAll(byAll)))
-        {
-            byAll = point;
-        }
-    }
-
-    if (byAll && byCreatures)
-    {
-        if (byAll->isBetterByCreatures(byCreatures))
-        {
-            return byAll;
-        }
-    }
-
-    return byCreatures;
+	return best;
 }
 
 bool FleeManager::CalculateDestination(float* rx, float* ry, float* rz)
 {
-    list<FleePoint*> points;
-    calculatePossibleDestinations(points);
+	list<FleePoint*> points;
+	calculatePossibleDestinations(points);
 
     FleePoint* point = selectOptimalDestination(points);
     if (!point)
@@ -167,10 +157,25 @@ bool FleeManager::CalculateDestination(float* rx, float* ry, float* rz)
         return false;
     }
 
-    *rx = point->x;
-    *ry = point->y;
-    *rz = bot->GetPositionZ();
+	*rx = point->x;
+	*ry = point->y;
+	*rz = point->z;
 
     cleanup(points);
-    return true;
+	return true;
+}
+
+bool FleeManager::isUseful()
+{
+    list<ObjectGuid> units = *bot->GetPlayerbotAI()->GetAiObjectContext()->GetValue<list<ObjectGuid> >("possible targets");
+    for (list<ObjectGuid>::iterator i = units.begin(); i != units.end(); ++i)
+    {
+        Unit* unit = bot->GetPlayerbotAI()->GetUnit(*i);
+        if (!unit)
+            continue;
+
+        float d = sServerFacade.GetDistance2d(unit, bot);
+        if (sServerFacade.IsDistanceLessThan(d, sPlayerbotAIConfig.aggroDistance)) return true;
+    }
+    return false;
 }

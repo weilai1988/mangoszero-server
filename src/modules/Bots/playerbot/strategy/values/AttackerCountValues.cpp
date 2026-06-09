@@ -2,6 +2,7 @@
 #include "../../playerbot.h"
 #include "AttackerCountValues.h"
 #include "../../PlayerbotAIConfig.h"
+#include "../../ServerFacade.h"
 
 using namespace ai;
 
@@ -14,27 +15,33 @@ bool HasAggroValue::Calculate()
 {
     Unit* target = GetTarget();
     if (!target)
-    {
         return true;
-    }
 
-    HostileReference *ref = bot->GetHostileRefManager().getFirst();
+    HostileReference *ref = sServerFacade.GetHostileRefManager(bot).getFirst();
     if (!ref)
-    {
         return true; // simulate as target is not atacking anybody yet
-    }
 
-    while ( ref )
+    while( ref )
     {
         ThreatManager *threatManager = ref->getSource();
         Unit *attacker = threatManager->getOwner();
         Unit *victim = attacker->getVictim();
         if (victim == bot && target == attacker)
-        {
             return true;
-        }
         ref = ref->next();
     }
+
+    ref = target->GetThreatManager().getCurrentVictim();
+    if (ref)
+    {
+        Unit* victim = ref->getTarget();
+        if (victim)
+        {
+            Player* pl = dynamic_cast<Player*>(victim);
+            if (pl && ai->IsTank(pl)) return true;
+        }
+    }
+
     return false;
 }
 
@@ -47,16 +54,12 @@ uint8 AttackerCountValue::Calculate()
     for (list<ObjectGuid>::iterator i = attackers.begin(); i != attackers.end(); i++)
     {
         Unit* unit = ai->GetUnit(*i);
-        if (!unit || !unit->IsAlive())
-        {
+        if (!unit || !sServerFacade.IsAlive(unit))
             continue;
-        }
 
         float distance = bot->GetDistance(unit);
         if (distance <= range)
-        {
             count++;
-        }
     }
 
     return count;
@@ -74,10 +77,8 @@ uint8 BalancePercentValue::Calculate()
         for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
         {
             Player *player = sObjectMgr.GetPlayer(itr->guid);
-            if ( !player || !player->IsAlive())
-            {
+            if( !player || !sServerFacade.IsAlive(player))
                 continue;
-            }
 
             playerLevel += player->getLevel();
         }
@@ -88,15 +89,12 @@ uint8 BalancePercentValue::Calculate()
     for (list<ObjectGuid>::iterator i = v.begin(); i!=v.end(); i++)
     {
         Creature* creature = ai->GetCreature((*i));
-        if (!creature || !creature->IsAlive())
-        {
+        if (!creature || !sServerFacade.IsAlive(creature))
             continue;
-        }
 
         uint32 level = creature->getLevel();
 
-        switch (creature->GetCreatureInfo()->Rank)
-        {
+        switch (creature->GetCreatureInfo()->Rank) {
         case CREATURE_ELITE_RARE:
             level *= 2;
             break;
@@ -114,9 +112,7 @@ uint8 BalancePercentValue::Calculate()
     }
 
     if (!attackerLevel)
-    {
         return 100;
-    }
 
     float percent = playerLevel * 100 / attackerLevel;
     return percent <= 200 ? (uint8)percent : 200;

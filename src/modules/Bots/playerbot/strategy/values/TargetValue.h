@@ -13,10 +13,7 @@ namespace ai
         }
 
     public:
-        Unit* GetResult()
-        {
-            return result;
-        }
+        Unit* GetResult() { return result; }
 
     public:
         virtual void CheckAttacker(Unit* attacker, ThreatManager* threatManager) = 0;
@@ -31,12 +28,40 @@ namespace ai
         map<Unit*, int> dpsCountCache;
     };
 
-    class TargetValue : public UnitCalculatedValue
+    class FindNonCcTargetStrategy : public FindTargetStrategy
     {
     public:
+        FindNonCcTargetStrategy(PlayerbotAI* ai) : FindTargetStrategy(ai) {}
+
+    protected:
+        virtual bool IsCcTarget(Unit* attacker);
+
+    };
+
+    class TargetValue : public UnitCalculatedValue
+	{
+	public:
         TargetValue(PlayerbotAI* ai) : UnitCalculatedValue(ai) {}
 
     protected:
         Unit* FindTarget(FindTargetStrategy* strategy);
+    };
+
+    class RpgTargetValue : public ManualSetValue<ObjectGuid>
+    {
+    public:
+        RpgTargetValue(PlayerbotAI* ai) : ManualSetValue<ObjectGuid>(ai, ObjectGuid()) {}
+    };
+
+    class TalkTargetValue : public ManualSetValue<ObjectGuid>
+    {
+    public:
+        TalkTargetValue(PlayerbotAI* ai) : ManualSetValue<ObjectGuid>(ai, ObjectGuid()) {}
+    };
+
+    class PullTargetValue : public ManualSetValue<ObjectGuid>
+    {
+    public:
+        PullTargetValue(PlayerbotAI* ai) : ManualSetValue<ObjectGuid>(ai, ObjectGuid()) {}
     };
 }

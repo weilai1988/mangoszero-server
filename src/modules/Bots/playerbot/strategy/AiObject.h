@@ -8,8 +8,8 @@ namespace ai
     class ChatHelper;
 
     class AiObject : public PlayerbotAIAware
-    {
-    public:
+	{
+	public:
         AiObject(PlayerbotAI* ai);
 
     protected:
@@ -17,7 +17,7 @@ namespace ai
         Player* GetMaster();
         AiObjectContext* context;
         ChatHelper* chat;
-    };
+	};
 
     class AiNamedObject : public AiObject
     {
@@ -25,10 +25,7 @@ namespace ai
         AiNamedObject(PlayerbotAI* ai, string name) : AiObject(ai), name(name) {}
 
     public:
-        virtual string getName()
-        {
-            return name;
-        }
+        virtual string getName() { return name; }
 
     protected:
         string name;

@@ -2,42 +2,72 @@
 #include "../../playerbot.h"
 #include "TankTargetValue.h"
 
+#include "AttackersValue.h"
 using namespace ai;
 
-class FindTargetForTankStrategy : public FindTargetStrategy
+class FindTargetForTankStrategy : public FindNonCcTargetStrategy
 {
 public:
-    FindTargetForTankStrategy(PlayerbotAI* ai) : FindTargetStrategy(ai)
+    FindTargetForTankStrategy(PlayerbotAI* ai) : FindNonCcTargetStrategy(ai)
     {
         minThreat = 0;
-        minTankCount = 0;
-        maxDpsCount = 0;
+        bestPriority = -1;
     }
 
 public:
     virtual void CheckAttacker(Unit* creature, ThreatManager* threatManager)
     {
         Player* bot = ai->GetBot();
-        float threat = threatManager->getThreat(bot);
-        int tankCount, dpsCount;
-        GetPlayerCount(creature, &tankCount, &dpsCount);
+        if (IsCcTarget(creature)) return;
 
-        if (!result ||
-            (minThreat >= threat &&
-            (minTankCount >= tankCount || maxDpsCount <= dpsCount)))
+        int priority = GetLooseMobPriority(creature, threatManager);
+        float threat = threatManager->getThreat(bot);
+        if (!result || priority > bestPriority || (priority == bestPriority && (minThreat - threat) > 0.1f))
         {
+            bestPriority = priority;
             minThreat = threat;
-            minTankCount = tankCount;
-            maxDpsCount = dpsCount;
             result = creature;
         }
     }
 
 protected:
+    int GetLooseMobPriority(Unit* creature, ThreatManager* threatManager)
+    {
+        Player* bot = ai->GetBot();
+        Unit* victim = NULL;
+
+        HostileReference* ref = threatManager->getCurrentVictim();
+        if (ref)
+            victim = ref->getTarget();
+
+        if (!victim && creature->GetTargetGuid())
+            victim = ai->GetUnit(creature->GetTargetGuid());
+
+        if (!victim)
+            return 0;
+
+        if (victim == bot)
+            return 1;
+
+        Player* victimPlayer = dynamic_cast<Player*>(victim);
+        if (!victimPlayer)
+            return 0;
+
+        Group* group = bot->GetGroup();
+        bool sameGroup = group && group->IsMember(victimPlayer->GetObjectGuid());
+        if (sameGroup && !ai->IsTank(victimPlayer))
+            return 4;
+
+        if (sameGroup && victimPlayer != bot)
+            return 3;
+
+        return ai->IsTank(victimPlayer) ? 1 : 2;
+    }
+
     float minThreat;
-    int minTankCount;
-    int maxDpsCount;
+    int bestPriority;
 };
+
 
 Unit* TankTargetValue::Calculate()
 {

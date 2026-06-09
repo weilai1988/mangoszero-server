@@ -23,9 +23,7 @@ private:
 float MagePullMultiplier::GetValue(Action* action)
 {
     if (!action)
-    {
         return 1.0f;
-    }
 
     string name = action->getName();
     if (this->action == name ||
@@ -38,17 +36,25 @@ float MagePullMultiplier::GetValue(Action* action)
 
 NextAction** PullStrategy::getDefaultActions()
 {
-    return NextAction::array(0, new NextAction(action, 105.0f), new NextAction("follow master", 104.0f), new NextAction("end pull", 103.0f), NULL);
+    return NextAction::array(0, new NextAction(action, 105.0f), new NextAction("follow", 104.0f), new NextAction("end pull", 103.0f), NULL);
 }
 
 void PullStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
 {
-    RangedCombatStrategy::InitTriggers(triggers);
+    CombatStrategy::InitTriggers(triggers);
 }
 
 void PullStrategy::InitMultipliers(std::list<Multiplier*> &multipliers)
 {
     multipliers.push_back(new MagePullMultiplier(ai, action));
-    RangedCombatStrategy::InitMultipliers(multipliers);
+    CombatStrategy::InitMultipliers(multipliers);
 }
 
+void PossibleAdsStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
+{
+    Strategy::InitTriggers(triggers);
+
+    triggers.push_back(new TriggerNode(
+        "possible ads",
+        NextAction::array(0, new NextAction("flee with pet", 60), NULL)));
+}

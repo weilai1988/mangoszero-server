@@ -38,6 +38,10 @@
 #include "World.h"
 #include "AccountMgr.h"
 #include "SQLStorages.h"
+#include "DBCStores.h"
+
+#include <algorithm>
+#include <cctype>
 
 /**
  * @brief Handler for HandleCharacterEraseCommand command.
@@ -936,6 +940,175 @@ bool ChatHandler::HandleTaxiCheatCommand(char* args)
         {
             ChatHandler(chr).PSendSysMessage(LANG_YOURS_TAXIS_REMOVED, GetNameLink().c_str());
         }
+    }
+
+    return true;
+}
+
+/**
+ * @brief Permanently learns taxi nodes for the selected online player.
+ *
+ * @param args Optional mode: faction, alliance, horde, or all. Defaults to faction.
+ * @returns True if the command executed successfully, false otherwise.
+ */
+bool ChatHandler::HandleTaxiUnlockCommand(char* args)
+{
+    Player* chr = getSelectedPlayer();
+    if (!chr)
+    {
+        chr = m_session->GetPlayer();
+    }
+    else if (HasLowerSecurity(chr))
+    {
+        return false;
+    }
+
+    std::string mode = "faction";
+    if (char* modeText = ExtractLiteralArg(&args))
+    {
+        mode = modeText;
+        std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
+    }
+
+    bool includeAll = mode == "all";
+    bool allianceOnly = mode == "alliance";
+    bool hordeOnly = mode == "horde";
+    if (!includeAll && !allianceOnly && !hordeOnly && mode != "faction")
+    {
+        SendSysMessage("Syntax: .taxiunlock [faction|alliance|horde|all]");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    Team team = chr->GetTeam();
+    uint32 learned = 0;
+    uint32 known = 0;
+
+    for (uint32 i = 1; i < sTaxiNodesStore.GetNumRows(); ++i)
+    {
+        TaxiNodesEntry const* node = sTaxiNodesStore.LookupEntry(i);
+        if (!node)
+        {
+            continue;
+        }
+
+        uint8 field = uint8((i - 1) / 32);
+        if (field >= TaxiMaskSize)
+        {
+            continue;
+        }
+
+        uint32 submask = 1 << ((i - 1) % 32);
+        if ((sTaxiNodesMask[field] & submask) == 0)
+        {
+            continue;
+        }
+
+        bool nodeAllowed = includeAll;
+        if (!nodeAllowed)
+        {
+            if (allianceOnly)
+            {
+                nodeAllowed = node->MountCreatureID[1] != 0;
+            }
+            else if (hordeOnly)
+            {
+                nodeAllowed = node->MountCreatureID[0] != 0;
+            }
+            else if (team == ALLIANCE)
+            {
+                nodeAllowed = node->MountCreatureID[1] != 0;
+            }
+            else if (team == HORDE)
+            {
+                nodeAllowed = node->MountCreatureID[0] != 0;
+            }
+        }
+
+        if (!nodeAllowed)
+        {
+            continue;
+        }
+
+        if (chr->m_taxi.SetTaximaskNode(i))
+        {
+            ++learned;
+        }
+        else
+        {
+            ++known;
+        }
+    }
+
+    WorldPacket data(SMSG_NEW_TAXI_PATH, 0);
+    chr->GetSession()->SendPacket(&data);
+    chr->SaveToDB();
+
+    PSendSysMessage("Taxi unlock: %s learned %u new %s taxi nodes (%u already known).",
+                    GetNameLink(chr).c_str(), learned, mode.c_str(), known);
+    if (needReportToTarget(chr))
+    {
+        ChatHandler(chr).PSendSysMessage("Your %s taxi routes have been permanently unlocked by %s.",
+                                         mode.c_str(), GetNameLink().c_str());
+    }
+
+    return true;
+}
+
+/**
+ * @brief Clears saved taxi flight state for an online or offline character.
+ *
+ * @param args Optional character name/link. Defaults to selected player or self.
+ * @returns True if the command executed successfully, false otherwise.
+ */
+bool ChatHandler::HandleTaxiClearCommand(char* args)
+{
+    Player* target = nullptr;
+    ObjectGuid targetGuid;
+    std::string targetName;
+
+    if (!ExtractPlayerTarget(&args, &target, &targetGuid, &targetName))
+    {
+        return false;
+    }
+
+    if (target && HasLowerSecurity(target))
+    {
+        return false;
+    }
+
+    uint32 lowGuid = target ? target->GetGUIDLow() : targetGuid.GetCounter();
+    if (!lowGuid)
+    {
+        SendSysMessage(LANG_PLAYER_NOT_FOUND);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (target)
+    {
+        target->m_taxi.ClearTaxiDestinations();
+        target->clearUnitState(UNIT_STAT_TAXI_FLIGHT);
+        target->GetMotionMaster()->MovementExpired();
+        target->SaveToDB();
+        targetName = GetNameLink(target);
+    }
+    else if (targetName.empty())
+    {
+        sObjectMgr.GetPlayerNameByGUID(targetGuid, targetName);
+    }
+
+    CharacterDatabase.PExecute("UPDATE `characters` SET `taxi_path`='', `transguid`='0', "
+                               "`trans_x`='0', `trans_y`='0', `trans_z`='0', `trans_o`='0' "
+                               "WHERE `guid`='%u'",
+                               lowGuid);
+
+    PSendSysMessage("Cleared saved taxi flight path for %s.",
+                    targetName.empty() ? "character" : targetName.c_str());
+    if (target && needReportToTarget(target))
+    {
+        ChatHandler(target).PSendSysMessage("Your saved taxi flight path was cleared by %s. Relog if movement still looks wrong.",
+                                            GetNameLink().c_str());
     }
 
     return true;

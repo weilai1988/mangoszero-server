@@ -25,7 +25,6 @@ namespace ai
             creators["lesser heal on party"] = &lesser_heal_on_party;
             creators["flash heal"] = &flash_heal;
             creators["flash heal on party"] = &flash_heal_on_party;
-            creators["circle of healing"] = &circle_of_healing;
             creators["psychic scream"] = &psychic_scream;
             creators["fade"] = &fade;
         }
@@ -156,13 +155,6 @@ namespace ai
                 /*A*/ NextAction::array(0, new NextAction("greater heal on party"), NULL),
                 /*C*/ NULL);
         }
-        static ActionNode* circle_of_healing(PlayerbotAI* ai)
-        {
-            return new ActionNode ("circle of healing",
-                /*P*/ NextAction::array(0, new NextAction("remove shadowform"), NULL),
-                /*A*/ NextAction::array(0, new NextAction("flash heal on party"), NULL),
-                /*C*/ NULL);
-        }
         static ActionNode* psychic_scream(PlayerbotAI* ai)
         {
             return new ActionNode ("psychic scream",
@@ -174,7 +166,7 @@ namespace ai
         {
             return new ActionNode ("fade",
                 /*P*/ NULL,
-                /*A*/ NextAction::array(0, new NextAction("flee"), NULL),
+                /*A*/ NULL,
                 /*C*/ NULL);
         }
     };

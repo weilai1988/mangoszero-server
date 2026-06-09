@@ -2,45 +2,34 @@
 
 namespace ai
 {
-    class CastFinishingMoveAction : public CastMeleeSpellAction
-    {
-    public:
-        CastFinishingMoveAction(PlayerbotAI* ai, string name) : CastMeleeSpellAction(ai, name) {}
+	class CastEviscerateAction : public CastMeleeSpellAction 
+	{ 
+	public: 
+		CastEviscerateAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "eviscerate") {} 
+	};
 
-        virtual bool isUseful()
-        {
-            return CastMeleeSpellAction::isUseful() && AI_VALUE2(uint8, "combo", "current target") >= 1;
-        }
-    };
+	class CastSliceAndDiceAction : public CastMeleeSpellAction 
+	{ 
+	public: 
+		CastSliceAndDiceAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "slice and dice") {} 
+	};
 
-    class CastEviscerateAction : public CastFinishingMoveAction
-    {
-    public:
-        CastEviscerateAction(PlayerbotAI* ai) : CastFinishingMoveAction(ai, "eviscerate") {}
-    };
+	class CastExposeArmorAction : public CastMeleeSpellAction 
+	{ 
+	public: 
+		CastExposeArmorAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "expose armor") {} 
+	};
 
-    class CastSliceAndDiceAction : public CastFinishingMoveAction
-    {
-    public:
-        CastSliceAndDiceAction(PlayerbotAI* ai) : CastFinishingMoveAction(ai, "slice and dice") {}
-    };
-
-    class CastExposeArmorAction : public CastFinishingMoveAction
-    {
-    public:
-        CastExposeArmorAction(PlayerbotAI* ai) : CastFinishingMoveAction(ai, "expose armor") {}
-    };
-
-    class CastRuptureAction : public CastFinishingMoveAction
-    {
-    public:
-        CastRuptureAction(PlayerbotAI* ai) : CastFinishingMoveAction(ai, "rupture") {}
-    };
-
-    class CastKidneyShotAction : public CastFinishingMoveAction
-    {
-    public:
-        CastKidneyShotAction(PlayerbotAI* ai) : CastFinishingMoveAction(ai, "kidney shot") {}
-    };
-
+	class CastRuptureAction : public CastMeleeSpellAction 
+	{ 
+	public: 
+		CastRuptureAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "rupture") {} 
+	};
+	
+	class CastKidneyShotAction : public CastMeleeSpellAction 
+	{ 
+	public: 
+		CastKidneyShotAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "kidney shot") {} 
+	};
+	
 }

@@ -968,6 +968,12 @@ class PlayerTaxi
             return m_TaxiDestinations.empty();
         }
 
+        // Check whether the active flight has no additional chained taxi leg.
+        bool IsLastDestination() const
+        {
+            return m_TaxiDestinations.size() <= 2;
+        }
+
         // Friend function to output taxi information
         friend std::ostringstream& operator<< (std::ostringstream& ss, PlayerTaxi const& taxi);
 
@@ -2853,6 +2859,9 @@ class Player : public Unit
         // Handle leaving a channel
         void LeftChannel(Channel* c);
 
+        typedef std::list<Channel*> JoinedChannelsList;
+        JoinedChannelsList const& GetJoinedChannels() const { return m_channels; }
+
         // Cleanup channels
         void CleanupChannels();
 
@@ -3888,7 +3897,6 @@ class Player : public Unit
 
         WorldSession* m_session; // Player session
 
-        typedef std::list<Channel*> JoinedChannelsList;
         JoinedChannelsList m_channels; // List of joined channels
 
         uint32 m_cinematic; // Cinematic ID

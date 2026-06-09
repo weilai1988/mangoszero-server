@@ -15,15 +15,13 @@ bool BankAction::Execute(Event event)
     for (list<ObjectGuid>::iterator i = npcs.begin(); i != npcs.end(); i++)
     {
         Unit* npc = ai->GetUnit(*i);
-        if (!npc || !bot->GetNPCIfCanInteractWith(npc->GetObjectGuid(), UNIT_NPC_FLAG_BANKER))
-        {
+        if (!npc || !npc->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_BANKER))
             continue;
-        }
 
         return Execute(text, npc);
     }
 
-    ai->TellMaster("Cannot find banker nearby");
+    ai->TellError("Cannot find banker nearby");
     return false;
 }
 
@@ -38,28 +36,24 @@ bool BankAction::Execute(string text, Unit* bank)
     bool result = false;
     if (text[0] == '-')
     {
-        ItemIds found = chat->parseItems(text);
-        for (ItemIds::iterator i = found.begin(); i != found.end(); i++)
+        list<Item*> found = parseItems(text.substr(1), ITERATE_ITEMS_IN_BANK);
+        for (list<Item*>::iterator i = found.begin(); i != found.end(); i++)
         {
-            uint32 itemId = *i;
-            result &= Withdraw(itemId);
+            Item* item = *i;
+            result &= Withdraw(item->GetProto()->ItemId);
         }
     }
     else
     {
-        list<Item*> found = parseItems(text);
+        list<Item*> found = parseItems(text, ITERATE_ITEMS_IN_BAGS);
         if (found.empty())
-        {
             return false;
-        }
 
         for (list<Item*>::iterator i = found.begin(); i != found.end(); i++)
         {
             Item* item = *i;
             if (!item)
-            {
                 continue;
-            }
 
             result &= Deposit(item);
         }
@@ -72,9 +66,7 @@ bool BankAction::Withdraw(const uint32 itemid)
 {
     Item* pItem = FindItemInBank(itemid);
     if (!pItem)
-    {
         return false;
-    }
 
     ItemPosCountVec dest;
     InventoryResult msg = bot->CanStoreItem(NULL_BAG, NULL_SLOT, dest, pItem, false);
@@ -110,7 +102,7 @@ bool BankAction::Deposit(Item* pItem)
 
     out << "put " << chat->formatItem(pItem->GetProto(), pItem->GetCount()) << " to bank";
     ai->TellMaster(out.str());
-    return true;
+	return true;
 }
 
 void BankAction::ListItems()
@@ -118,26 +110,27 @@ void BankAction::ListItems()
     ai->TellMaster("=== Bank ===");
 
     map<uint32, int> items;
-    for (uint8 bag = BANK_SLOT_BAG_START; bag < BANK_SLOT_BAG_END; ++bag)
-    {
-        const Bag* const pBag = static_cast<Bag *>(bot->GetItemByPos(INVENTORY_SLOT_BAG_0, bag));
-        if (pBag)
-        {
-            const ItemPrototype* const pBagProto = pBag->GetProto();
-            std::string bagName = pBagProto->Name1;
-
-            for (uint8 slot = 0; slot < pBag->GetBagSize(); ++slot)
+    map<uint32, bool> soulbound;
+    for (int i = BANK_SLOT_ITEM_START; i < BANK_SLOT_ITEM_END; ++i)
+        if (Item* pItem = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+            if (pItem)
             {
-                Item* const item = bot->GetItemByPos(bag, slot);
-                if (item)
-                {
-                    items[item->GetProto()->ItemId] = item->GetCount();
-                }
+                items[pItem->GetProto()->ItemId] += pItem->GetCount();
+                soulbound[pItem->GetProto()->ItemId] = pItem->IsSoulBound();
             }
-        }
-    }
 
-    TellItems(items);
+    for (int i = BANK_SLOT_BAG_START; i < BANK_SLOT_BAG_END; ++i)
+        if (Bag* pBag = (Bag*)bot->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+            if (pBag)
+                for (uint32 j = 0; j < pBag->GetBagSize(); ++j)
+                    if (Item* pItem = pBag->GetItemByPos(j))
+                        if (pItem)
+                        {
+                            items[pItem->GetProto()->ItemId] += pItem->GetCount();
+                            soulbound[pItem->GetProto()->ItemId] = pItem->IsSoulBound();
+                        }
+
+    TellItems(items, soulbound);
 }
 
 Item* BankAction::FindItemInBank(uint32 ItemId)
@@ -149,14 +142,10 @@ Item* BankAction::FindItemInBank(uint32 ItemId)
         {
             const ItemPrototype* const pItemProto = pItem->GetProto();
             if (!pItemProto)
-            {
                 continue;
-            }
 
             if (pItemProto->ItemId == ItemId)   // have required item
-            {
                 return pItem;
-            }
         }
     }
 
@@ -171,14 +160,10 @@ Item* BankAction::FindItemInBank(uint32 ItemId)
                 {
                     const ItemPrototype* const pItemProto = pItem->GetProto();
                     if (!pItemProto)
-                    {
                         continue;
-                    }
 
                     if (pItemProto->ItemId == ItemId)
-                    {
                         return pItem;
-                    }
                 }
             }
     }

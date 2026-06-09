@@ -6,7 +6,7 @@ using namespace ai;
 
 NextAction** FollowMasterStrategy::getDefaultActions()
 {
-    return NextAction::array(0, new NextAction("follow master", 1.0f), NULL);
+    return NextAction::array(0, new NextAction("follow", ACTION_MOVE + 2), NULL);
 }
 
 void FollowMasterStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
@@ -14,4 +14,8 @@ void FollowMasterStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
     triggers.push_back(new TriggerNode(
         "out of react range",
         NextAction::array(0, new NextAction("tell out of react range", 10.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "far from master",
+        NextAction::array(0, new NextAction("follow", ACTION_MOVE + 3), NULL)));
 }
