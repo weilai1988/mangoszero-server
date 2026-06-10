@@ -1649,7 +1649,7 @@ namespace
             return commands;
 
         commands.push_back("formation shield");
-        commands.push_back("nc +follow,-stay,-passive,-grind,-rpg,-runaway");
+        commands.push_back("nc +follow,-stay,-passive,-grind,-rpg,-runaway,+food");
         commands.push_back("grouprefresh");
 
         if (LowerPlayerbotCommandParam(bot->GetName()) == LowerPlayerbotCommandParam(tankName))
@@ -1800,7 +1800,7 @@ namespace
         if (!bot || !bot->GetPlayerbotAI())
             return commands;
 
-        commands.push_back("nc +follow,-stay,-passive,-grind,-rpg,-runaway,+loot,+threat");
+        commands.push_back("nc +follow,-stay,-passive,-grind,-rpg,-runaway,+food,+loot,+threat");
 
         if (bot->GetPlayerbotAI()->IsTank(bot))
         {

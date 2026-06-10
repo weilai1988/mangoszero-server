@@ -253,7 +253,7 @@ bool UseItemAction::UseItem(Item* item, ObjectGuid goGuid, Item* itemTarget)
         if (sServerFacade.IsInCombat(bot))
             return false;
 
-        bot->addUnitState(UNIT_STAND_STATE_SIT);
+        bot->SetStandState(UNIT_STAND_STATE_SIT);
         ai->InterruptSpell();
 
         float hp = bot->GetHealthPercent();
