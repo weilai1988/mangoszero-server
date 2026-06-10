@@ -46,6 +46,7 @@ The normal server update command should be:
 
 ```bash
 ssh wow-server 'sudo -n -u mangos git -C /home/mangos/mangos/zero/server-ike3-upgrade-test pull --ff-only origin playerbot-ike3-upgrade'
+ssh wow-server 'sudo -n -u mangos git -C /home/mangos/mangos/zero/server-ike3-upgrade-test submodule update --init --recursive'
 ```
 
 If the server checkout is dirty, stop and inspect the diff. Do not overwrite live
