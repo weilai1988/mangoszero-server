@@ -1,5 +1,6 @@
 #pragma once
 #include "../actions/GenericActions.h"
+#include "../actions/ChooseTargetActions.h"
 
 namespace ai
 {
@@ -13,6 +14,7 @@ namespace ai
     class CastCleaveAction : public CastMeleeSpellAction {
     public:
         CastCleaveAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "cleave") {}
+        virtual ActionThreatType getThreatType() { return ACTION_THREAT_AOE; }
     };
 
     // battle, berserker
@@ -48,6 +50,7 @@ namespace ai
     class CastTauntAction : public CastMeleeSpellAction {
     public:
         CastTauntAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "taunt") {}
+        virtual bool isUseful() { return CastSpellAction::isUseful() && !AI_VALUE2(bool, "has aggro", "current target"); }
     };
 
     // defensive
@@ -117,10 +120,14 @@ namespace ai
         CastDemoralizingShoutAction(PlayerbotAI* ai) : CastDebuffSpellAction(ai, "demoralizing shout") {
             range = ATTACK_DISTANCE;
         }
+        virtual ActionThreatType getThreatType() { return ACTION_THREAT_AOE; }
     };
 
-    BEGIN_MELEE_SPELL_ACTION(CastChallengingShoutAction, "challenging shout")
-    END_SPELL_ACTION()
+    class CastChallengingShoutAction : public CastMeleeSpellAction {
+    public:
+        CastChallengingShoutAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "challenging shout") {}
+        virtual ActionThreatType getThreatType() { return ACTION_THREAT_AOE; }
+    };
 
     // stuns
     BEGIN_MELEE_SPELL_ACTION(CastShieldBashAction, "shield bash")
@@ -129,8 +136,11 @@ namespace ai
     BEGIN_MELEE_SPELL_ACTION(CastIntimidatingShoutAction, "intimidating shout")
     END_SPELL_ACTION()
 
-    BEGIN_MELEE_SPELL_ACTION(CastThunderClapAction, "thunder clap")
-    END_SPELL_ACTION()
+    class CastThunderClapAction : public CastMeleeSpellAction {
+    public:
+        CastThunderClapAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "thunder clap") {}
+        virtual ActionThreatType getThreatType() { return ACTION_THREAT_AOE; }
+    };
 
     // buffs
 	class CastBattleShoutAction : public CastBuffSpellAction {
@@ -193,7 +203,25 @@ namespace ai
     class CastBattleShoutTauntAction : public CastMeleeSpellAction
     {
     public:
-	    CastBattleShoutTauntAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "battle shout") {}
-	    virtual bool isUseful() { return CastSpellAction::isUseful(); }
+        CastBattleShoutTauntAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "battle shout") {}
+        virtual bool isUseful() { return CastSpellAction::isUseful(); }
+        virtual ActionThreatType getThreatType() { return ACTION_THREAT_AOE; }
+    };
+
+    class WarriorTankThreatAction : public AttackAction
+    {
+    public:
+        WarriorTankThreatAction(PlayerbotAI* ai) : AttackAction(ai, "tank threat") {}
+        virtual string GetTargetName() { return "tank target"; }
+        virtual NextAction** getContinuers()
+        {
+            return NextAction::array(0,
+                new NextAction("taunt", ACTION_EMERGENCY + 6),
+                new NextAction("thunder clap", ACTION_HIGH + 7),
+                new NextAction("demoralizing shout", ACTION_HIGH + 6),
+                new NextAction("cleave", ACTION_HIGH + 5),
+                new NextAction("sunder armor", ACTION_HIGH + 4),
+                NULL);
+        }
     };
 }

@@ -135,6 +135,7 @@ namespace ai
                 creators["shield wall"] = &AiObjectContextInternal::shield_wall;
                 creators["battle shout"] = &AiObjectContextInternal::battle_shout;
                 creators["battle shout taunt"] = &AiObjectContextInternal::battle_shout_taunt;
+                creators["tank threat"] = &AiObjectContextInternal::tank_threat;
                 creators["thunder clap"] = &AiObjectContextInternal::thunder_clap;
                 creators["taunt"] = &AiObjectContextInternal::taunt;
                 creators["revenge"] = &AiObjectContextInternal::revenge;
@@ -184,6 +185,7 @@ namespace ai
             static Action* shield_wall(PlayerbotAI* ai) { return new CastShieldWallAction(ai); }
             static Action* battle_shout(PlayerbotAI* ai) { return new CastBattleShoutAction(ai); }
             static Action* battle_shout_taunt(PlayerbotAI* ai) { return new CastBattleShoutTauntAction(ai); }
+            static Action* tank_threat(PlayerbotAI* ai) { return new WarriorTankThreatAction(ai); }
             static Action* thunder_clap(PlayerbotAI* ai) { return new CastThunderClapAction(ai); }
             static Action* shield_bash_on_enemy_healer(PlayerbotAI* ai) { return new CastShieldBashOnEnemyHealerAction(ai); }
 

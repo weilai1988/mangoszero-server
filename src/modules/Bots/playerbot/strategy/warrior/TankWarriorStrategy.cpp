@@ -42,7 +42,7 @@ void TankWarriorStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
     triggers.push_back(new TriggerNode(
         "tank aoe",
         NextAction::array(0,
-            new NextAction("tank assist", ACTION_EMERGENCY + 8),
+            new NextAction("tank threat", ACTION_EMERGENCY + 8),
             new NextAction("charge", ACTION_EMERGENCY + 7),
             new NextAction("taunt", ACTION_EMERGENCY + 6),
             new NextAction("challenging shout", ACTION_EMERGENCY + 5),
