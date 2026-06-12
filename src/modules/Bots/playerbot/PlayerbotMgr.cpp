@@ -1593,6 +1593,26 @@ namespace
         return PLAYERBOT_SHOOT_PULL_STARTED;
     }
 
+    void StartPlayerbotTankMeleePull(Player* bot, Unit* target)
+    {
+        if (!bot || !target || !bot->GetPlayerbotAI())
+            return;
+
+        ObjectGuid targetGuid = target->GetObjectGuid();
+        bot->SetSelectionGuid(targetGuid);
+        bot->GetPlayerbotAI()->GetAiObjectContext()->GetValue<Unit*>("current target")->Set(target);
+        bot->GetPlayerbotAI()->GetAiObjectContext()->GetValue<ObjectGuid>("pull target")->Set(targetGuid);
+
+        if (!sServerFacade.IsInFront(bot, target, sPlayerbotAIConfig.sightDistance, CAST_ANGLE_IN_FRONT))
+            sServerFacade.SetFacingTo(bot, target);
+
+        bot->Attack(target, true);
+        bot->GetPlayerbotAI()->ChangeEngine(BOT_STATE_COMBAT);
+        bot->GetPlayerbotAI()->DoSpecificAction("reach melee");
+        bot->GetPlayerbotAI()->DoSpecificAction("tank assist");
+        bot->GetPlayerbotAI()->SetNextCheckDelay(sPlayerbotAIConfig.reactDelay);
+    }
+
     void UpdatePendingPlayerbotShootPulls(PlayerbotMgr* mgr)
     {
         if (!mgr)
@@ -1636,6 +1656,9 @@ namespace
                 ++i;
                 continue;
             }
+
+            if (result == PLAYERBOT_SHOOT_PULL_STARTED)
+                StartPlayerbotTankMeleePull(bot, target);
 
             map<uint64, ObjectGuid>::iterator erase = i++;
             pendingPlayerbotShootPullTargets.erase(erase);
@@ -2155,7 +2178,10 @@ namespace
                 if (pullResult == PLAYERBOT_SHOOT_PULL_PENDING)
                     pendingPlayerbotShootPullTargets[bot->GetObjectGuid().GetRawValue()] = selectedGuid;
                 else
+                {
                     pendingPlayerbotShootPullTargets.erase(bot->GetObjectGuid().GetRawValue());
+                    StartPlayerbotTankMeleePull(bot, target);
+                }
             }
 
             return true;
@@ -2943,7 +2969,32 @@ list<string> PlayerbotHolder::HandlePlayerbotCommand(char const* args, Player* m
     if (routePrepCommand)
         messages.push_back("Group prep: stack together and refresh available buffs.");
 
-    for (set<string>::iterator i = bots.begin(); i != bots.end(); ++i)
+    vector<string> routedBots;
+    if (routePullCommand)
+    {
+        string normalizedTankName = LowerPlayerbotCommandParam(pullTankName);
+        for (set<string>::iterator i = bots.begin(); i != bots.end(); ++i)
+        {
+            if (LowerPlayerbotCommandParam(*i) == normalizedTankName)
+            {
+                routedBots.push_back(*i);
+                break;
+            }
+        }
+
+        for (set<string>::iterator i = bots.begin(); i != bots.end(); ++i)
+        {
+            if (LowerPlayerbotCommandParam(*i) != normalizedTankName)
+                routedBots.push_back(*i);
+        }
+    }
+    else
+    {
+        for (set<string>::iterator i = bots.begin(); i != bots.end(); ++i)
+            routedBots.push_back(*i);
+    }
+
+    for (vector<string>::iterator i = routedBots.begin(); i != routedBots.end(); ++i)
     {
         string bot = *i;
         ostringstream out;
