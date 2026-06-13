@@ -1,10 +1,44 @@
 #include "botpch.h"
 #include "../../playerbot.h"
 #include "ChatShortcutActions.h"
+#include "NonCombatActions.h"
+#include "StayActions.h"
 #include "../../PlayerbotAIConfig.h"
 #include "../values/PositionValue.h"
 
 using namespace ai;
+
+static void PrepareRest(PlayerbotAI* ai)
+{
+    Event emptyEvent;
+    StayAction stay(ai);
+    stay.Execute(emptyEvent);
+    SitAction sit(ai);
+    sit.Execute(emptyEvent);
+}
+
+static bool TryDrink(PlayerbotAI* ai)
+{
+    Player* bot = ai->GetBot();
+    if (!bot || bot->GetPowerType() != POWER_MANA || !bot->GetMaxPower(POWER_MANA) ||
+        bot->GetPower(POWER_MANA) >= bot->GetMaxPower(POWER_MANA))
+        return false;
+
+    Event emptyEvent;
+    DrinkAction drink(ai);
+    return drink.Execute(emptyEvent);
+}
+
+static bool TryEat(PlayerbotAI* ai)
+{
+    Player* bot = ai->GetBot();
+    if (!bot || bot->GetHealth() >= bot->GetMaxHealth())
+        return false;
+
+    Event emptyEvent;
+    EatAction eat(ai);
+    return eat.Execute(emptyEvent);
+}
 
 void ReturnPositionResetAction::ResetReturnPosition()
 {
@@ -55,6 +89,49 @@ bool StayChatShortcutAction::Execute(Event event)
 
     ai->TellMaster("Staying");
     return true;
+}
+
+bool RestChatShortcutAction::Execute(Event event)
+{
+    Player* master = GetMaster();
+    if (!master)
+        return false;
+
+    ai->Reset();
+    ai->ChangeStrategy("+stay,+food,+sit,-buff,-grind,-rpg,-runaway,-passive", BOT_STATE_NON_COMBAT);
+
+    SetReturnPosition(bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ());
+
+    PrepareRest(ai);
+    TryDrink(ai);
+    TryEat(ai);
+
+    ai->TellMaster("Resting");
+    return true;
+}
+
+bool DrinkChatShortcutAction::Execute(Event event)
+{
+    Player* master = GetMaster();
+    if (!master)
+        return false;
+
+    ai->ChangeStrategy("+stay,+food,+sit,-buff,-grind,-rpg,-runaway,-passive", BOT_STATE_NON_COMBAT);
+
+    PrepareRest(ai);
+    return TryDrink(ai);
+}
+
+bool EatChatShortcutAction::Execute(Event event)
+{
+    Player* master = GetMaster();
+    if (!master)
+        return false;
+
+    ai->ChangeStrategy("+stay,+food,+sit,-buff,-grind,-rpg,-runaway,-passive", BOT_STATE_NON_COMBAT);
+
+    PrepareRest(ai);
+    return TryEat(ai);
 }
 
 bool FleeChatShortcutAction::Execute(Event event)

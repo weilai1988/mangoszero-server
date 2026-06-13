@@ -58,6 +58,10 @@ namespace ai
             creators["bank"] = &ChatTriggerContext::bank;
             creators["follow"] = &ChatTriggerContext::follow;
             creators["stay"] = &ChatTriggerContext::stay;
+            creators["rest"] = &ChatTriggerContext::rest;
+            creators["drink"] = &ChatTriggerContext::drink;
+            creators["eat"] = &ChatTriggerContext::eat;
+            creators["food"] = &ChatTriggerContext::food;
             creators["flee"] = &ChatTriggerContext::flee;
             creators["grind"] = &ChatTriggerContext::grind;
             creators["tank attack"] = &ChatTriggerContext::tank_attack;
@@ -125,6 +129,10 @@ namespace ai
         static Trigger* flee(PlayerbotAI* ai) { return new ChatCommandTrigger(ai, "flee"); }
         static Trigger* grind(PlayerbotAI* ai) { return new ChatCommandTrigger(ai, "grind"); }
         static Trigger* tank_attack(PlayerbotAI* ai) { return new ChatCommandTrigger(ai, "tank attack"); }
+        static Trigger* food(PlayerbotAI* ai) { return new ChatCommandTrigger(ai, "food"); }
+        static Trigger* eat(PlayerbotAI* ai) { return new ChatCommandTrigger(ai, "eat"); }
+        static Trigger* drink(PlayerbotAI* ai) { return new ChatCommandTrigger(ai, "drink"); }
+        static Trigger* rest(PlayerbotAI* ai) { return new ChatCommandTrigger(ai, "rest"); }
         static Trigger* stay(PlayerbotAI* ai) { return new ChatCommandTrigger(ai, "stay"); }
         static Trigger* follow(PlayerbotAI* ai) { return new ChatCommandTrigger(ai, "follow"); }
         static Trigger* gb(PlayerbotAI* ai) { return new ChatCommandTrigger(ai, "gb"); }

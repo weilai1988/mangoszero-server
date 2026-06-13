@@ -117,6 +117,30 @@ void ChatCommandHandlerStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
         NextAction::array(0, new NextAction("stay chat shortcut", relevance), NULL)));
 
     triggers.push_back(new TriggerNode(
+        "rest",
+        NextAction::array(0,
+            new NextAction("rest chat shortcut", relevance),
+            NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "drink",
+        NextAction::array(0,
+            new NextAction("drink chat shortcut", relevance),
+            NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "eat",
+        NextAction::array(0,
+            new NextAction("eat chat shortcut", relevance),
+            NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "food",
+        NextAction::array(0,
+            new NextAction("food chat shortcut", relevance),
+            NULL)));
+
+    triggers.push_back(new TriggerNode(
         "flee",
         NextAction::array(0, new NextAction("flee chat shortcut", relevance), NULL)));
 
@@ -203,6 +227,10 @@ ChatCommandHandlerStrategy::ChatCommandHandlerStrategy(PlayerbotAI* ai) : PassTr
     supported.push_back("emote");
     supported.push_back("buff");
     supported.push_back("grouprefresh");
+    supported.push_back("rest");
+    supported.push_back("drink");
+    supported.push_back("eat");
+    supported.push_back("food");
     supported.push_back("help");
     supported.push_back("gb");
     supported.push_back("bank");

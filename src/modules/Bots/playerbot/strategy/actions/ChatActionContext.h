@@ -119,6 +119,10 @@ namespace ai
             creators["bank"] = &ChatActionContext::bank;
             creators["follow chat shortcut"] = &ChatActionContext::follow_chat_shortcut;
             creators["stay chat shortcut"] = &ChatActionContext::stay_chat_shortcut;
+            creators["rest chat shortcut"] = &ChatActionContext::rest_chat_shortcut;
+            creators["drink chat shortcut"] = &ChatActionContext::drink_chat_shortcut;
+            creators["eat chat shortcut"] = &ChatActionContext::eat_chat_shortcut;
+            creators["food chat shortcut"] = &ChatActionContext::food_chat_shortcut;
             creators["flee chat shortcut"] = &ChatActionContext::flee_chat_shortcut;
             creators["runaway chat shortcut"] = &ChatActionContext::runaway_chat_shortcut;
             creators["grind chat shortcut"] = &ChatActionContext::grind_chat_shortcut;
@@ -184,6 +188,10 @@ namespace ai
         static Action* grind_chat_shortcut(PlayerbotAI* ai) { return new GrindChatShortcutAction(ai); }
         static Action* flee_chat_shortcut(PlayerbotAI* ai) { return new FleeChatShortcutAction(ai); }
         static Action* runaway_chat_shortcut(PlayerbotAI* ai) { return new GoawayChatShortcutAction(ai); }
+        static Action* rest_chat_shortcut(PlayerbotAI* ai) { return new RestChatShortcutAction(ai); }
+        static Action* drink_chat_shortcut(PlayerbotAI* ai) { return new DrinkChatShortcutAction(ai); }
+        static Action* eat_chat_shortcut(PlayerbotAI* ai) { return new EatChatShortcutAction(ai); }
+        static Action* food_chat_shortcut(PlayerbotAI* ai) { return new EatChatShortcutAction(ai, "food chat shortcut"); }
         static Action* stay_chat_shortcut(PlayerbotAI* ai) { return new StayChatShortcutAction(ai); }
         static Action* follow_chat_shortcut(PlayerbotAI* ai) { return new FollowChatShortcutAction(ai); }
         static Action* gb(PlayerbotAI* ai) { return new GuildBankAction(ai); }

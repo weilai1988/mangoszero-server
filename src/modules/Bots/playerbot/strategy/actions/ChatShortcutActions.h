@@ -27,6 +27,27 @@ namespace ai
         virtual bool Execute(Event event);
     };
 
+    class RestChatShortcutAction : public ReturnPositionResetAction
+    {
+    public:
+        RestChatShortcutAction(PlayerbotAI* ai) : ReturnPositionResetAction(ai, "rest chat shortcut") {}
+        virtual bool Execute(Event event);
+    };
+
+    class DrinkChatShortcutAction : public Action
+    {
+    public:
+        DrinkChatShortcutAction(PlayerbotAI* ai) : Action(ai, "drink chat shortcut") {}
+        virtual bool Execute(Event event);
+    };
+
+    class EatChatShortcutAction : public Action
+    {
+    public:
+        EatChatShortcutAction(PlayerbotAI* ai, string name = "eat chat shortcut") : Action(ai, name) {}
+        virtual bool Execute(Event event);
+    };
+
     class FleeChatShortcutAction : public ReturnPositionResetAction
     {
     public:
