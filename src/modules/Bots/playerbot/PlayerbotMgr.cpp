@@ -1523,7 +1523,7 @@ namespace
             target->GetNearPoint(bot, x, y, z, bot->GetObjectBoundingRadius(), desiredDistance, angle);
             bot->UpdateAllowedPositionZ(x, y, z);
 
-            if (!bot->IsWithinLOS(x, y, z))
+            if (!target->IsWithinLOS(x, y, z))
                 continue;
 
             bot->GetMotionMaster()->MovePoint(target->GetMapId(), x, y, z, true);
@@ -1580,6 +1580,15 @@ namespace
             bot->GetPlayerbotAI()->DoSpecificAction("attack my target");
             if (reason) *reason = "target too close for shoot; attacking";
             return PLAYERBOT_SHOOT_PULL_STARTED;
+        }
+
+        if (!bot->IsWithinLOSInMap(target))
+        {
+            if (!MovePlayerbotShootPullIntoRange(bot, target, shootRange, reason))
+                return PLAYERBOT_SHOOT_PULL_FAILED;
+
+            if (reason) *reason = "moving to line up shoot pull";
+            return PLAYERBOT_SHOOT_PULL_PENDING;
         }
 
         PreparePlayerbotShootPullCast(bot, target);
