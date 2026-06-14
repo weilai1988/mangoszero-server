@@ -1681,8 +1681,7 @@ namespace
             return commands;
 
         commands.push_back("formation shield");
-        commands.push_back("nc +follow,-stay,-passive,-grind,-rpg,-runaway,+food");
-        commands.push_back("grouprefresh");
+        commands.push_back("nc +follow,-stay,-passive,-grind,-rpg,-runaway,+food,-buff");
 
         if (LowerPlayerbotCommandParam(bot->GetName()) == LowerPlayerbotCommandParam(tankName))
         {
@@ -2034,7 +2033,7 @@ namespace
         return true;
     }
 
-    bool TryCastPlayerbotPartyBuff(Player* master, Player* bot, const string& spell)
+    bool TryCastPlayerbotPartyBuff(Player* master, Player* bot, const string& spell, const string& equivalentAura = "")
     {
         if (!bot || !bot->GetPlayerbotAI() || bot->IsInCombat())
             return false;
@@ -2071,7 +2070,8 @@ namespace
         for (vector<Player*>::iterator i = targets.begin(); i != targets.end(); ++i)
         {
             Player* target = *i;
-            if (!target || !target->IsAlive() || ai->HasAura(spell, target, true))
+            if (!target || !target->IsAlive() || ai->HasAura(spell, target, true) ||
+                    (!equivalentAura.empty() && ai->HasAura(equivalentAura, target)))
                 continue;
 
             if (ai->CanCastSpell(spell, target) && ai->CastSpell(spell, target))
@@ -2089,8 +2089,8 @@ namespace
         switch (bot->getClass())
         {
         case CLASS_PRIEST:
-            return TryCastPlayerbotPartyBuff(master, bot, "power word: fortitude") ||
-                TryCastPlayerbotPartyBuff(master, bot, "divine spirit");
+            return TryCastPlayerbotPartyBuff(master, bot, "power word: fortitude", "prayer of fortitude") ||
+                TryCastPlayerbotPartyBuff(master, bot, "divine spirit", "prayer of spirit");
         case CLASS_DRUID:
             return TryCastPlayerbotPartyBuff(master, bot, "mark of the wild");
         case CLASS_MAGE:
