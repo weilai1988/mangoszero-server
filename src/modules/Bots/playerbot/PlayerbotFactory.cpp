@@ -16,11 +16,117 @@
 #ifdef ENABLE_IMMERSIVE
 #include "immersive.h"
 #endif
+#include <cctype>
 
 using namespace ai;
 using namespace std;
 
 #define PLAYER_SKILL_INDEX(x)       (PLAYER_SKILL_INFO_1_1 + ((x)*3))
+
+namespace
+{
+    string TrimTalentText(string text)
+    {
+        size_t start = text.find_first_not_of(" \t\r\n");
+        if (start == string::npos)
+            return "";
+
+        size_t end = text.find_last_not_of(" \t\r\n");
+        return text.substr(start, end - start + 1);
+    }
+
+    string NormalizeTalentRole(string role)
+    {
+        role = TrimTalentText(role);
+        for (string::iterator i = role.begin(); i != role.end(); ++i)
+            *i = char(tolower((unsigned char)*i));
+
+        if (role == "healer" || role == "healing")
+            return "heal";
+        if (role == "damage" || role == "dd")
+            return "dps";
+        if (role == "protection")
+            return "tank";
+
+        return role;
+    }
+
+    int GetRoleTalentSpec(uint8 cls, string const& role)
+    {
+        if (role == "auto")
+            return -2;
+
+        if (role == "tank")
+        {
+            switch (cls)
+            {
+                case CLASS_WARRIOR: return 2;
+                case CLASS_PALADIN: return 1;
+                case CLASS_DRUID: return 1;
+                default: return -1;
+            }
+        }
+
+        if (role == "heal")
+        {
+            switch (cls)
+            {
+                case CLASS_PRIEST: return 1;
+                case CLASS_PALADIN: return 0;
+                case CLASS_SHAMAN: return 2;
+                case CLASS_DRUID: return 2;
+                default: return -1;
+            }
+        }
+
+        if (role == "dps")
+        {
+            switch (cls)
+            {
+                case CLASS_WARRIOR: return 1;
+                case CLASS_PALADIN: return 2;
+                case CLASS_HUNTER: return 1;
+                case CLASS_ROGUE: return 1;
+                case CLASS_PRIEST: return 2;
+                case CLASS_SHAMAN: return 1;
+                case CLASS_MAGE: return 2;
+                case CLASS_WARLOCK: return 0;
+                case CLASS_DRUID: return 1;
+                default: return -1;
+            }
+        }
+
+        return -1;
+    }
+
+    string GetTalentSpecName(uint8 cls, uint32 specNo)
+    {
+        switch (cls)
+        {
+            case CLASS_WARRIOR:
+                return specNo == 0 ? "Arms" : (specNo == 1 ? "Fury" : "Protection");
+            case CLASS_PALADIN:
+                return specNo == 0 ? "Holy" : (specNo == 1 ? "Protection" : "Retribution");
+            case CLASS_HUNTER:
+                return specNo == 0 ? "Beast Mastery" : (specNo == 1 ? "Marksmanship" : "Survival");
+            case CLASS_ROGUE:
+                return specNo == 0 ? "Assassination" : (specNo == 1 ? "Combat" : "Subtlety");
+            case CLASS_PRIEST:
+                return specNo == 0 ? "Discipline" : (specNo == 1 ? "Holy" : "Shadow");
+            case CLASS_SHAMAN:
+                return specNo == 0 ? "Elemental" : (specNo == 1 ? "Enhancement" : "Restoration");
+            case CLASS_MAGE:
+                return specNo == 0 ? "Arcane" : (specNo == 1 ? "Fire" : "Frost");
+            case CLASS_WARLOCK:
+                return specNo == 0 ? "Affliction" : (specNo == 1 ? "Demonology" : "Destruction");
+            case CLASS_DRUID:
+                return specNo == 0 ? "Balance" : (specNo == 1 ? "Feral" : "Restoration");
+            default:
+                return "";
+        }
+    }
+
+}
 
 uint32 PlayerbotFactory::tradeSkills[] =
 {
@@ -230,6 +336,61 @@ void PlayerbotFactory::TrainForLevel()
     InitTalents();
 }
 
+void PlayerbotFactory::TrainAvailableSpells()
+{
+    bot->SetLevel(level);
+    bot->InitTalentForLevel();
+    InitAvailableSpells();
+    InitSpecialSpells();
+    InitSkills();
+    bot->SaveToDB();
+}
+
+bool PlayerbotFactory::ApplyRoleTalents(string const& role, string& appliedRole, string& appliedSpec)
+{
+    appliedRole = NormalizeTalentRole(role);
+    if (appliedRole.empty())
+        appliedRole = "auto";
+
+    int specNo = GetRoleTalentSpec(bot->getClass(), appliedRole);
+    if (specNo == -1)
+        return false;
+
+    bot->SetLevel(level);
+    bot->resetTalents(true);
+    bot->InitTalentForLevel();
+
+    uint32 primarySpec = 0;
+    if (specNo == -2)
+    {
+        sRandomPlayerbotMgr.SetValue(bot, "specNo", 0);
+        InitTalents();
+
+        uint32 selectedSpec = sRandomPlayerbotMgr.GetValue(bot, "specNo");
+        primarySpec = selectedSpec ? selectedSpec - 1 : 0;
+    }
+    else
+    {
+        primarySpec = (uint32)specNo;
+        sRandomPlayerbotMgr.SetValue(bot, "specNo", primarySpec + 1);
+        InitTalents(primarySpec);
+
+        for (uint32 fallbackSpec = 0; fallbackSpec < 3 && bot->GetFreeTalentPoints(); ++fallbackSpec)
+        {
+            if (fallbackSpec != primarySpec)
+                InitTalents(fallbackSpec);
+        }
+    }
+
+    InitAvailableSpells();
+    InitSpecialSpells();
+    InitSkills();
+    bot->SaveToDB();
+
+    appliedSpec = GetTalentSpecName(bot->getClass(), primarySpec);
+    return true;
+}
+
 void PlayerbotFactory::GearOnly(string const& role)
 {
     sLog.outDetail("Preparing gear-only randomize...");
@@ -415,7 +576,7 @@ void PlayerbotFactory::InitTalents()
         uint32 p1 = sPlayerbotAIConfig.specProbability[cls][0];
         uint32 p2 = p1 + sPlayerbotAIConfig.specProbability[cls][1];
 
-        uint32 specNo = (point < p1 ? 0 : (point < p2 ? 1 : 2));
+        specNo = (point < p1 ? 0 : (point < p2 ? 1 : 2));
         sRandomPlayerbotMgr.SetValue(bot, "specNo", specNo + 1);
     }
 

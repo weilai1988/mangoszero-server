@@ -21,6 +21,8 @@ public:
     void Randomize(bool incremental);
     void GearOnly(string const& role = "");
     void TrainForLevel();
+    void TrainAvailableSpells();
+    bool ApplyRoleTalents(string const& role, string& appliedRole, string& appliedSpec);
 
 private:
     void Prepare();

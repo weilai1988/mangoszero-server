@@ -55,11 +55,21 @@ protected:
 
         Group* group = bot->GetGroup();
         bool sameGroup = group && group->IsMember(victimPlayer->GetObjectGuid());
-        if (sameGroup && !ai->IsTank(victimPlayer))
-            return 4;
+        if (sameGroup)
+        {
+            Player* master = ai->GetMaster();
+            if (ai->IsHeal(victimPlayer))
+                return 6;
 
-        if (sameGroup && victimPlayer != bot)
-            return 3;
+            if (master && victimPlayer == master)
+                return 5;
+
+            if (!ai->IsTank(victimPlayer))
+                return 4;
+
+            if (victimPlayer != bot)
+                return 3;
+        }
 
         return ai->IsTank(victimPlayer) ? 1 : 2;
     }
