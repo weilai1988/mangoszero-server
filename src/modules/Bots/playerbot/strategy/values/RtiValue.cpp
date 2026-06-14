@@ -10,6 +10,6 @@ RtiValue::RtiValue(PlayerbotAI* ai)
 }
 
 RtiCcValue::RtiCcValue(PlayerbotAI* ai)
-    : ManualSetValue<string>(ai, "moon")
+    : ManualSetValue<string>(ai, "triangle")
 {
 }

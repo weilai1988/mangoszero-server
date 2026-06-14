@@ -4,10 +4,10 @@
 
 using namespace ai;
 
-class FindLeastHpTargetStrategy : public FindTargetStrategy
+class FindLeastHpTargetStrategy : public FindNonCcTargetStrategy
 {
 public:
-    FindLeastHpTargetStrategy(PlayerbotAI* ai) : FindTargetStrategy(ai)
+    FindLeastHpTargetStrategy(PlayerbotAI* ai) : FindNonCcTargetStrategy(ai)
     {
         minHealth = 0;
     }
@@ -15,13 +15,9 @@ public:
 public:
     virtual void CheckAttacker(Unit* attacker, ThreatManager* threatManager)
     {
-        Group* group = ai->GetBot()->GetGroup();
-        if (group)
-        {
-            uint64 guid = group->GetTargetIcon(4);
-            if (guid && attacker->GetObjectGuid() == ObjectGuid(guid))
-                return;
-        }
+        if (IsCcTarget(attacker))
+            return;
+
         if (!result || result->GetHealth() > attacker->GetHealth())
             result = attacker;
     }
@@ -39,10 +35,10 @@ Unit* DpsTargetValue::Calculate()
     return TargetValue::FindTarget(&strategy);
 }
 
-class FindMaxHpTargetStrategy : public FindTargetStrategy
+class FindMaxHpTargetStrategy : public FindNonCcTargetStrategy
 {
 public:
-    FindMaxHpTargetStrategy(PlayerbotAI* ai) : FindTargetStrategy(ai)
+    FindMaxHpTargetStrategy(PlayerbotAI* ai) : FindNonCcTargetStrategy(ai)
     {
         maxHealth = 0;
     }
@@ -50,13 +46,9 @@ public:
 public:
     virtual void CheckAttacker(Unit* attacker, ThreatManager* threatManager)
     {
-        Group* group = ai->GetBot()->GetGroup();
-        if (group)
-        {
-            uint64 guid = group->GetTargetIcon(4);
-            if (guid && attacker->GetObjectGuid() == ObjectGuid(guid))
-                return;
-        }
+        if (IsCcTarget(attacker))
+            return;
+
         if (!result || result->GetHealth() < attacker->GetHealth())
             result = attacker;
     }
