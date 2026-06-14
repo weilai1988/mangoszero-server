@@ -2,6 +2,7 @@
 #include "../../PlayerbotAIConfig.h"
 #include "../../ServerFacade.h"
 #include "../Value.h"
+#include "AttackersValue.h"
 #include "Group.h"
 #include "TargetValue.h"
 
@@ -72,16 +73,37 @@ namespace ai
             if (!guid)
                 return NULL;
 
-            list<ObjectGuid> attackers = context->GetValue<list<ObjectGuid> >("attackers")->Get();
-            if (find(attackers.begin(), attackers.end(), guid) == attackers.end()) return NULL;
-
             Unit* unit = ai->GetUnit(ObjectGuid(guid));
             if (!unit || sServerFacade.UnitIsDead(unit) ||
                     !sServerFacade.IsWithinLOSInMap(bot, unit) ||
-                    sServerFacade.IsDistanceGreaterThan(sServerFacade.GetDistance2d(bot, unit), sPlayerbotAIConfig.sightDistance))
+                    sServerFacade.IsDistanceGreaterThan(sServerFacade.GetDistance2d(bot, unit), sPlayerbotAIConfig.sightDistance) ||
+                    !AttackersValue::IsPossibleTarget(unit, bot))
                 return NULL;
 
-            return unit;
+            list<ObjectGuid> attackers = context->GetValue<list<ObjectGuid> >("attackers")->Get();
+            if (find(attackers.begin(), attackers.end(), guid) != attackers.end())
+                return unit;
+
+            if (IsMasterEngagingMarkedTarget(unit))
+                return unit;
+
+            return NULL;
+        }
+
+        bool IsMasterEngagingMarkedTarget(Unit* unit)
+        {
+            Player* master = ai->GetMaster();
+            if (!master || !unit || !master->IsAlive() || !master->IsInCombat())
+                return false;
+
+            ObjectGuid guid = unit->GetObjectGuid();
+            if (master->GetSelectionGuid() == guid)
+                return true;
+
+            if (master->GetTargetGuid() == guid)
+                return true;
+
+            return master->getVictim() == unit;
         }
 
         string type;

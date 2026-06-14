@@ -96,5 +96,9 @@ protected:
 Unit* TankTargetValue::Calculate()
 {
     FindTargetForTankStrategy strategy(ai);
-    return FindTarget(&strategy);
+    Unit* target = FindTarget(&strategy);
+    if (target)
+        return target;
+
+    return ai->GetAiObjectContext()->GetValue<Unit*>("rti target")->Get();
 }
