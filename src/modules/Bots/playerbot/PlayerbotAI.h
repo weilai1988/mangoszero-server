@@ -180,6 +180,7 @@ public:
     BotDecision SelectBrainDecision();
     string FormatBrainState();
     string FormatBrainDebug();
+    string FormatBrainMonitor();
     ChatHelper* GetChatHelper() { return &chatHelper; }
     bool IsOpposing(Player* player);
     static bool IsOpposing(uint8 race1, uint8 race2);

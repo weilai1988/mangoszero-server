@@ -1015,6 +1015,94 @@ string PlayerbotAI::FormatBrainDebug()
     return out.str();
 }
 
+string PlayerbotAI::FormatBrainMonitor()
+{
+    if (!bot || !aiObjectContext)
+        return "Monitor no-ai-context";
+
+    BotBrainContext brainContext = BuildBrainContext();
+    ostringstream out;
+    out << "Monitor " << bot->GetName()
+        << " role=" << BotBrainRoleName(brainContext.role)
+        << " hp=" << uint32(brainContext.healthPercent) << "%";
+
+    if (brainContext.manaPercent >= 0.0f)
+        out << " mana=" << uint32(brainContext.manaPercent) << "%";
+
+    list<ObjectGuid> attackers = aiObjectContext->GetValue<list<ObjectGuid> >("attackers")->Get();
+    Unit* tankTarget = aiObjectContext->GetValue<Unit*>("tank target")->Get();
+    Unit* currentTarget = aiObjectContext->GetValue<Unit*>("current target")->Get();
+    bool hasTankTargetAggro = tankTarget ? aiObjectContext->GetValue<bool>("has aggro", "tank target")->Get() : false;
+
+    uint32 aliveAttackers = 0;
+    uint32 healerAttackers = 0;
+    uint32 partyAttackers = 0;
+    uint32 onMeAttackers = 0;
+    Unit* rescueTarget = NULL;
+    Unit* rescueVictim = NULL;
+
+    for (list<ObjectGuid>::iterator i = attackers.begin(); i != attackers.end(); ++i)
+    {
+        Unit* attacker = GetUnit(*i);
+        if (!attacker || sServerFacade.UnitIsDead(attacker))
+            continue;
+
+        ++aliveAttackers;
+        ThreatManager& threatManager = sServerFacade.GetThreatManager(attacker);
+        HostileReference* ref = threatManager.getCurrentVictim();
+        Unit* victim = ref ? ref->getTarget() : NULL;
+        if (!victim && attacker->GetTargetGuid())
+            victim = GetUnit(attacker->GetTargetGuid());
+
+        if (victim == bot)
+        {
+            ++onMeAttackers;
+            continue;
+        }
+
+        Player* victimPlayer = dynamic_cast<Player*>(victim);
+        if (!victimPlayer)
+            continue;
+
+        if (IsHeal(victimPlayer))
+        {
+            ++healerAttackers;
+            if (!rescueTarget || attacker == tankTarget)
+            {
+                rescueTarget = attacker;
+                rescueVictim = victim;
+            }
+        }
+        else if (!IsTank(victimPlayer))
+        {
+            ++partyAttackers;
+        }
+    }
+
+    out << " target=" << (currentTarget ? currentTarget->GetName() : "none")
+        << " tankTarget=" << (tankTarget ? tankTarget->GetName() : "none")
+        << " aggro=" << (hasTankTargetAggro ? "yes" : "no")
+        << " attackers=" << aliveAttackers
+        << " onHealer=" << healerAttackers
+        << " onParty=" << partyAttackers
+        << " onMe=" << onMeAttackers;
+
+    if (tankTarget)
+    {
+        out << " dist=" << uint32(sServerFacade.GetDistance2d(bot, tankTarget))
+            << " los=" << (bot->IsWithinLOSInMap(tankTarget) ? "yes" : "no");
+    }
+
+    if (rescueTarget)
+        out << " rescue=" << rescueTarget->GetName()
+            << "->" << (rescueVictim ? rescueVictim->GetName() : "unknown");
+
+    if (tankTarget && currentTarget != tankTarget)
+        out << " switch=pending";
+
+    return out.str();
+}
+
 
 
 namespace MaNGOS
