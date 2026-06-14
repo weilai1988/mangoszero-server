@@ -44,7 +44,7 @@ WorldLocation MoveAheadFormation::GetLocation()
     float y = loc.coord_y;
     float z = loc.coord_z;
 
-    if (sServerFacade.isMoving(master)) {
+    if (ShouldLeadMovingMaster() && sServerFacade.isMoving(master)) {
         float ori = master->GetOrientation();
         float x1 = x + sPlayerbotAIConfig.tooCloseDistance * cos(ori);
         float y1 = y + sPlayerbotAIConfig.tooCloseDistance * sin(ori);
@@ -91,14 +91,37 @@ namespace ai
     {
     public:
         NearFormation(PlayerbotAI* ai) : MoveAheadFormation(ai, "near") {}
+        virtual bool ShouldLeadMovingMaster() { return false; }
         virtual WorldLocation GetLocationInternal()
         {
             Player* master = GetMaster();
             if (!master)
                 return WorldLocation();
 
-            float range = sPlayerbotAIConfig.followDistance;
-            float angle = GetFollowAngle();
+            float range = max(sPlayerbotAIConfig.followDistance * 1.6f, sPlayerbotAIConfig.followDistance + 2.0f);
+            float angle = master->GetOrientation() + M_PI;
+
+            Group* group = bot->GetGroup();
+            if (group && group->GetMembersCount() > 2)
+            {
+                int index = 0, count = 0;
+                for (GroupReference *ref = group->GetFirstMember(); ref; ref = ref->next())
+                {
+                    Player* member = ref->getSource();
+                    if (!member || member == master)
+                        continue;
+
+                    if (member == bot)
+                        index = count;
+                    count++;
+                }
+
+                if (count > 1)
+                {
+                    float step = M_PI / (count + 1);
+                    angle += (index + 1) * step - M_PI / 2;
+                }
+            }
             float x = master->GetPositionX() + cos(angle) * range;
             float y = master->GetPositionY() + sin(angle) * range;
             float z = master->GetPositionZ();

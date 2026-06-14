@@ -10,8 +10,12 @@ namespace ai
     class CastAutoShotAction : public CastSpellAction
     {
     public:
-        CastAutoShotAction(PlayerbotAI* ai) : CastSpellAction(ai, "auto shot") {}
+        CastAutoShotAction(PlayerbotAI* ai) : CastSpellAction(ai, "auto shot") { range = ai->GetRange("shoot"); }
         virtual bool isUseful();
+        virtual NextAction** getPrerequisites()
+        {
+            return NextAction::merge(NextAction::array(0, new NextAction("reach shoot"), NULL), Action::getPrerequisites());
+        }
     };
 
     BEGIN_RANGED_SPELL_ACTION(CastArcaneShotAction, "arcane shot")

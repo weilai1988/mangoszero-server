@@ -49,6 +49,7 @@ namespace ai
             creators["attack my target"] = &ActionContext::attack_my_target;
             creators["melee"] = &ActionContext::melee;
             creators["reach spell"] = &ActionContext::ReachSpell;
+            creators["reach shoot"] = &ActionContext::ReachShoot;
             creators["reach melee"] = &ActionContext::ReachMelee;
             creators["reach party member to heal"] = &ActionContext::reach_party_member_to_heal;
             creators["flee"] = &ActionContext::flee;
@@ -137,6 +138,7 @@ namespace ai
         static Action* shoot(PlayerbotAI* ai) { return new CastShootAction(ai); }
         static Action* melee(PlayerbotAI* ai) { return new MeleeAction(ai); }
         static Action* ReachSpell(PlayerbotAI* ai) { return new ReachSpellAction(ai); }
+        static Action* ReachShoot(PlayerbotAI* ai) { return new ReachShootAction(ai); }
         static Action* ReachMelee(PlayerbotAI* ai) { return new ReachMeleeAction(ai); }
         static Action* reach_party_member_to_heal(PlayerbotAI* ai) { return new ReachPartyMemberToHealAction(ai); }
         static Action* flee(PlayerbotAI* ai) { return new FleeAction(ai); }

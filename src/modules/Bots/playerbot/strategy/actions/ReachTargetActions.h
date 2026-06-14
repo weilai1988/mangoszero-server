@@ -48,13 +48,19 @@ namespace ai
     };
 
     class ReachSpellAction : public ReachTargetAction
-	{
+    {
     public:
         ReachSpellAction(PlayerbotAI* ai) : ReachTargetAction(ai, "reach spell", ai->GetRange("spell")) {}
     };
 
+    class ReachShootAction : public ReachTargetAction
+    {
+    public:
+        ReachShootAction(PlayerbotAI* ai) : ReachTargetAction(ai, "reach shoot", ai->GetRange("shoot")) {}
+    };
+
     class ReachPartyMemberToHealAction : public ReachTargetAction
-	{
+    {
     public:
         ReachPartyMemberToHealAction(PlayerbotAI* ai) : ReachTargetAction(ai, "reach party member to heal", ai->GetRange("heal")) {}
         virtual string GetTargetName() { return "party member to heal"; }

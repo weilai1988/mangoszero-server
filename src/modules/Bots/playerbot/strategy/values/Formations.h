@@ -43,6 +43,7 @@ namespace ai
         MoveAheadFormation(PlayerbotAI* ai, string name) : MoveFormation(ai, name) {}
         virtual WorldLocation GetLocation();
         virtual WorldLocation GetLocationInternal() { return NullLocation; }
+        virtual bool ShouldLeadMovingMaster() { return true; }
     };
 
     class FormationValue : public ManualSetValue<Formation*>

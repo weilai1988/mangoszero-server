@@ -159,7 +159,7 @@ bool TankAoeTrigger::IsActive()
         return false;
 
     Unit* currentTarget = AI_VALUE(Unit*, "current target");
-    return !currentTarget || currentTarget != tankTarget;
+    return !currentTarget || currentTarget != tankTarget || !AI_VALUE2(bool, "has aggro", "tank target");
 }
 
 bool IsBehindTargetTrigger::IsActive()

@@ -73,13 +73,19 @@ namespace ai
     };
 
     class EnemyOutOfSpellRangeTrigger : public OutOfRangeTrigger
-	{
+    {
     public:
         EnemyOutOfSpellRangeTrigger(PlayerbotAI* ai) : OutOfRangeTrigger(ai, "enemy out of spell range", ai->GetRange("spell")) {}
     };
 
+    class EnemyOutOfShootRangeTrigger : public OutOfRangeTrigger
+    {
+    public:
+        EnemyOutOfShootRangeTrigger(PlayerbotAI* ai) : OutOfRangeTrigger(ai, "enemy out of shoot range", ai->GetRange("shoot")) {}
+    };
+
     class PartyMemberToHealOutOfSpellRangeTrigger : public OutOfRangeTrigger
-	{
+    {
     public:
         PartyMemberToHealOutOfSpellRangeTrigger(PlayerbotAI* ai) : OutOfRangeTrigger(ai, "party member to heal out of spell range", ai->GetRange("heal")) {}
         virtual string GetTargetName() { return "party member to heal"; }

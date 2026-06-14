@@ -236,7 +236,11 @@ namespace ai
     class CastShootAction : public CastSpellAction
     {
     public:
-        CastShootAction(PlayerbotAI* ai) : CastSpellAction(ai, "shoot") {}
+        CastShootAction(PlayerbotAI* ai) : CastSpellAction(ai, "shoot") { range = ai->GetRange("shoot"); }
+        virtual NextAction** getPrerequisites()
+        {
+            return NextAction::merge(NextAction::array(0, new NextAction("reach shoot"), NULL), Action::getPrerequisites());
+        }
         virtual ActionThreatType getThreatType() { return ACTION_THREAT_NONE; }
     };
 
