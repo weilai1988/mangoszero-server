@@ -51,6 +51,7 @@ void TankPaladinStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
         NextAction::array(0,
             new NextAction("tank assist", ACTION_EMERGENCY + 8),
             new NextAction("hand of reckoning", ACTION_EMERGENCY + 6),
+            new NextAction("reach melee", ACTION_EMERGENCY + 5),
             new NextAction("avenger's shield", ACTION_HIGH + 8),
             new NextAction("judgement of justice", ACTION_HIGH + 7),
             new NextAction("consecration", ACTION_HIGH + 6),

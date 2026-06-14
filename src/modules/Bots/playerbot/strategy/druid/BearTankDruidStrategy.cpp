@@ -159,6 +159,7 @@ void BearTankDruidStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
             new NextAction("tank assist", ACTION_EMERGENCY + 8),
             new NextAction("feral charge - bear", ACTION_EMERGENCY + 7),
             new NextAction("growl", ACTION_EMERGENCY + 6),
+            new NextAction("reach melee", ACTION_EMERGENCY + 5),
             new NextAction("demoralizing roar", ACTION_HIGH + 7),
             new NextAction("swipe (bear)", ACTION_HIGH + 6),
             NULL)));

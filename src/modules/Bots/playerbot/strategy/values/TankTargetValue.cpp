@@ -3,6 +3,8 @@
 #include "TankTargetValue.h"
 
 #include "AttackersValue.h"
+#include "../../ServerFacade.h"
+#include <cmath>
 using namespace ai;
 
 class FindTargetForTankStrategy : public FindNonCcTargetStrategy
@@ -12,6 +14,7 @@ public:
     {
         minThreat = 0;
         bestPriority = -1;
+        bestVictimDistance = 0.0f;
     }
 
 public:
@@ -20,32 +23,42 @@ public:
         Player* bot = ai->GetBot();
         if (IsCcTarget(creature)) return;
 
-        int priority = GetLooseMobPriority(creature, threatManager);
+        Unit* victim = GetLooseMobVictim(creature, threatManager);
+        int priority = GetLooseMobPriority(victim);
         float threat = threatManager->getThreat(bot);
-        if (!result || priority > bestPriority || (priority == bestPriority && (minThreat - threat) > 0.1f))
+        float victimDistance = victim ? sServerFacade.GetDistance2d(creature, victim) : sServerFacade.GetDistance2d(bot, creature);
+        bool lowerThreat = priority == bestPriority && (minThreat - threat) > 0.1f;
+        bool closerToVictim = priority == bestPriority && fabs(minThreat - threat) <= 0.1f &&
+            (!bestVictimDistance || victimDistance + 0.5f < bestVictimDistance);
+
+        if (!result || priority > bestPriority || lowerThreat || closerToVictim)
         {
             bestPriority = priority;
             minThreat = threat;
+            bestVictimDistance = victimDistance;
             result = creature;
         }
     }
 
 protected:
-    int GetLooseMobPriority(Unit* creature, ThreatManager* threatManager)
+    Unit* GetLooseMobVictim(Unit* creature, ThreatManager* threatManager)
     {
-        Player* bot = ai->GetBot();
-        Unit* victim = NULL;
-
         HostileReference* ref = threatManager->getCurrentVictim();
         if (ref)
-            victim = ref->getTarget();
+            return ref->getTarget();
 
-        if (!victim && creature->GetTargetGuid())
-            victim = ai->GetUnit(creature->GetTargetGuid());
+        if (creature->GetTargetGuid())
+            return ai->GetUnit(creature->GetTargetGuid());
 
+        return NULL;
+    }
+
+    int GetLooseMobPriority(Unit* victim)
+    {
         if (!victim)
             return 0;
 
+        Player* bot = ai->GetBot();
         if (victim == bot)
             return 1;
 
@@ -76,6 +89,7 @@ protected:
 
     float minThreat;
     int bestPriority;
+    float bestVictimDistance;
 };
 
 

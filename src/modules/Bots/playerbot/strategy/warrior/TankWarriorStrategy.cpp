@@ -46,6 +46,7 @@ void TankWarriorStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
             new NextAction("charge", ACTION_EMERGENCY + 7),
             new NextAction("taunt", ACTION_EMERGENCY + 6),
             new NextAction("challenging shout", ACTION_EMERGENCY + 5),
+            new NextAction("reach melee", ACTION_EMERGENCY + 4),
             new NextAction("thunder clap", ACTION_HIGH + 4),
             NULL)));
 
