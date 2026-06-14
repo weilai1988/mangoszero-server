@@ -944,6 +944,77 @@ string PlayerbotAI::FormatBrainState()
     return out.str();
 }
 
+string PlayerbotAI::FormatBrainDebug()
+{
+    ostringstream out;
+    out << FormatBrainState();
+
+    if (!bot || !aiObjectContext)
+    {
+        out << " | debug=no-ai-context";
+        return out.str();
+    }
+
+    list<ObjectGuid> attackers = aiObjectContext->GetValue<list<ObjectGuid> >("attackers")->Get();
+    Unit* tankTarget = aiObjectContext->GetValue<Unit*>("tank target")->Get();
+    Unit* currentTarget = aiObjectContext->GetValue<Unit*>("current target")->Get();
+
+    out << " | attackers=" << attackers.size();
+
+    uint32 aliveAttackers = 0;
+    uint32 shownAttackers = 0;
+    for (list<ObjectGuid>::iterator i = attackers.begin(); i != attackers.end(); ++i)
+    {
+        Unit* attacker = GetUnit(*i);
+        if (!attacker || sServerFacade.UnitIsDead(attacker))
+            continue;
+
+        ++aliveAttackers;
+        if (shownAttackers >= 6)
+            continue;
+
+        ThreatManager& threatManager = sServerFacade.GetThreatManager(attacker);
+        HostileReference* ref = threatManager.getCurrentVictim();
+        Unit* victim = ref ? ref->getTarget() : NULL;
+        if (!victim && attacker->GetTargetGuid())
+            victim = GetUnit(attacker->GetTargetGuid());
+
+        Player* victimPlayer = dynamic_cast<Player*>(victim);
+        float botThreat = threatManager.getThreat(bot);
+        float victimThreat = victim ? threatManager.getThreat(victim) : 0.0f;
+
+        ++shownAttackers;
+        out << " | #" << shownAttackers
+            << " " << attacker->GetName()
+            << "->" << (victim ? victim->GetName() : "none")
+            << " hp=" << uint32(attacker->GetHealthPercent()) << "%"
+            << " dist=" << uint32(sServerFacade.GetDistance2d(bot, attacker))
+            << " botTh=" << uint32(botThreat)
+            << " vicTh=" << uint32(victimThreat);
+
+        if (attacker == tankTarget)
+            out << " tankTarget";
+        if (attacker == currentTarget)
+            out << " current";
+        if (victim == bot)
+            out << " onMe";
+        else if (victimPlayer && IsHeal(victimPlayer))
+            out << " onHealer";
+        else if (victimPlayer && IsTank(victimPlayer))
+            out << " onTank";
+        else if (victimPlayer)
+            out << " onParty";
+    }
+
+    out << " aliveAttackers=" << aliveAttackers;
+    if (aliveAttackers > shownAttackers)
+        out << " moreAlive=" << (aliveAttackers - shownAttackers);
+    if (!shownAttackers)
+        out << " | no live attackers in cache";
+
+    return out.str();
+}
+
 
 
 namespace MaNGOS

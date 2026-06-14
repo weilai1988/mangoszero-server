@@ -2498,7 +2498,7 @@ bool PlayerbotMgr::HandlePlayerbotMgrCommand(ChatHandler* handler, char const* a
 list<string> PlayerbotHolder::HandlePlayerbotCommand(char const* args, Player* master)
 {
     list<string> messages;
-    const string usage = "usage: list [prefix], pool [class|role|prefix], create NAME class [race] [role] [quality], account list [prefix], account chars ACCOUNT, account quick ACCOUNT NAME class [gender] [role], account create ACCOUNT PASSWORD, account character ACCOUNT NAME class [race] [gender] [role] [quality], account level CHARACTER LEVEL [quality], account gear CHARACTER [quality] [level], add random [class|role], control random [class|role], party PLAYERNAME|random [class|role], prep [PLAYERNAME|*], brain prep|assist|status|stop|mark MARKER|pull TANK [MARKER], or add/init/remove/cmd/role PLAYERNAME|* [COMMAND|heal|dps|tank], pull TANKNAME [TARGETNAME], or boss PRESET";
+    const string usage = "usage: list [prefix], pool [class|role|prefix], create NAME class [race] [role] [quality], account list [prefix], account chars ACCOUNT, account quick ACCOUNT NAME class [gender] [role], account create ACCOUNT PASSWORD, account character ACCOUNT NAME class [race] [gender] [role] [quality], account level CHARACTER LEVEL [quality], account gear CHARACTER [quality] [level], add random [class|role], control random [class|role], party PLAYERNAME|random [class|role], prep [PLAYERNAME|*], brain prep|assist|status|debug|stop|mark MARKER|pull TANK [MARKER] [shoot|charge], or add/init/remove/cmd/role PLAYERNAME|* [COMMAND|heal|dps|tank], pull TANKNAME [TARGETNAME], or boss PRESET";
 
     string cmdStr, charnameStr, paramStr;
     SplitPlayerbotCommand(args ? args : "", cmdStr, charnameStr, paramStr);
@@ -2655,6 +2655,7 @@ list<string> PlayerbotHolder::HandlePlayerbotCommand(char const* args, Player* m
     bool routeBrainAssistCommand = false;
     bool routeBrainStopCommand = false;
     bool routeBrainStatusCommand = false;
+    bool routeBrainDebugCommand = false;
     bool routeBrainPrepCommand = false;
     bool routeBrainPullCommand = false;
     string brainPullTankName;
@@ -2667,7 +2668,7 @@ list<string> PlayerbotHolder::HandlePlayerbotCommand(char const* args, Player* m
         brainParam = TrimPlayerbotCommandParam(paramStr);
         if (brainAction.empty() || brainAction == "help" || brainAction == "?")
         {
-            messages.push_back("usage: brain prep|assist|status|stop|mark MARKER|pull TANK [MARKER] [shoot|charge]");
+            messages.push_back("usage: brain prep|assist|status|debug|stop|mark MARKER|pull TANK [MARKER] [shoot|charge]");
             return messages;
         }
 
@@ -2690,6 +2691,11 @@ list<string> PlayerbotHolder::HandlePlayerbotCommand(char const* args, Player* m
         else if (brainAction == "status" || brainAction == "think")
         {
             routeBrainStatusCommand = true;
+            charnameStr = brainParam.empty() ? "*" : brainParam;
+        }
+        else if (brainAction == "debug")
+        {
+            routeBrainDebugCommand = true;
             charnameStr = brainParam.empty() ? "*" : brainParam;
         }
         else if (brainAction == "mark")
@@ -2736,7 +2742,7 @@ list<string> PlayerbotHolder::HandlePlayerbotCommand(char const* args, Player* m
         }
         else
         {
-            messages.push_back("usage: brain prep|assist|status|stop|mark MARKER|pull TANK [MARKER] [shoot|charge]");
+            messages.push_back("usage: brain prep|assist|status|debug|stop|mark MARKER|pull TANK [MARKER] [shoot|charge]");
             return messages;
         }
     }
@@ -2867,7 +2873,7 @@ list<string> PlayerbotHolder::HandlePlayerbotCommand(char const* args, Player* m
     }
 
     bool routeChatCommand = !IsPlayerbotManagementCommand(cmdStr) && !routePullCommand && !routePrepCommand &&
-        !routeBrainAssistCommand && !routeBrainStopCommand && !routeBrainStatusCommand;
+        !routeBrainAssistCommand && !routeBrainStopCommand && !routeBrainStatusCommand && !routeBrainDebugCommand;
 
     set<string> bots;
     if (charnameStr == "*" && master)
@@ -2975,6 +2981,9 @@ list<string> PlayerbotHolder::HandlePlayerbotCommand(char const* args, Player* m
     if (routeBrainStatusCommand)
         messages.push_back("Brain status: shared party state from controlled bots.");
 
+    if (routeBrainDebugCommand)
+        messages.push_back("Brain debug: attacker, victim, and threat state from controlled bots.");
+
     if (routePrepCommand)
         messages.push_back("Group prep: stack together and refresh available buffs.");
 
@@ -3045,6 +3054,18 @@ list<string> PlayerbotHolder::HandlePlayerbotCommand(char const* args, Player* m
                 if (AttachOnlinePlayerBotToMaster(master, onlineBot, &reason))
                 {
                     onlineBot->GetPlayerbotAI()->TellMaster(onlineBot->GetPlayerbotAI()->FormatBrainState());
+                    out << "ok";
+                }
+                else
+                {
+                    out << reason;
+                }
+            }
+            else if (routeBrainDebugCommand)
+            {
+                if (AttachOnlinePlayerBotToMaster(master, onlineBot, &reason))
+                {
+                    onlineBot->GetPlayerbotAI()->TellMaster(onlineBot->GetPlayerbotAI()->FormatBrainDebug());
                     out << "ok";
                 }
                 else
