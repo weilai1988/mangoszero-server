@@ -34,6 +34,12 @@ namespace ai
     public:
         TankAssistAction(PlayerbotAI* ai) : AttackAction(ai, "tank assist") {}
         virtual string GetTargetName() { return "tank target"; }
+        virtual bool isUseful()
+        {
+            Unit* target = GetTarget();
+            Unit* currentTarget = AI_VALUE(Unit*, "current target");
+            return target && currentTarget != target;
+        }
     };
 
     class AttackAnythingAction : public AttackAction

@@ -36,7 +36,10 @@ bool FeedPetAction::Execute(Event event)
 
 bool CastAutoShotAction::isUseful()
 {
-    return CastSpellAction::isUseful() && AI_VALUE(uint32, "active spell") != AI_VALUE2(uint32, "spell id", getName());
+    Unit* target = GetTarget();
+    return target &&
+        AI_VALUE2(float, "distance", GetTargetName()) <= ai->GetRange("shoot") &&
+        AI_VALUE(uint32, "active spell") != AI_VALUE2(uint32, "spell id", getName());
 }
 
 Value<Unit*>* CastScareBeastCcAction::GetTargetValue()
