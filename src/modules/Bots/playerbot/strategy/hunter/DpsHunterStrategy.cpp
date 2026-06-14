@@ -63,7 +63,14 @@ DpsHunterStrategy::DpsHunterStrategy(PlayerbotAI* ai) : GenericHunterStrategy(ai
 
 NextAction** DpsHunterStrategy::getDefaultActions()
 {
-    return NextAction::array(0, new NextAction("explosive shot", 11.0f), new NextAction("auto shot", 10.0f), NULL);
+    return NextAction::array(0,
+        new NextAction("explosive shot", 11.0f),
+        new NextAction("aimed shot", 10.8f),
+        new NextAction("multi-shot", 10.6f),
+        new NextAction("arcane shot", 10.4f),
+        new NextAction("serpent sting", 10.2f),
+        new NextAction("auto shot", 10.0f),
+        NULL);
 }
 
 void DpsHunterStrategy::InitTriggers(std::list<TriggerNode*> &triggers)

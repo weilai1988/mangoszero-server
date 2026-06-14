@@ -3,6 +3,7 @@
 #include "GenericTriggers.h"
 #include "../../LootObjectStack.h"
 #include "../../PlayerbotAIConfig.h"
+#include "../../ServerFacade.h"
 
 using namespace ai;
 
@@ -159,7 +160,35 @@ bool TankAoeTrigger::IsActive()
         return false;
 
     Unit* currentTarget = AI_VALUE(Unit*, "current target");
-    return !currentTarget || currentTarget != tankTarget || !AI_VALUE2(bool, "has aggro", "tank target");
+    if (!currentTarget || currentTarget != tankTarget || !AI_VALUE2(bool, "has aggro", "tank target"))
+        return true;
+
+    if (AI_VALUE(uint8, "attacker count") < 2)
+        return false;
+
+    Group* group = bot->GetGroup();
+    if (!group)
+        return false;
+
+    ThreatManager& threatManager = sServerFacade.GetThreatManager(tankTarget);
+    float botThreat = threatManager.getThreat(bot);
+    if (botThreat <= 0.0f)
+        return true;
+
+    float maxNonTankThreat = 0.0f;
+    Group::MemberSlotList const& groupSlot = group->GetMemberSlots();
+    for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); ++itr)
+    {
+        Player* member = sObjectMgr.GetPlayer(itr->guid);
+        if (!member || member == bot || !sServerFacade.IsAlive(member) || ai->IsTank(member))
+            continue;
+
+        float threat = threatManager.getThreat(member);
+        if (maxNonTankThreat < threat)
+            maxNonTankThreat = threat;
+    }
+
+    return maxNonTankThreat > 0.0f && botThreat < maxNonTankThreat * 1.5f;
 }
 
 bool IsBehindTargetTrigger::IsActive()
