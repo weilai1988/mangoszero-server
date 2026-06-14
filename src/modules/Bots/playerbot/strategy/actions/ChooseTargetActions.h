@@ -34,11 +34,33 @@ namespace ai
     public:
         TankAssistAction(PlayerbotAI* ai) : AttackAction(ai, "tank assist") {}
         virtual string GetTargetName() { return "tank target"; }
+        virtual bool Execute(Event event)
+        {
+            Unit* target = GetTarget();
+            if (!target)
+                return false;
+
+            Unit* currentTarget = AI_VALUE(Unit*, "current target");
+            if (currentTarget != target)
+            {
+                bot->SetSelectionGuid(target->GetObjectGuid());
+                context->GetValue<Unit*>("old target")->Set(currentTarget);
+                context->GetValue<Unit*>("current target")->Set(target);
+            }
+
+            bool attacked = Attack(target);
+            bool moved = false;
+            if (!attacked)
+                moved = MoveTo(target, sPlayerbotAIConfig.meleeDistance);
+
+            ai->SetNextCheckDelay(sPlayerbotAIConfig.reactDelay);
+            return attacked || moved || currentTarget != target;
+        }
         virtual bool isUseful()
         {
             Unit* target = GetTarget();
             Unit* currentTarget = AI_VALUE(Unit*, "current target");
-            return target && currentTarget != target;
+            return target && (currentTarget != target || !AI_VALUE2(bool, "has aggro", "tank target"));
         }
     };
 

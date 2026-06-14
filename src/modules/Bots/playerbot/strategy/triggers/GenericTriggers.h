@@ -431,15 +431,15 @@ namespace ai
         time_t lastCheck;
     };
 
-	class TankAoeTrigger : public NoAttackersTrigger
-	{
-	public:
-		TankAoeTrigger(PlayerbotAI* ai) : NoAttackersTrigger(ai) {}
+    class TankAoeTrigger : public NoAttackersTrigger
+    {
+    public:
+        TankAoeTrigger(PlayerbotAI* ai) : NoAttackersTrigger(ai) { checkInterval = 0; }
 
-	public:
-		virtual bool IsActive();
+    public:
+        virtual bool IsActive();
 
-	};
+    };
 
     class IsBehindTargetTrigger : public Trigger
     {
