@@ -49,9 +49,16 @@ namespace ai
             }
 
             bool attacked = Attack(target);
+            if (sServerFacade.IsWithinLOSInMap(bot, target))
+                sServerFacade.SetFacingTo(bot, target, true);
+
             bool moved = false;
             if (!attacked)
+            {
                 moved = MoveTo(target, sPlayerbotAIConfig.meleeDistance);
+                if (moved && sServerFacade.IsWithinLOSInMap(bot, target))
+                    sServerFacade.SetFacingTo(bot, target, true);
+            }
 
             ai->SetNextCheckDelay(sPlayerbotAIConfig.reactDelay);
             return attacked || moved || currentTarget != target;

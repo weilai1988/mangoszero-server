@@ -169,13 +169,13 @@ namespace
         string role = LowerPlayerbotCommandParam(TrimPlayerbotCommandParam(param));
 
         if (role == "1" || role == "heal" || role == "healer")
-            return "co +heal,+cure,-conserve mana,-dps,-tank,-bear";
+            return "co +heal,+cure,+conserve mana,-dps,-tank,-bear";
 
         if (role == "2" || role == "dps" || role == "damage")
             return "co +dps,+dps assist,+threat,-heal,-tank,-bear";
 
         if (role == "3" || role == "tank")
-            return "co +tank,+tank assist,+tank aoe,+bthreat,+threat,-heal,-dps";
+            return "co +tank,+tank assist,+tank aoe,+bthreat,+threat,-heal,-dps,-follow,-stay,-flee,-ranged,-runaway,-passive";
 
         return "";
     }
@@ -1274,13 +1274,13 @@ namespace
         if (bot->GetPlayerbotAI()->IsHeal(bot))
         {
             if (PlayerbotCanCure(bot))
-                commands.push_back("co +heal,+cure,-conserve mana,-dps,-tank,-bear");
+                commands.push_back("co +heal,+cure,+conserve mana,-dps,-tank,-bear");
             else
-                commands.push_back("co +heal,-conserve mana,-dps,-tank,-bear");
+                commands.push_back("co +heal,+conserve mana,-dps,-tank,-bear");
         }
         else if (bot->GetPlayerbotAI()->IsTank(bot))
         {
-            commands.push_back("co +tank,+tank assist,+tank aoe,+bthreat,+threat,-heal,-dps");
+            commands.push_back("co +tank,+tank assist,+tank aoe,+bthreat,+threat,-heal,-dps,-follow,-stay,-flee,-ranged,-runaway,-passive");
         }
         else
         {
@@ -1689,7 +1689,7 @@ namespace
         {
             commands.push_back("directpullattack " + NormalizePlayerbotPullOpener(opener));
             commands.push_back("nc +tank assist,+tank aoe");
-            commands.push_back("co +tank,+tank assist,+tank aoe,+bthreat,+threat,-heal,-dps");
+            commands.push_back("co +tank,+tank assist,+tank aoe,+bthreat,+threat,-heal,-dps,-follow,-stay,-flee,-ranged,-runaway,-passive");
             if (NormalizePlayerbotPullOpener(opener) == "charge")
             {
                 commands.push_back("tank attack");
@@ -1699,9 +1699,9 @@ namespace
         else if (bot->GetPlayerbotAI()->IsHeal(bot))
         {
             if (PlayerbotCanCure(bot))
-                commands.push_back("co +heal,+cure,-conserve mana,-dps,-tank,-bear");
+                commands.push_back("co +heal,+cure,+conserve mana,-dps,-tank,-bear");
             else
-                commands.push_back("co +heal,-conserve mana,-dps,-tank,-bear");
+                commands.push_back("co +heal,+conserve mana,-dps,-tank,-bear");
         }
         else
         {
@@ -1847,14 +1847,14 @@ namespace
 
         if (bot->GetPlayerbotAI()->IsTank(bot))
         {
-            commands.push_back("co +tank,+tank assist,+tank aoe,+bthreat,+threat,-heal,-dps,-passive");
+            commands.push_back("co +tank,+tank assist,+tank aoe,+bthreat,+threat,-heal,-dps,-follow,-stay,-flee,-ranged,-runaway,-passive");
         }
         else if (bot->GetPlayerbotAI()->IsHeal(bot))
         {
             if (PlayerbotCanCure(bot))
-                commands.push_back("co +heal,+cure,+follow,-stay,-flee,-ranged,-runaway,-conserve mana,-dps,-tank,-bear,-passive");
+                commands.push_back("co +heal,+cure,+follow,-stay,-flee,-ranged,-runaway,+conserve mana,-dps,-tank,-bear,-passive");
             else
-                commands.push_back("co +heal,+follow,-stay,-flee,-ranged,-runaway,-conserve mana,-dps,-tank,-bear,-passive");
+                commands.push_back("co +heal,+follow,-stay,-flee,-ranged,-runaway,+conserve mana,-dps,-tank,-bear,-passive");
         }
         else
         {
