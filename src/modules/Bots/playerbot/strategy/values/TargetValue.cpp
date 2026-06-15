@@ -8,6 +8,54 @@
 
 using namespace ai;
 
+namespace
+{
+    bool IsHardControlled(Unit* attacker)
+    {
+        return !attacker ||
+            attacker->IsPolymorphed() ||
+            attacker->HasAuraType(SPELL_AURA_MOD_CONFUSE) ||
+            attacker->HasAuraType(SPELL_AURA_MOD_FEAR) ||
+            attacker->HasAuraType(SPELL_AURA_MOD_STUN) ||
+            attacker->HasAuraType(SPELL_AURA_MOD_PACIFY) ||
+            attacker->HasAuraType(SPELL_AURA_MOD_PACIFY_SILENCE) ||
+            sServerFacade.IsFeared(attacker) ||
+            sServerFacade.IsCharmed(attacker);
+    }
+
+    Unit* GetCurrentVictim(PlayerbotAI* ai, Unit* attacker)
+    {
+        if (!attacker)
+            return NULL;
+
+        ThreatManager& threatManager = sServerFacade.GetThreatManager(attacker);
+        HostileReference* ref = threatManager.getCurrentVictim();
+        if (ref)
+            return ref->getTarget();
+
+        ObjectGuid targetGuid = attacker->GetTargetGuid();
+        return targetGuid && ai ? ai->GetUnit(targetGuid) : NULL;
+    }
+
+    bool IsActiveThreatToParty(PlayerbotAI* ai, Unit* attacker)
+    {
+        if (!ai || IsHardControlled(attacker))
+            return false;
+
+        Player* bot = ai->GetBot();
+        Group* group = bot ? bot->GetGroup() : NULL;
+        if (!group)
+            return false;
+
+        Unit* victim = GetCurrentVictim(ai, attacker);
+        if (!victim || !sServerFacade.IsAlive(victim))
+            return false;
+
+        Player* victimPlayer = dynamic_cast<Player*>(victim);
+        return victimPlayer && group->IsMember(victimPlayer->GetObjectGuid());
+    }
+}
+
 Unit* TargetValue::FindTarget(FindTargetStrategy* strategy)
 {
     list<ObjectGuid> attackers = ai->GetAiObjectContext()->GetValue<list<ObjectGuid> >("attackers")->Get();
@@ -27,6 +75,9 @@ Unit* TargetValue::FindTarget(FindTargetStrategy* strategy)
 
 bool FindNonCcTargetStrategy::IsCcTarget(Unit* attacker)
 {
+    if (IsActiveThreatToParty(ai, attacker))
+        return false;
+
     Group* group = ai->GetBot()->GetGroup();
     if (group)
     {
