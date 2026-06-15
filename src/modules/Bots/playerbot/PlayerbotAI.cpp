@@ -802,7 +802,7 @@ BotBrainContext PlayerbotAI::BuildBrainContext()
             }
         }
 
-        uint8 mainMarkers[] = { 7, 6, 5, 4 };
+        uint8 mainMarkers[] = { 7, 6, 5, 3 };
         for (uint32 i = 0; i < sizeof(mainMarkers) / sizeof(mainMarkers[0]); ++i)
         {
             Unit* markerTarget = GetBotBrainMarkerUnit(bot, group, mainMarkers[i]);
@@ -814,7 +814,7 @@ BotBrainContext PlayerbotAI::BuildBrainContext()
             }
         }
 
-        uint8 ccMarkers[] = { 3, 2, 1, 0 };
+        uint8 ccMarkers[] = { 4, 2, 1, 0 };
         for (uint32 i = 0; i < sizeof(ccMarkers) / sizeof(ccMarkers[0]); ++i)
         {
             Unit* markerTarget = GetBotBrainMarkerUnit(bot, group, ccMarkers[i]);

@@ -38,7 +38,7 @@ namespace ai
             string rti = AI_VALUE(string, type);
             if (type == "rti" && IsOrderedKillRti(rti))
             {
-                const char* killOrder[] = { "skull", "cross", "square", "moon" };
+                const char* killOrder[] = { "skull", "cross", "square", "triangle" };
                 for (uint32 i = 0; i < sizeof(killOrder) / sizeof(killOrder[0]); ++i)
                 {
                     Unit* unit = GetMarkedTarget(group, GetRtiIndex(killOrder[i]));
@@ -61,7 +61,7 @@ namespace ai
         bool IsOrderedKillRti(string rti)
         {
             return rti.empty() || rti == "kill" || rti == "order" ||
-                rti == "skull" || rti == "cross" || rti == "square" || rti == "moon";
+                rti == "skull" || rti == "cross" || rti == "square" || rti == "triangle";
         }
 
         Unit* GetMarkedTarget(Group* group, int index)

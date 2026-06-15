@@ -1269,7 +1269,7 @@ namespace
     {
         commands.push_back("nc +follow,-grind,-rpg,-runaway,-stay");
         commands.push_back("rti skull");
-        commands.push_back("rti cc triangle");
+        commands.push_back("rti cc moon");
 
         if (bot->GetPlayerbotAI()->IsHeal(bot))
         {
@@ -1835,7 +1835,7 @@ namespace
 
         commands.push_back("nc +follow,-stay,-passive,-grind,-rpg,-runaway,+food,+loot,+threat");
         commands.push_back("rti skull");
-        commands.push_back("rti cc triangle");
+        commands.push_back("rti cc moon");
 
         if (bot->GetPlayerbotAI()->IsTank(bot))
         {
