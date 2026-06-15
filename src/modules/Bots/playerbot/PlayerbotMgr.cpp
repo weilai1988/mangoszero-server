@@ -1624,6 +1624,32 @@ namespace
         bot->GetPlayerbotAI()->SetNextCheckDelay(sPlayerbotAIConfig.reactDelay);
     }
 
+    bool TryPlayerbotChargePull(Player* bot, Unit* target, string* reason)
+    {
+        if (!bot || !target || !bot->GetPlayerbotAI() || bot->getClass() != CLASS_WARRIOR)
+        {
+            if (reason) *reason = "charge is only available to warrior tanks";
+            return false;
+        }
+
+        sServerFacade.SetFacingTo(bot, target, true);
+        if (!bot->GetPlayerbotAI()->CanCastSpell("charge", target))
+        {
+            if (reason) *reason = "charge is not currently castable";
+            return false;
+        }
+
+        if (!bot->GetPlayerbotAI()->CastSpell("charge", target))
+        {
+            if (reason) *reason = "charge cast failed";
+            return false;
+        }
+
+        StartPlayerbotTankMeleePull(bot, target);
+        if (reason) *reason = "charge started";
+        return true;
+    }
+
     void UpdatePendingPlayerbotShootPulls(PlayerbotMgr* mgr)
     {
         if (!mgr)
@@ -2178,31 +2204,35 @@ namespace
             bot->GetPlayerbotAI()->GetAiObjectContext()->GetValue<Unit*>("current target")->Set(target);
             bot->GetPlayerbotAI()->GetAiObjectContext()->GetValue<ObjectGuid>("pull target")->Set(selectedGuid);
 
-            if (opener == "charge" && bot->getClass() == CLASS_WARRIOR)
+            bool chargeFallback = false;
+            string chargeReason;
+            if (opener == "charge")
             {
-                bot->GetPlayerbotAI()->DoSpecificAction("charge");
-                bot->GetPlayerbotAI()->DoSpecificAction("attack my target");
-                bot->GetPlayerbotAI()->DoSpecificAction("reach melee");
-                return true;
+                if (TryPlayerbotChargePull(bot, target, &chargeReason))
+                    return true;
+
+                chargeFallback = true;
+                bot->GetPlayerbotAI()->TellMaster(string("Charge pull fallback: ") + chargeReason);
             }
+
+            string pullReason;
+            PlayerbotShootPullResult pullResult = CastPlayerbotShootPull(bot, target, &pullReason);
+            if (pullResult == PLAYERBOT_SHOOT_PULL_FAILED)
+            {
+                string failedReason = chargeFallback ? string("charge fallback failed; shoot pull failed: ") + pullReason : pullReason;
+                bot->GetPlayerbotAI()->TellMaster(string("Shoot pull failed: ") + failedReason);
+                if (reason) *reason = failedReason;
+                return false;
+            }
+
+            if (pullResult == PLAYERBOT_SHOOT_PULL_PENDING)
+                pendingPlayerbotShootPullTargets[bot->GetObjectGuid().GetRawValue()] = selectedGuid;
             else
             {
-                string pullReason;
-                PlayerbotShootPullResult pullResult = CastPlayerbotShootPull(bot, target, &pullReason);
-                if (pullResult == PLAYERBOT_SHOOT_PULL_FAILED)
-                {
-                    bot->GetPlayerbotAI()->TellMaster(string("Shoot pull failed: ") + pullReason);
-                    if (reason) *reason = pullReason;
-                    return false;
-                }
-
-                if (pullResult == PLAYERBOT_SHOOT_PULL_PENDING)
-                    pendingPlayerbotShootPullTargets[bot->GetObjectGuid().GetRawValue()] = selectedGuid;
-                else
-                {
-                    pendingPlayerbotShootPullTargets.erase(bot->GetObjectGuid().GetRawValue());
-                    StartPlayerbotTankMeleePull(bot, target);
-                }
+                pendingPlayerbotShootPullTargets.erase(bot->GetObjectGuid().GetRawValue());
+                StartPlayerbotTankMeleePull(bot, target);
+                if (chargeFallback)
+                    bot->GetPlayerbotAI()->TellMaster("Charge unavailable; using shoot pull.");
             }
 
             return true;
