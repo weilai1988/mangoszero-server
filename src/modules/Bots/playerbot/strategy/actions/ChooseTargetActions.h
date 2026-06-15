@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../ServerFacade.h"
 #include "../Action.h"
 #include "AttackAction.h"
 
