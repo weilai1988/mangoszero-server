@@ -216,11 +216,15 @@ namespace ai
         virtual NextAction** getContinuers()
         {
             return NextAction::array(0,
-                new NextAction("taunt", ACTION_EMERGENCY + 6),
-                new NextAction("thunder clap", ACTION_HIGH + 7),
-                new NextAction("demoralizing shout", ACTION_HIGH + 6),
-                new NextAction("cleave", ACTION_HIGH + 5),
-                new NextAction("sunder armor", ACTION_HIGH + 4),
+                new NextAction("taunt", ACTION_EMERGENCY + 7),
+                new NextAction("revenge", ACTION_HIGH + 9),
+                new NextAction("shield slam", ACTION_HIGH + 8),
+                new NextAction("sunder armor", ACTION_HIGH + 7),
+                new NextAction("heroic strike", ACTION_HIGH + 6),
+                new NextAction("thunder clap", ACTION_HIGH + 5),
+                new NextAction("demoralizing shout", ACTION_HIGH + 4),
+                new NextAction("cleave", ACTION_HIGH + 3),
+                new NextAction("battle shout taunt", ACTION_HIGH + 2),
                 NULL);
         }
     };

@@ -12,7 +12,11 @@ TankWarriorStrategy::TankWarriorStrategy(PlayerbotAI* ai) : GenericWarriorStrate
 
 NextAction** TankWarriorStrategy::getDefaultActions()
 {
-    return NextAction::array(0, new NextAction("sunder armor", ACTION_NORMAL + 1), new NextAction("melee", ACTION_NORMAL), NULL);
+    return NextAction::array(0,
+            new NextAction("tank threat", ACTION_NORMAL + 3),
+            new NextAction("sunder armor", ACTION_NORMAL + 2),
+            new NextAction("melee", ACTION_NORMAL),
+            NULL);
 }
 
 void TankWarriorStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
@@ -25,7 +29,12 @@ void TankWarriorStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
 
     triggers.push_back(new TriggerNode(
         "medium rage available",
-        NextAction::array(0, new NextAction("shield slam", ACTION_NORMAL + 2), new NextAction("heroic strike", ACTION_NORMAL + 2), NULL)));
+        NextAction::array(0,
+            new NextAction("tank threat", ACTION_HIGH + 5),
+            new NextAction("shield slam", ACTION_HIGH + 4),
+            new NextAction("sunder armor", ACTION_HIGH + 3),
+            new NextAction("heroic strike", ACTION_HIGH + 2),
+            NULL)));
 
     triggers.push_back(new TriggerNode(
         "shield block",
@@ -37,7 +46,11 @@ void TankWarriorStrategy::InitTriggers(std::list<TriggerNode*> &triggers)
 
     triggers.push_back(new TriggerNode(
         "lose aggro",
-        NextAction::array(0, new NextAction("taunt", ACTION_EMERGENCY + 6), NULL)));
+        NextAction::array(0,
+            new NextAction("tank assist", ACTION_EMERGENCY + 8),
+            new NextAction("taunt", ACTION_EMERGENCY + 7),
+            new NextAction("tank threat", ACTION_EMERGENCY + 6),
+            NULL)));
 
     triggers.push_back(new TriggerNode(
         "tank aoe",
