@@ -1827,6 +1827,14 @@ namespace
         return true;
     }
 
+    bool IsPlayerbotPullTargetWithinCommandRange(Player* master, Unit* target)
+    {
+        if (!master || !target)
+            return false;
+
+        return master->IsWithinDistInMap(target, sPlayerbotAIConfig.reactDistance);
+    }
+
     vector<string> BuildPlayerbotBrainAssistCommands(Player* bot)
     {
         vector<string> commands;
@@ -2786,7 +2794,7 @@ list<string> PlayerbotHolder::HandlePlayerbotCommand(char const* args, Player* m
             return messages;
         }
 
-        if (!master->IsWithinDistInMap(pullTarget, sPlayerbotAIConfig.sightDistance))
+        if (!IsPlayerbotPullTargetWithinCommandRange(master, pullTarget))
         {
             messages.push_back(string("Pull target is too far away: ") + pullTarget->GetName());
             return messages;
@@ -2842,7 +2850,7 @@ list<string> PlayerbotHolder::HandlePlayerbotCommand(char const* args, Player* m
             return messages;
         }
 
-        if (!master->IsWithinDistInMap(pullTarget, sPlayerbotAIConfig.sightDistance))
+        if (!IsPlayerbotPullTargetWithinCommandRange(master, pullTarget))
         {
             messages.push_back(string("Pull target is too far away: ") + pullTarget->GetName());
             return messages;
