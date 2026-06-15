@@ -47,9 +47,9 @@ namespace ai
     };
 
     // defensive
-    class CastTauntAction : public CastMeleeSpellAction {
+    class CastTauntAction : public CastSpellAction {
     public:
-        CastTauntAction(PlayerbotAI* ai) : CastMeleeSpellAction(ai, "taunt") {}
+        CastTauntAction(PlayerbotAI* ai) : CastSpellAction(ai, "taunt") {}
         virtual bool isUseful() { return CastSpellAction::isUseful() && !AI_VALUE2(bool, "has aggro", "current target"); }
     };
 

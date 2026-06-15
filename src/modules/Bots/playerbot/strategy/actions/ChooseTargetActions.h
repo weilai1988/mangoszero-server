@@ -54,7 +54,11 @@ namespace ai
                 sServerFacade.SetFacingTo(bot, target, true);
 
             bool moved = false;
-            if (!attacked)
+            bool outOfMelee = sServerFacade.IsDistanceGreaterThan(
+                sServerFacade.GetDistance2d(bot, target),
+                sPlayerbotAIConfig.meleeDistance + sPlayerbotAIConfig.contactDistance);
+
+            if (!attacked || outOfMelee)
             {
                 moved = MoveTo(target, sPlayerbotAIConfig.meleeDistance);
                 if (moved && sServerFacade.IsWithinLOSInMap(bot, target))

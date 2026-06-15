@@ -175,7 +175,7 @@ namespace
             return "co +dps,+dps assist,+threat,-heal,-tank,-bear";
 
         if (role == "3" || role == "tank")
-            return "co +tank,+tank assist,+tank aoe,+bthreat,-threat,-heal,-dps,-follow,-stay,-flee,-ranged,-runaway,-passive";
+            return "co +tank,+tank assist,+tank aoe,+bthreat,+close,-threat,-heal,-dps,-follow,-stay,-flee,-ranged,-runaway,-passive";
 
         return "";
     }
@@ -1280,7 +1280,7 @@ namespace
         }
         else if (bot->GetPlayerbotAI()->IsTank(bot))
         {
-            commands.push_back("co +tank,+tank assist,+tank aoe,+bthreat,-threat,-heal,-dps,-follow,-stay,-flee,-ranged,-runaway,-passive");
+            commands.push_back("co +tank,+tank assist,+tank aoe,+bthreat,+close,-threat,-heal,-dps,-follow,-stay,-flee,-ranged,-runaway,-passive");
         }
         else
         {
@@ -1715,7 +1715,7 @@ namespace
         {
             commands.push_back("directpullattack " + NormalizePlayerbotPullOpener(opener));
             commands.push_back("nc +tank assist,+tank aoe");
-            commands.push_back("co +tank,+tank assist,+tank aoe,+bthreat,-threat,-heal,-dps,-follow,-stay,-flee,-ranged,-runaway,-passive");
+            commands.push_back("co +tank,+tank assist,+tank aoe,+bthreat,+close,-threat,-heal,-dps,-follow,-stay,-flee,-ranged,-runaway,-passive");
             if (NormalizePlayerbotPullOpener(opener) == "charge")
             {
                 commands.push_back("tank attack");
@@ -1873,7 +1873,7 @@ namespace
 
         if (bot->GetPlayerbotAI()->IsTank(bot))
         {
-            commands.push_back("co +tank,+tank assist,+tank aoe,+bthreat,-threat,-heal,-dps,-follow,-stay,-flee,-ranged,-runaway,-passive");
+            commands.push_back("co +tank,+tank assist,+tank aoe,+bthreat,+close,-threat,-heal,-dps,-follow,-stay,-flee,-ranged,-runaway,-passive");
         }
         else if (bot->GetPlayerbotAI()->IsHeal(bot))
         {
