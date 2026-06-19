@@ -25,6 +25,7 @@
 #include "generic/GuardStrategy.h"
 #include "generic/CastTimeStrategy.h"
 #include "generic/ThreatStrategy.h"
+#include "generic/HumanStrategy.h"
 #include "generic/TellTargetStrategy.h"
 #include "generic/AttackEnemyPlayersStrategy.h"
 #include "generic/DefenseStrategy.h"
@@ -60,6 +61,7 @@ namespace ai
             creators["potions"] = &StrategyContext::potions;
             creators["cast time"] = &StrategyContext::cast_time;
             creators["threat"] = &StrategyContext::threat;
+            creators["human"] = &StrategyContext::human;
             creators["tell target"] = &StrategyContext::tell_target;
             creators["pvp"] = &StrategyContext::pvp;
             creators["return"] = &StrategyContext::_return;
@@ -82,6 +84,7 @@ namespace ai
         static Strategy* close(PlayerbotAI* ai) { return new MeleeCombatStrategy(ai); }
         static Strategy* mark_rti(PlayerbotAI* ai) { return new MarkRtiStrategy(ai); }
         static Strategy* tell_target(PlayerbotAI* ai) { return new TellTargetStrategy(ai); }
+        static Strategy* human(PlayerbotAI* ai) { return new HumanPlayerPatternStrategy(ai); }
         static Strategy* threat(PlayerbotAI* ai) { return new ThreatStrategy(ai); }
         static Strategy* cast_time(PlayerbotAI* ai) { return new CastTimeStrategy(ai); }
         static Strategy* potions(PlayerbotAI* ai) { return new UsePotionsStrategy(ai); }

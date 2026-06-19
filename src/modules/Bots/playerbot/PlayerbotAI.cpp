@@ -15,6 +15,7 @@
 #include "PlayerbotAI.h"
 #include "PlayerbotFactory.h"
 #include "PlayerbotSecurity.h"
+#include "HumanPlayerStrategyMgr.h"
 #include "Group.h"
 #include "Pet.h"
 #include "SpellAuras.h"
@@ -948,6 +949,7 @@ string PlayerbotAI::FormatBrainDebug()
 {
     ostringstream out;
     out << FormatBrainState();
+    out << " | " << sHumanPlayerStrategyMgr.FormatSummary(this);
 
     if (!bot || !aiObjectContext)
     {

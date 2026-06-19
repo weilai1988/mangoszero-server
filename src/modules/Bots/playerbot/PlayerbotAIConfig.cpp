@@ -2,6 +2,7 @@
 #include "../ahbot/AhBot.h"
 #include "PlayerbotAIConfig.h"
 #include "playerbot.h"
+#include "HumanPlayerStrategyMgr.h"
 #include "RandomPlayerbotFactory.h"
 #include "AccountMgr.h"
 #include "SystemConfig.h"
@@ -146,6 +147,8 @@ bool PlayerbotAIConfig::Initialize()
     logValuesPerTick = config.GetBoolDefault("AiPlayerbot.LogValuesPerTick", false);
     fleeingEnabled = config.GetBoolDefault("AiPlayerbot.FleeingEnabled", true);
     summonAtInnkeepersEnabled = config.GetBoolDefault("AiPlayerbot.SummonAtInnkeepersEnabled", true);
+    humanStrategyEnabled = config.GetBoolDefault("AiPlayerbot.HumanStrategy.Enabled", true);
+    humanStrategyProfilePath = config.GetStringDefault("AiPlayerbot.HumanStrategy.ProfilePath", SYSCONFDIR"playerbot-human-profiles.conf");
     randomBotMinLevel = config.GetIntDefault("AiPlayerbot.RandomBotMinLevel", 1);
     randomBotMaxLevel = config.GetIntDefault("AiPlayerbot.RandomBotMaxLevel", 60);
     randomBotLoginAtStartup = config.GetBoolDefault("AiPlayerbot.RandomBotLoginAtStartup", true);
@@ -193,6 +196,7 @@ bool PlayerbotAIConfig::Initialize()
     targetPosRecalcDistance = config.GetFloatDefault("AiPlayerbot.TargetPosRecalcDistance", 0.1f);
     BarGoLink::SetOutputState(config.GetBoolDefault("AiPlayerbot.ShowProgressBars", false));
 
+    sHumanPlayerStrategyMgr.Initialize();
     RandomPlayerbotFactory::CreateRandomBots();
     PlayerbotFactory::Init();
     sRandomItemMgr.Init();

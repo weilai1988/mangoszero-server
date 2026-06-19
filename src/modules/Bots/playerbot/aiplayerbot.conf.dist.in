@@ -185,6 +185,11 @@ AiPlayerbot.RandomBotTeleLevel = 3
 #AiPlayerbot.LogValuesPerTick = 0
 #AiPlayerbot.RandomChangeMultiplier = 1
 
+# Human-player-inspired local strategy profiles.
+# Profiles are loaded from a local file only; the server never scrapes the internet.
+#AiPlayerbot.HumanStrategy.Enabled = 1
+#AiPlayerbot.HumanStrategy.ProfilePath = playerbot-human-profiles.conf
+
 # Command server port, 0 - disabled
 #AiPlayerbot.CommandServerPort = 8888
 
